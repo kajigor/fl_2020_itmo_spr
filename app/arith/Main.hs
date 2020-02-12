@@ -15,6 +15,11 @@ fm2 = "1+2*3+4"
 fm3 :: String 
 fm3 = "12+23*34+456"
 
+fm4 = "2/1"
+fm5 = "1*1*1*1*1/1/1/1/1/1/1*1*1*1*1*1*1*1*1/1"
+
+
+
 run :: String -> IO () 
 run input = do 
     putStrLn ""
@@ -30,3 +35,6 @@ main = do
     run fm1 
     run fm2
     run fm3
+    run fm4
+    run fm5
+
