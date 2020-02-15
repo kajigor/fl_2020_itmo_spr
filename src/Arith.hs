@@ -15,17 +15,38 @@ data AST = BinOp Operator AST AST
          | Num  Int 
          deriving (Eq)
 
--- parseExpr :: String -> Maybe (AST, String) 
--- parseExpr = parseSum 
+parseExpr :: String -> Maybe (AST, String)
+parseExpr = parseSum
 
 parseMult :: String -> Maybe (AST, String) 
-parseMult input = error "parseMult not implemented"
+parseMult input = do
+     (num, rest) <- parseNum input
+     if null rest then
+        return $ (Num num, rest)
+      else do
+       (op, rest') <- parseOp rest
+       case op of
+        Mult -> do (otherExpr, rest'') <- parseMult rest'
+                   return $ (BinOp Mult (Num num) otherExpr, rest'')
+        Div -> do (otherExpr, rest'') <- parseMult rest'
+                  return $ (BinOp Div (Num num) otherExpr, rest'')
+        _ -> return $ (Num num, rest)
 
 parseSum :: String -> Maybe (AST, String) 
-parseSum input = error "parseSum not implemented"
+parseSum input = do
+      (mult, rest) <- parseMult input
+      if null rest then
+        return $ (mult, rest)
+      else do
+        (op, rest') <- parseOp rest
+        case op of
+          Plus -> do (otherExpr, rest'') <- parseSum rest'
+                     return $ (BinOp Plus mult otherExpr, rest'')
+          Minus -> do (otherExpr, rest'') <- parseSum rest'
+                      return $ (BinOp Minus mult otherExpr, rest'')
+          _    -> return $ (mult, rest)
 
-
-parseNum :: String -> Maybe (Int, String) 
+parseNum :: String -> Maybe (Int, String)
 parseNum input =  
     let (acc, rest) = span isDigit input in 
     if null acc 
@@ -35,29 +56,21 @@ parseNum input =
 parseOp :: String -> Maybe (Operator, String)
 parseOp ('+' : input) = Just (Plus, input)
 parseOp ('*' : input) = Just (Mult, input)
-parseOp _ = Nothing 
+parseOp ('-' : input) = Just (Minus, input)
+parseOp ('/' : input) = Just (Div, input)
+parseOp _ = Nothing
 
 evaluate :: String -> Maybe Int
 evaluate input = do 
     (ast, rest) <- parseExpr input 
     return $ compute ast 
 
-parseExpr :: String -> Maybe (AST, String) 
-parseExpr input = do 
-    (x, input') <- parseNum input 
-    if null input' 
-    then 
-      return (Num x, input')
-    else do 
-      (op, input'') <- parseOp input' 
-      (y, input''') <- parseExpr input''
-      return (BinOp op (Num x) y, input''')
-
 compute :: AST -> Int 
 compute (Num x) = x 
 compute (BinOp Plus x y) = compute x + compute y 
 compute (BinOp Mult x y) = compute x * compute y 
-compute _ = error "compute not implemented"
+compute (BinOp Minus x y) = compute x - compute y
+compute (BinOp Div x y) = compute x `div` compute y
 
 instance Show Operator where 
   show Plus = "+"
