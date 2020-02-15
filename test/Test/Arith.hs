@@ -16,6 +16,7 @@ unit_evaluate = do
     evaluate "1-2*3+4" @?= Just (1-(2*3+4))
     evaluate "1-2-3" @?= Just (1-(2-3))
     evaluate "4/2-2" @?= Just ((4 `div` 2) - 2)
+    evaluate "4/4/2-2" @?= Just (0)
 
 unit_parseNum :: Assertion 
 unit_parseNum = do 
@@ -39,8 +40,8 @@ unit_parseMult = do
     parseMult "123" @?= Just (Num 123, "")
     parseMult "1*2+3*4" @?= Just (BinOp Mult (Num 1) (Num 2), "+3*4")
 
-unit_parseSum :: Assertion 
-unit_parseSum = do 
+unit_parseSum :: Assertion
+unit_parseSum = do
     parseSum "1*2*3"   @?= Just (BinOp Mult (Num 1) (BinOp Mult (Num 2) (Num 3)), "")
     parseSum "123"     @?= Just (Num 123, "")
     parseSum "1*2+3*4" @?= Just (BinOp Plus (BinOp Mult (Num 1) (Num 2)) (BinOp Mult (Num 3) (Num 4)), "")
