@@ -39,14 +39,11 @@ parseMult input =  do
                   return (Num x, input')
                 else do
                   (op, input'') <- parseOp input'
-                  case op of
-                             Mult -> do
-                                       (y, input''') <- parseMult input''
-                                       return (BinOp Mult (Num x) y, input''')
-                             Div -> do
-                                       (y, input''') <- parseMult input''
-                                       return (BinOp Div (Num x) y, input''')
-                             _ -> return (Num x, input')
+                  case op of real
+                                   | real == Mult || real == Div -> do
+                                                                      (y, input''') <- parseMult input''
+                                                                      return (BinOp op (Num x) y, input''')
+                                   | otherwise -> return (Num x, input')
 
 
 
@@ -59,14 +56,12 @@ parseSum input = do
                          return (x, input')
                        else do
                          (op, input'') <- parseOp input'
-                         case op of
-                                    Plus -> do
-                                              (y, input''') <- parseSum input''
-                                              return (BinOp Plus x y, input''')
-                                    Minus -> do
-                                               (y, input''') <- parseSum input''
-                                               return (BinOp Minus x y, input''')
-                                    _ -> return (x, input')
+                         case op of real
+                                         | real == Plus || real == Minus -> do
+                                                                                (y, input''') <- parseSum input''
+                                                                                return (BinOp op x y, input''')
+                                         | otherwise -> return (x, input')
+
 
 
 
