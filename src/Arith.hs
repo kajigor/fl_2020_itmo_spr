@@ -28,9 +28,10 @@ parseMult input = do
     then Just (Num number, rest)
     else do
       (operator, rest') <- parseOp rest
-      (tree, rest'') <- parseMult rest'
       if operator == Mult || operator == Div
-        then Just (BinOp operator lhs tree, rest'')
+        then do
+          (tree, rest'') <- parseMult rest'
+          Just (BinOp operator lhs tree, rest'')
         else Just (lhs, rest)
 
 parseSum :: String -> Maybe (AST, String)
@@ -40,9 +41,10 @@ parseSum input = do
     then Just (lhs, rest)
     else do
       (operator, rest') <- parseOp rest
-      (tree, rest'') <- parseSum rest'
       if operator == Minus || operator == Plus
-        then Just (BinOp operator lhs tree, rest'')
+        then do
+          (tree, rest'') <- parseSum rest'
+          Just (BinOp operator lhs tree, rest'')
         else Just (lhs, rest)
 
 parseNum :: String -> Maybe (Int, String)
