@@ -27,7 +27,7 @@ parseMult input = do
   else do
     (op, input'') <- parseOp input'
     case op of
-      Mult -> do
+      op | op `elem` [Mult, Div] -> do
         (y, input''') <- parseMult input''
         return (BinOp op (Num x) y, input''')
       _ -> return (Num x, input')
@@ -46,10 +46,8 @@ parseSum input = do
         return (BinOp op x y, input''')
       op | op `elem` [Mult, Div] -> do
         (y, input''') <- parseMult input''
-        (op', input'''') <- parseOp input'''
-        (z, input''''') <- parseSum input''''
-        return (BinOp op' (BinOp op x y) z, input''''')
-      _ -> error "Something went horribly wrong"
+        return (BinOp op x y, input''')
+      _ -> Nothing
 
 
 parseNum :: String -> Maybe (Int, String)
