@@ -25,14 +25,10 @@ parseMult input = do
              "" -> return $ (Num num, "")
              _ -> do
                  (operator, resttail) <- parseOp rest
-                 case operator of
-                         Mult -> do
-                             (num2, rest2) <- parseMult resttail
-                             return $ (BinOp Mult (Num num) num2, rest2)
-                         Div -> do
-                             (num2, rest2) <- parseMult resttail
-                             return $ (BinOp Div (Num num) num2, rest2)
-                         _ -> return $ (Num num, rest)
+                 case operator of x | x == Mult || x == Div -> do
+                                           (num2, rest2) <- parseMult resttail
+                                           return $ (BinOp operator (Num num) num2, rest2)
+                                    | otherwise -> return $ (Num num, rest)
 
                    
 parseSum :: String -> Maybe (AST, String) 
@@ -42,14 +38,10 @@ parseSum input = do
              "" -> return $ (mul, "")
              _ -> do 
                  (operator, resttail) <- parseOp rest
-                 case operator of
-                         Plus -> do
-                             (mul2, rest2) <- parseSum resttail
-                             return $ (BinOp Plus mul mul2, rest2)
-                         Minus -> do
-                             (mul2, rest2) <- parseSum resttail
-                             return $ (BinOp Minus mul mul2, rest2)
-                         _ -> return $ (mul, rest)
+                 case operator of x | x == Plus || x == Minus -> do
+                                           (mul2, rest2) <- parseSum resttail
+                                           return $ (BinOp operator mul mul2, rest2)
+                                    | otherwise -> return $ (mul, rest)
 
 
 parseNum :: String -> Maybe (Int, String) 
