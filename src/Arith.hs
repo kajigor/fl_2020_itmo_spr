@@ -44,9 +44,6 @@ parseSum input = do
       op | op `elem` [Plus, Minus] -> do
         (y, input''') <- parseSum input''
         return (BinOp op x y, input''')
-      op | op `elem` [Mult, Div] -> do
-        (y, input''') <- parseMult input''
-        return (BinOp op x y, input''')
       _ -> Nothing
 
 
