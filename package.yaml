@@ -32,24 +32,9 @@ library:
   source-dirs: src
 
 executables:
-  polish:
+  expr:
     main:                Main.hs
-    source-dirs:         app/polish
-    dependencies:
-    - fl2020-ifmo-spr
-  digitSum:
-    main:                Main.hs
-    source-dirs:         app/digitSum
-    dependencies:
-    - fl2020-ifmo-spr
-  sum:
-    main:                Main.hs
-    source-dirs:         app/sum
-    dependencies:
-    - fl2020-ifmo-spr
-  arith:
-    main:                Main.hs
-    source-dirs:         app/arith
+    source-dirs:         app/expr
     dependencies:
     - fl2020-ifmo-spr
 
