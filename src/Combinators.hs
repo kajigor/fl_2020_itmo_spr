@@ -3,7 +3,6 @@ module Combinators where
 import           AST                 (AST (..), Operator (..))
 import           Control.Applicative (Alternative (..))
 import           Text.Printf         (printf)
-
 import           Control.Monad (liftM, ap)
 
 data Result error input result
@@ -15,22 +14,9 @@ newtype Parser error input result
   = Parser { runParser :: input -> Result error input result}
 
 instance Functor (Parser error input) where
-{-
-  fmap f = Parser . (helper .) . runParser where
-    helper (Success input result) = Success input $ f result
-    helper (Failure error) = Failure error
--}
   fmap = liftM
+
 instance Applicative (Parser error input) where
-{-
-  pure x = Parser (\i -> Success i x)
-  (Parser pf) <*> (Parser px) = Parser go where
-    go inp = case pf inp of
-               (Failure err) -> Failure err
-               (Success inp' f) -> case px inp' of
-                 (Failure err') -> Failure err'
-                 (Success inp'' x) -> Success inp'' $ f x
--}
   pure = return
   (<*>) = ap
 
