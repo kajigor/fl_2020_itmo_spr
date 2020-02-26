@@ -48,9 +48,6 @@ instance Monoid error => Alternative (Parser error input) where
                (Failure _) -> p2 inp
                s@(Success _ _) -> s
 
-digit :: Parser String String Char
-digit = satisfy (`elem` "012346789")
-
 -- Принимает последовательность элементов, разделенных разделителем
 -- Первый аргумент -- парсер для разделителя
 -- Второй аргумент -- парсер для элемента
