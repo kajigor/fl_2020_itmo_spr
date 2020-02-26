@@ -2,16 +2,20 @@ module Expr where
 
 import           AST         (AST (..), Operator (..))
 import           Combinators (Parser (..), Result (..), alt, elem', fail', map',
-                              return', satisfy, seq', symbol)
+                              return', satisfy, seq', symbol, sepBy1)
 import           Data.Char   (isDigit, digitToInt)
+
+import           Control.Applicative (Alternative (..))
 
 -- Парсер для произведения/деления термов
 parseMult :: Parser String String AST
-parseMult = error "parseMult not implemented"
+parseMult = let parseMultOp = (symbol '*' <|> symbol '/') >>= toOperator in
+  ((\x f y -> BinOp f x y) <$> parseTerm <*> parseMultOp <*> parseMult <|> parseTerm) <|> parseTerm
 
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
-parseSum = error "parseSum not implemented"
+parseSum = let parseSumOp = (symbol '+' <|> symbol '-') >>= toOperator in
+  ((\x f y -> BinOp f x y) <$> parseMult <*> parseSumOp <*> parseSum <|> parseMult) <|> parseMult
 
 -- Парсер чисел
 parseNum :: Parser String String Int
@@ -44,6 +48,11 @@ parseTerm =
     map' Num parseNum `alt`
     (lbr `seq'` \_ ->
      parseTerm `seq'` \e ->
+     rbr `seq'` \_ ->
+     return' e
+    ) `alt` 
+    (lbr `seq'` \_ ->
+     parseSum `seq'` \e ->
      rbr `seq'` \_ ->
      return' e
     )

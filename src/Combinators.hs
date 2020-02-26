@@ -4,6 +4,8 @@ import           AST                 (AST (..), Operator (..))
 import           Control.Applicative (Alternative (..))
 import           Text.Printf         (printf)
 
+import           Control.Monad (liftM, ap)
+
 data Result error input result
   = Success input result
   | Failure error
@@ -13,28 +15,49 @@ newtype Parser error input result
   = Parser { runParser :: input -> Result error input result}
 
 instance Functor (Parser error input) where
-  fmap = error "fmap not implemented"
-
+{-
+  fmap f = Parser . (helper .) . runParser where
+    helper (Success input result) = Success input $ f result
+    helper (Failure error) = Failure error
+-}
+  fmap = liftM
 instance Applicative (Parser error input) where
-  pure = error "pure not implemented"
-  (<*>) = error "<*> not implemented"
+{-
+  pure x = Parser (\i -> Success i x)
+  (Parser pf) <*> (Parser px) = Parser go where
+    go inp = case pf inp of
+               (Failure err) -> Failure err
+               (Success inp' f) -> case px inp' of
+                 (Failure err') -> Failure err'
+                 (Success inp'' x) -> Success inp'' $ f x
+-}
+  pure = return
+  (<*>) = ap
 
 instance Monad (Parser error input) where
-  return = error "return not implemented"
-
-  (>>=) = error ">>= not implemented"
+  return x = Parser (\i -> Success i x)
+  (Parser m) >>= k = Parser go where
+    go inp = case m inp of
+               (Failure err) -> (Failure err)
+               (Success inp' x) -> runParser (k x) inp'
 
 instance Monoid error => Alternative (Parser error input) where
-  empty = error "empty not implemented"
+  empty = Parser (\i -> Failure mempty)
+  (Parser p1) <|> (Parser p2) = Parser go where
+    go inp = case p1 inp of
+               (Failure _) -> p2 inp
+               s@(Success _ _) -> s
 
-  (<|>) = error "<|> not implemented"
+digit :: Parser String String Char
+digit = satisfy (`elem` "012346789")
 
 -- Принимает последовательность элементов, разделенных разделителем
 -- Первый аргумент -- парсер для разделителя
 -- Второй аргумент -- парсер для элемента
 -- В последовательности должен быть хотя бы один элемент
-sepBy1 :: Parser e i sep -> Parser e i a -> Parser e i [a]
-sepBy1 sep elem = error "sepBy1 not implemented"
+sepBy1 :: Monoid e => Parser e i sep -> Parser e i a -> Parser e i [a]
+sepBy1 sep elem = (:) <$> elem <*> (helper sep elem) where
+  helper sep elem = (:) <$> (sep *> elem) <*> helper sep elem <|> pure []
 
 -- Альтернатива: в случае неудачи разбора первым парсером, парсит вторым
 alt :: Parser e i a -> Parser e i a -> Parser e i a
