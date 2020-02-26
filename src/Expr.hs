@@ -9,12 +9,12 @@ import           Control.Applicative (Alternative (..))
 -- Парсер для произведения/деления термов
 parseMult :: Parser String String AST
 parseMult = let parseMultOp = (symbol '*' <|> symbol '/') >>= toOperator in
-  ((\x f y -> BinOp f x y) <$> parseTerm <*> parseMultOp <*> parseMult <|> parseTerm) <|> parseTerm
+  ((\x f y -> BinOp f x y) <$> parseTerm <*> parseMultOp <*> parseMult) <|> parseTerm
 
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
 parseSum = let parseSumOp = (symbol '+' <|> symbol '-') >>= toOperator in
-  ((\x f y -> BinOp f x y) <$> parseMult <*> parseSumOp <*> parseSum <|> parseMult) <|> parseMult
+  ((\x f y -> BinOp f x y) <$> parseMult <*> parseSumOp <*> parseSum) <|> parseMult
 
 -- Парсер чисел
 parseNum :: Parser String String Int
@@ -37,7 +37,7 @@ toOperator _   = fail' "Failed toOperator"
 -- Парсер для терма: либо число, либо выражение в скобках.
 -- Скобки не хранятся в AST за ненадобностью.
 parseTerm :: Parser String String AST
-parseTerm = Num <$> parseNum <|> (lbr *> parseTerm <* rbr) <|> (lbr *> parseSum <* rbr)
+parseTerm = Num <$> parseNum <|> (lbr *> parseSum <* rbr)
   where
     lbr = symbol '('
     rbr = symbol ')'
