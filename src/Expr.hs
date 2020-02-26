@@ -50,7 +50,7 @@ parseTerm =
      parseTerm `seq'` \e ->
      rbr `seq'` \_ ->
      return' e
-    ) `alt` 
+    ) `alt`
     (lbr `seq'` \_ ->
      parseSum `seq'` \e ->
      rbr `seq'` \_ ->
