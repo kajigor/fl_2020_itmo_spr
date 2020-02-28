@@ -1,51 +1,59 @@
 module Expr where
 
 import           AST         (AST (..), Operator (..))
-import           Combinators (Parser (..), Result (..), alt, elem', fail', map',
-                              return', satisfy, seq', symbol)
+import           Combinators (Parser (..), Result (..), elem', fail', satisfy, symbol, sepBy1)
 import           Data.Char   (isDigit, digitToInt)
+import           Control.Applicative
 
 -- Парсер для произведения/деления термов
 parseMult :: Parser String String AST
-parseMult = error "parseMult not implemented"
+parseMult = parseDiv
+  where
+    parseDiv =
+      foldr1 (BinOp Div) <$> sepBy1 (symbol '/') parseProd
+    parseProd =
+      foldr1 (BinOp Mult) <$> sepBy1 (symbol '*') parseTerm
 
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
-parseSum = error "parseSum not implemented"
+parseSum = parseMinus
+  where
+    parsePlus =
+      foldr1 (BinOp Plus) <$> sepBy1 (symbol '+') parseMult
+    parseMinus =
+      foldr1 (BinOp Minus) <$> sepBy1 (symbol '-') parsePlus
 
 -- Парсер чисел
 parseNum :: Parser String String Int
 parseNum =
-    map' toNum go
+  fmap toNum go
   where
     digit = satisfy isDigit
-    empty' = return' []
     toNum = foldl (\acc d -> 10 * acc + digitToInt d) 0
-    go =
-      digit `seq'`
-      \d -> map' (d:) (go `alt` empty')
+    go = some digit
 
 -- Парсер для операторов
 parseOp :: Parser String String Operator
-parseOp = elem' `seq'` toOperator
+parseOp = elem' >>= toOperator
 
 -- Преобразование символов операторов в операторы
 toOperator :: Char -> Parser String String Operator
-toOperator '+' = return' Plus
-toOperator '*' = return' Mult
-toOperator '-' = return' Minus
-toOperator '/' = return' Div
+toOperator '+' = pure Plus
+toOperator '*' = pure Mult
+toOperator '-' = pure Minus
+toOperator '/' = pure Div
 toOperator _   = fail' "Failed toOperator"
 
 -- Парсер для терма: либо число, либо выражение в скобках.
 -- Скобки не хранятся в AST за ненадобностью.
 parseTerm :: Parser String String AST
 parseTerm =
-    map' Num parseNum `alt`
-    (lbr `seq'` \_ ->
-     parseTerm `seq'` \e ->
-     rbr `seq'` \_ ->
-     return' e
+    fmap Num parseNum <|>
+    (do
+        lbr
+        e <- parseSum
+        rbr
+        pure e
     )
   where
     lbr = symbol '('
