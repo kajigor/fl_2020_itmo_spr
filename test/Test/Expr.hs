@@ -24,6 +24,8 @@ unit_evaluate = do
     evaluate "(1+2)*(3+4)" @?= Just ((1+2)*(3+4))
     evaluate "12+(23*(34)+456)" @?= Just (12+(23*(34)+456))
     evaluate "((1-(2*3))+4)" @?= Just ((1-(2*3))+4)
+    evaluate "1-2+3-4" @?= Just (1-2+3-4)
+    evaluate "6/2*3" @?= Just ((6 `div` 2) * 3)
 
 unit_parseNum :: Assertion
 unit_parseNum = do
