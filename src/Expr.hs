@@ -4,24 +4,31 @@ import           AST         (AST (..), Operator (..))
 import           Combinators (Parser (..), Result (..), elem', fail', satisfy, symbol, sepBy1)
 import           Data.Char   (isDigit, digitToInt)
 import           Control.Applicative
+import           Data.Functor ((<&>))
+import           Data.Foldable (asum)
 
 -- Парсер для произведения/деления термов
 parseMult :: Parser String String AST
-parseMult = parseDiv
-  where
-    parseDiv =
-      foldr1 (BinOp Div) <$> sepBy1 (symbol '/') parseProd
-    parseProd =
-      foldr1 (BinOp Mult) <$> sepBy1 (symbol '*') parseTerm
+parseMult = parseOps parseTerm
+  [ ('/', Div)
+  , ('*', Mult)
+  ]
 
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
-parseSum = parseMinus
+parseSum = parseOps parseMult
+  [ ('+', Plus)
+  , ('-', Minus)
+  ]
+
+-- Парсер для группы левоассоциативных операторов с одинаковым приоритетом
+parseOps :: Parser String String AST -> [(Char, Operator)] -> Parser String String AST
+parseOps child table = do
+  x <- child
+  foldl (\x (op, t) -> BinOp op x t) x <$>
+    many ((,) <$> asum someOp <*> child)
   where
-    parsePlus =
-      foldr1 (BinOp Plus) <$> sepBy1 (symbol '+') parseMult
-    parseMinus =
-      foldr1 (BinOp Minus) <$> sepBy1 (symbol '-') parsePlus
+    someOp = table <&> \(char, op) -> pure op <* symbol char
 
 -- Парсер чисел
 parseNum :: Parser String String Int
