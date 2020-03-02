@@ -26,17 +26,17 @@ unit_elem = do
 
 unit_many :: Assertion
 unit_many = do
-    runParser (many' $ symbol '1') "234" @?= Success "234" ""
-    runParser (many' $ symbol '1') "134" @?= Success "34" "1"
-    runParser (many' $ symbol '1') "114" @?= Success "4" "11"
-    runParser (many' $ symbol '1') "111" @?= Success "" "111"
+    runParser (many $ symbol '1') "234" @?= Success "234" ""
+    runParser (many $ symbol '1') "134" @?= Success "34" "1"
+    runParser (many $ symbol '1') "114" @?= Success "4" "11"
+    runParser (many $ symbol '1') "111" @?= Success "" "111"
 
 unit_some :: Assertion
 unit_some = do
-    runParser (some' $ symbol '1') "234" @?= Failure predErrMsg
-    runParser (some' $ symbol '1') "134" @?= Success "34" "1"
-    runParser (some' $ symbol '1') "114" @?= Success "4" "11"
-    runParser (some' $ symbol '1') "111" @?= Success "" "111"
+    runParser (some $ symbol '1') "234" @?= Failure predErrMsg
+    runParser (some $ symbol '1') "134" @?= Success "34" "1"
+    runParser (some $ symbol '1') "114" @?= Success "4" "11"
+    runParser (some $ symbol '1') "111" @?= Success "" "111"
 
 unit_sepBy :: Assertion
 unit_sepBy = do
