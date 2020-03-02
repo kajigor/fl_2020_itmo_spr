@@ -8,7 +8,15 @@ import           Control.Applicative (Alternative (..))
 
 -- Парсер для произведения/деления термов
 parseMult :: Parser String String AST
-parseMult = error ""
+parseMult = op <|> num where
+  op = do num <- parseNum
+          op <- parseOp
+          case op of
+            m | m == Mult || m == Div -> do rest <- parseMult
+                                            return $ BinOp m (Num num) rest
+            _ -> empty
+
+  num = Num <$> parseNum
 
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
@@ -22,7 +30,7 @@ parseNum = read <$> parseAsString where
 
 -- Парсер для операторов
 parseOp :: Parser String String Operator
-parseOp = elem' `seq'` toOperator
+parseOp = elem' >>= toOperator
 
 -- Преобразование символов операторов в операторы
 toOperator :: Char -> Parser String String Operator
