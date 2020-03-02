@@ -24,6 +24,7 @@ unit_evaluate = do
     evaluate "(1+2)*(3+4)" @?= Just ((1+2)*(3+4))
     evaluate "12+(23*(34)+456)" @?= Just (12+(23*(34)+456))
     evaluate "((1-(2*3))+4)" @?= Just ((1-(2*3))+4)
+    -- Предполагаю, это и есть тесты на левую ассоциативность?
     evaluate "1-2+3-4" @?= Just (1-2+3-4)
     evaluate "6/2*3" @?= Just ((6 `div` 2) * 3)
 
@@ -55,3 +56,9 @@ unit_parseSum = do
     runParser parseSum "123"     @?= Success "" (Num 123)
     runParser parseSum "1*2+3*4" @?= Success "" (BinOp Plus (BinOp Mult (Num 1) (Num 2)) (BinOp Mult (Num 3) (Num 4)))
     runParser parseSum "1+2*3+4" @?= Success "" (BinOp Plus (Num 1) (BinOp Plus (BinOp Mult (Num 2) (Num 3)) (Num 4)))
+    -- Проходит так:
+    runParser parseSum "1-2+3-4" @?= Success "" (BinOp Minus (Num 1) (BinOp Plus (Num 2) (BinOp Minus (Num 3) (Num 4))))
+    runParser parseSum "6/2*3" @?= Success "" (BinOp Div (Num 6) (BinOp Mult (Num 2) (Num 3)))
+    -- А должно быть так:
+    -- runParser parseSum "1-2+3-4" @?= Success "" (BinOp Minus (BinOp Plus (BinOp Minus (Num 1)) (Num 2)) (Num 3) (Num 4))
+    -- runParser parseSum "6/2*3" @?= Success "" (BinOp Mult (BinOp Div (Num 6) (Num 2)) (Num 3))
