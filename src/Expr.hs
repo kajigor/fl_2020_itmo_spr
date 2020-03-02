@@ -2,26 +2,31 @@ module Expr where
 
 import           AST         (AST (..), Operator (..))
 import           Combinators (Parser (..), Result (..), alt, elem', fail', map',
-                              return', satisfy, seq', symbol, empty')
+                              return', satisfy, seq', symbol, empty', sepBy1, some')
 import           Data.Char   (isDigit, digitToInt)
 
 -- Парсер для произведения/деления термов
-parseMult :: Parser String String AST
-parseMult = prs `alt` parseTerm
-  where prs = do
-          num1 <- parseTerm
-          op <- parseMultDiv
-          num2 <- parseMult
-          return (BinOp op num1 num2)
-     
+parseMult :: Parser String String AST    
+parseMult = do
+      elems <- sepBy1' parseMultDiv parseTerm
+      return (head elems)
+
+sepBy1' :: Parser String String Operator -> Parser String String AST -> Parser String String [AST]
+sepBy1' sep elem = prsr `alt` some' elem
+  where prsr = do
+          el <- elem
+          op <- sep
+          elems <- sepBy1' sep elem
+          return [BinOp op el (head elems)]
+
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
-parseSum = prs `alt` parseMult
-  where prs = do
-          num1 <- parseMult
+parseSum = prsr `alt` parseMult
+  where prsr = do
+          num <- parseMult
           op <- parseOp
           num2 <- parseSum
-          return (BinOp op num1 num2)
+          return (BinOp op num num2)
 
 -- Парсер чисел
 parseNum :: Parser String String Int
@@ -57,7 +62,7 @@ toOperator _   = fail' "Failed toOperator"
 parseTerm :: Parser String String AST
 parseTerm = map' Num parseNum `alt` do
       symbol '('
-      e <- parseTerm
+      e <- parseSum
       symbol ')'
       return e
 
