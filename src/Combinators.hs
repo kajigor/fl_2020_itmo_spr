@@ -13,21 +13,37 @@ newtype Parser error input result
   = Parser { runParser :: input -> Result error input result}
 
 instance Functor (Parser error input) where
-  fmap = error "fmap not implemented"
+  fmap f x = Parser $ \input -> 
+    case runParser x input of
+        (Success input' result) -> Success input' (f result)
+        (Failure error) -> Failure error
 
 instance Applicative (Parser error input) where
-  pure = error "pure not implemented"
-  (<*>) = error "<*> not implemented"
+  pure x = Parser $ \input -> Success input x
+  f <*> x = Parser $ \input -> 
+    case runParser f input of
+      (Success input' g) -> case runParser x input' of
+                                    (Success input'' xs) -> (Success input'' (g xs))
+                                    (Failure err) -> (Failure err)
+      (Failure error) -> Failure error
 
 instance Monad (Parser error input) where
-  return = error "return not implemented"
+  return x = pure x
 
-  (>>=) = error ">>= not implemented"
+  m >>= f = Parser $ \input ->
+    case runParser m input of
+      (Success input' result) -> runParser (f result) input'
+      (Failure error) -> Failure error
 
 instance Monoid error => Alternative (Parser error input) where
-  empty = error "empty not implemented"
+  empty = Parser $ \_ -> Failure mempty
 
-  (<|>) = error "<|> not implemented"
+  l <|> r = Parser $ \input ->
+      case runParser l input of
+          (Failure err) -> case runParser r input of
+                            (Failure errTwo) -> (Failure $ err <> errTwo)
+                            s -> s
+          s -> s
 
 -- Принимает последовательность элементов, разделенных разделителем
 -- Первый аргумент -- парсер для разделителя
