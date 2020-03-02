@@ -4,26 +4,21 @@ import           AST         (AST (..), Operator (..))
 import           Combinators (Parser (..), Result (..), alt, elem', fail', map',
                               return', satisfy, seq', symbol)
 import           Data.Char   (isDigit, digitToInt)
+import           Control.Applicative (Alternative (..))
 
 -- Парсер для произведения/деления термов
 parseMult :: Parser String String AST
-parseMult = error "parseMult not implemented"
+parseMult = error ""
 
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
 parseSum = error "parseSum not implemented"
 
--- Парсер чисел
 parseNum :: Parser String String Int
-parseNum =
-    map' toNum go
-  where
-    digit = satisfy isDigit
-    empty' = return' []
-    toNum = foldl (\acc d -> 10 * acc + digitToInt d) 0
-    go =
-      digit `seq'`
-      \d -> map' (d:) (go `alt` empty')
+parseNum = read <$> parseAsString where
+        parseAsString = do digit <- satisfy isDigit
+                           num <- parseAsString <|> (return "")
+                           return $ (digit:num)
 
 -- Парсер для операторов
 parseOp :: Parser String String Operator
