@@ -42,7 +42,7 @@ parseOp = elem' >>= toOperator
 -- Не уверен считается ли это сравнением с образцом, но иначе не знаю
 -- как сделать функцию parseMult.
 parseMultDiv :: Parser String String Operator
-parseMultDiv = satisfy (\x -> x == '\\' || x == '*') >>= toOperator
+parseMultDiv = satisfy (\x -> x == '/' || x == '*') >>= toOperator
 
 -- Преобразование символов операторов в операторы
 toOperator :: Char -> Parser String String Operator
