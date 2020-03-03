@@ -4,3 +4,13 @@
 fl2020-ifmo-spr.cabal
 
 README.html
+
+*.aux 
+
+*.fdb_latexmk
+
+*.fls 
+
+*.log
+
+*.synctex.gz
