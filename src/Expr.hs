@@ -6,27 +6,33 @@ import           Combinators (Parser (..), Result (..), alt, elem', fail', map',
 import           Data.Char   (isDigit, digitToInt)
 
 -- Парсер для произведения/деления термов
-parseMult :: Parser String String AST    
-parseMult = do
-      elems <- sepBy1' parseMultDiv parseTerm
-      return (head elems)
+parseMult :: Parser String String AST
+parseMult = go `alt` parseMBin `alt` parseTerm
+  where parseMBin = do
+          el <- parseTerm
+          op <- parseMultDiv
+          el2 <- parseTerm
+          return (BinOp op el el2)
+        go = do
+          el <- parseMBin
+          op <- parseMultDiv
+          el2 <- parseMult
+          return (BinOp op el el2)
 
-sepBy1' :: Parser String String Operator -> Parser String String AST -> Parser String String [AST]
-sepBy1' sep elem = prsr `alt` some' elem
-  where prsr = do
-          el <- elem
-          op <- sep
-          elems <- sepBy1' sep elem
-          return [BinOp op el (head elems)]
 
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
-parseSum = prsr `alt` parseMult
-  where prsr = do
-          num <- parseMult
+parseSum = go `alt` parseBin `alt` parseMult
+  where parseBin = do
+          el <- parseMult
           op <- parseOp
-          num2 <- parseSum
-          return (BinOp op num num2)
+          el2 <- parseMult
+          return (BinOp op el el2)
+        go = do
+          el <- parseBin
+          op <- parseOp
+          el2 <- parseSum
+          return (BinOp op el el2)
 
 -- Парсер чисел
 parseNum :: Parser String String Int
