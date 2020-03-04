@@ -13,28 +13,52 @@ newtype Parser error input result
   = Parser { runParser :: input -> Result error input result}
 
 instance Functor (Parser error input) where
-  fmap = error "fmap not implemented"
+  fmap f (Parser parser) = Parser (helper . parser) where
+    helper (Success i r) = Success i (f r)
+    helper (Failure err) = Failure err 
 
 instance Applicative (Parser error input) where
-  pure = error "pure not implemented"
-  (<*>) = error "<*> not implemented"
+  pure x = Parser (\i -> Success i x)
+  (Parser p1) <*> (Parser p2) = Parser $ helper . p1 where
+    helper (Success i f) = helper' f (p2 i)
+    helper (Failure err) = Failure err
+    helper' f (Success i a) = Success i (f a)
+    helper' _ (Failure err) = Failure err
+    
 
 instance Monad (Parser error input) where
-  return = error "return not implemented"
+  return x = pure x
 
-  (>>=) = error ">>= not implemented"
+  (Parser p) >>= f = Parser $ \i -> (helper $ p i)  where
+    helper (Success i a) = runParser (f a) i 
+    helper (Failure err) = Failure err
+
 
 instance Monoid error => Alternative (Parser error input) where
-  empty = error "empty not implemented"
+  empty = Parser $ \_ -> Failure mempty
+  (Parser p1) <|> (Parser p2) = Parser $ \input -> case p1 input of
+    Failure e1  -> case p2 input of
+                    Failure e2 -> Failure e2
+                    x          -> x
+    x           -> x
 
-  (<|>) = error "<|> not implemented"
-
+-- instance Monad (Parser error input) => MonadError (Parser error input) where
+--     throwError 
+  
 -- Принимает последовательность элементов, разделенных разделителем
 -- Первый аргумент -- парсер для разделителя
 -- Второй аргумент -- парсер для элемента
 -- В последовательности должен быть хотя бы один элемент
-sepBy1 :: Parser e i sep -> Parser e i a -> Parser e i [a]
-sepBy1 sep elem = error "sepBy1 not implemented"
+--sepBy1 :: Parser e i sep -> Parser e i a -> Parser e i [a]
+sepBy1 sep elem = do
+  a <- elem
+  res <- (sep *> sepBy1 sep elem) <|> return []
+  return (a:res)
+
+sepBy1' sep elem = do
+  a <- elem
+  xs <- many' (sep >>= (\s -> fmap (\l -> (s, l)) elem)) <|> return []
+  return $ (a, xs)
 
 -- Альтернатива: в случае неудачи разбора первым парсером, парсит вторым
 alt :: Parser e i a -> Parser e i a -> Parser e i a
@@ -43,16 +67,7 @@ alt p q = Parser $ \input ->
     Failure _ -> runParser q input
     x         -> x
 
--- Последовательное применение парсеров:
--- если первый парсер успешно принимает префикс строки, второй запускается на суффиксе.
--- Второй парсер использует результат первого.
-seq' :: Parser e i a -> (a -> Parser e i b) -> Parser e i b
-seq' p f = Parser $ \input ->
-  case runParser p input of
-    Success i a -> runParser (f a) i
-    Failure e   -> Failure e
-
--- Проверяет, что первый элемент входной последовательности удовлетворяет предикату
+-- -- Проверяет, что первый элемент входной последовательности удовлетворяет предикату
 satisfy :: (a -> Bool) -> Parser String [a] a
 satisfy p = Parser $ \input ->
   case input of
@@ -88,5 +103,5 @@ many' p = some' p `alt` return' []
 
 -- Последовательное применения одного и того же парсера 1 или более раз
 some' :: Parser e i a -> Parser e i [a]
-some' p = p `seq'` \r -> map' (r:) (some' p `alt` return' [])
+some' p = p >>= (\r -> fmap (r:) (some' p `alt` return' []))
 

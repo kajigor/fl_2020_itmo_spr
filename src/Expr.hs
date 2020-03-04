@@ -1,33 +1,43 @@
 module Expr where
 
 import           AST         (AST (..), Operator (..))
-import           Combinators (Parser (..), Result (..), alt, elem', fail', map',
-                              return', satisfy, seq', symbol)
+import           Combinators 
+import           Control.Applicative (Alternative (..))    
 import           Data.Char   (isDigit, digitToInt)
 
 -- Парсер для произведения/деления термов
 parseMult :: Parser String String AST
-parseMult = error "parseMult not implemented"
+parseMult = do
+   (n, ops) <- sepBy1' parseDivOrMult parseTerm
+   return $ foldl (\acc (op, term) -> BinOp op acc term) n ops
+  
 
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
-parseSum = error "parseSum not implemented"
+parseSum = do
+   (n, ops) <- sepBy1' parsePlusOrMinus parseMult
+   return $ foldl (\acc (op, term) -> BinOp op acc term) n ops
+
+parsePlusOrMinus = do
+  op <- parseOp
+  if op == Plus || op == Minus then return op else empty
+
+parseDivOrMult = do
+  op <- parseOp
+  if op == Div || op == Mult then return op else empty
+
 
 -- Парсер чисел
 parseNum :: Parser String String Int
-parseNum =
-    map' toNum go
-  where
-    digit = satisfy isDigit
-    empty' = return' []
-    toNum = foldl (\acc d -> 10 * acc + digitToInt d) 0
-    go =
-      digit `seq'`
-      \d -> map' (d:) (go `alt` empty')
+parseNum = fmap (\l -> foldl (\acc a -> acc * 10 + (digitToInt a)) 0 l) parseNumStr where
+  parseNumStr = do
+        digit <- satisfy isDigit
+        number <- parseNumStr <|> (return "")
+        return $ digit:number
 
 -- Парсер для операторов
 parseOp :: Parser String String Operator
-parseOp = elem' `seq'` toOperator
+parseOp = elem' >>= toOperator
 
 -- Преобразование символов операторов в операторы
 toOperator :: Char -> Parser String String Operator
@@ -37,16 +47,10 @@ toOperator '-' = return' Minus
 toOperator '/' = return' Div
 toOperator _   = fail' "Failed toOperator"
 
--- Парсер для терма: либо число, либо выражение в скобках.
+-- Парсер для терма: либо число, либо выражение в скобках. 
 -- Скобки не хранятся в AST за ненадобностью.
 parseTerm :: Parser String String AST
-parseTerm =
-    map' Num parseNum `alt`
-    (lbr `seq'` \_ ->
-     parseTerm `seq'` \e ->
-     rbr `seq'` \_ ->
-     return' e
-    )
+parseTerm = (fmap Num parseNum) <|> (lbr *> parseExpr <* rbr)
   where
     lbr = symbol '('
     rbr = symbol ')'
