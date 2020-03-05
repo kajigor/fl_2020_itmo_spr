@@ -2,7 +2,7 @@ module Expr where
 
 import           AST         (AST (..), Operator (..))
 import           Combinators (Parser (..), Result (..),  elem', fail', 
-                              return', satisfy, symbol, sepBy1, many', some')
+                              return', satisfy, symbol, sepBy1, sepBy1', many', some')
 import           Data.Char   (isDigit, digitToInt)
 import           Control.Applicative (Alternative (..))
 
@@ -10,10 +10,9 @@ import           Control.Applicative (Alternative (..))
 parseMult :: Parser String String AST
 parseMult = parseM <|> parseTerm
              where parseM = do
-                         term <- parseTerm
-                         op <- parseMulDivOp
-                         mul <- parseMult
-                         return $ BinOp op term mul
+                         (elem, expr) <- sepBy1' parseMulDivOp parseTerm
+                         return $ foldl toBinOp elem expr
+                   toBinOp x (y, z) = BinOp y x z
                    parseMulDivOp = (mul <|> div) >>= toOperator
                    mul = symbol '*'
                    div = symbol '/'
@@ -23,10 +22,9 @@ parseMult = parseM <|> parseTerm
 parseSum :: Parser String String AST
 parseSum = parseS <|> parseMult
             where parseS = do
-                         mul <- parseMult
-                         op <- parseAddSubOp
-                         sum <- parseSum
-                         return $ BinOp op mul sum
+                         (elem, expr) <- sepBy1' parseAddSubOp parseMult
+                         return $ foldl toBinOp elem expr
+                  toBinOp x (y, z) = BinOp y x z
                   parseAddSubOp = (add <|> sub) >>= toOperator
                   sub = symbol '-'
                   add = symbol '+'

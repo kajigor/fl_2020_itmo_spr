@@ -50,6 +50,9 @@ sepBy1 sep elem = (:) <$> elem <*> many' p
          where 
            p = sep *> elem
 
+sepBy1' :: Monoid e => Parser e i sep -> Parser e i a -> Parser e i (a, [(sep, a)])
+sepBy1' sep elem = (,) <$> elem <*> (many' ((,) <$> sep <*> elem))
+
 
 -- Проверяет, что первый элемент входной последовательности удовлетворяет предикату
 satisfy :: (a -> Bool) -> Parser String [a] a
