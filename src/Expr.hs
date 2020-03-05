@@ -1,26 +1,19 @@
 module Expr where
 
 import           AST         (AST (..), Operator (..))
-import           Combinators (Parser (..), Result (..), alt, elem', fail', map',
-                              return', satisfy, seq', symbol)
+import           Combinators (Parser (..), Result (..), symbol, satisfy, elem', fail', sepBy1, sepBy1')
 import           Data.Char   (isDigit, digitToInt)
 import           Control.Applicative (Alternative (..))
 
 -- Парсер для произведения/деления термов
+-- 3*4*2
 parseMult :: Parser String String AST
-parseMult = op <|> num where
-  op = do num <- parseNum
-          op <- parseOp
-          case op of
-            m | m == Mult || m == Div -> do rest <- parseMult
-                                            return $ BinOp m (Num num) rest
-            _ -> empty
+parseMult = (\(l, r) -> foldl (\acc (op, term) -> BinOp op acc term) l r) <$> sepBy1' (parseOp' '*' <|> parseOp' '/') parseTerm
 
-  num = Num <$> parseNum
 
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
-parseSum = error "parseSum not implemented"
+parseSum = (\(l, r) -> foldl (\acc (op, term) -> BinOp op acc term) l r) <$> sepBy1' (parseOp' '+' <|> parseOp' '-') parseMult
 
 parseNum :: Parser String String Int
 parseNum = read <$> parseAsString where
@@ -32,27 +25,25 @@ parseNum = read <$> parseAsString where
 parseOp :: Parser String String Operator
 parseOp = elem' >>= toOperator
 
+parseOp' :: Char -> Parser String String Operator
+parseOp' c = symbol c >>= toOperator
+
 -- Преобразование символов операторов в операторы
 toOperator :: Char -> Parser String String Operator
-toOperator '+' = return' Plus
-toOperator '*' = return' Mult
-toOperator '-' = return' Minus
-toOperator '/' = return' Div
+toOperator '+' = return Plus
+toOperator '*' = return Mult
+toOperator '-' = return Minus
+toOperator '/' = return Div
 toOperator _   = fail' "Failed toOperator"
 
 -- Парсер для терма: либо число, либо выражение в скобках.
 -- Скобки не хранятся в AST за ненадобностью.
 parseTerm :: Parser String String AST
-parseTerm =
-    map' Num parseNum `alt`
-    (lbr `seq'` \_ ->
-     parseTerm `seq'` \e ->
-     rbr `seq'` \_ ->
-     return' e
-    )
-  where
-    lbr = symbol '('
-    rbr = symbol ')'
+parseTerm = Num <$> parseNum <|> parseBracketed where
+  parseBracketed = do symbol '('
+                      e <- parseExpr
+                      symbol ')'
+                      return e
 
 -- Парсер арифметических выражений над целыми числами с операциями +,-,*,/.
 parseExpr :: Parser String String AST
