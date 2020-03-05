@@ -40,17 +40,25 @@ instance Monoid error => Alternative (Parser error input) where
 
   l <|> r = Parser $ \input ->
       case runParser l input of
-          (Failure err) -> case runParser r input of
-                            (Failure errTwo) -> (Failure $ err <> errTwo)
-                            s -> s
+          (Failure err) -> runParser r input
           s -> s
 
 -- Принимает последовательность элементов, разделенных разделителем
 -- Первый аргумент -- парсер для разделителя
 -- Второй аргумент -- парсер для элемента
 -- В последовательности должен быть хотя бы один элемент
-sepBy1 :: Parser e i sep -> Parser e i a -> Parser e i [a]
-sepBy1 sep elem = error "sepBy1 not implemented"
+sepBy1 :: Monoid e => Parser e i sep -> Parser e i a -> Parser e i [a]
+sepBy1 sep elem = l <|> r 
+  where l = do e <- elem
+               _ <- sep
+               rest <- sepBy1 sep elem
+               return $ e : rest
+        r = return <$> elem
+
+sepBy1' :: Monoid e => Parser e i sep -> Parser e i a -> Parser e i (a, [(sep, a)])
+sepBy1' sep elem = do e <- elem
+                      rest <- many (sep >>= (\s -> elem >>= (\e -> return $ (s, e)))) 
+                      return $ (e, rest)
 
 -- Альтернатива: в случае неудачи разбора первым парсером, парсит вторым
 alt :: Parser e i a -> Parser e i a -> Parser e i a
@@ -105,4 +113,3 @@ many' p = some' p `alt` return' []
 -- Последовательное применения одного и того же парсера 1 или более раз
 some' :: Parser e i a -> Parser e i [a]
 some' p = p `seq'` \r -> map' (r:) (some' p `alt` return' [])
-
