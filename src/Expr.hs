@@ -2,25 +2,23 @@ module Expr where
 
 import           AST                 (AST (..), Operator (..))
 import           Combinators         (Parser (..), Result (..), elem', nat,
-                                      satisfy, symbol)
+                                      satisfy, sepBy1', symbol)
 import           Control.Applicative (empty, (<|>))
 import           Data.Char           (digitToInt, isDigit)
 
 -- Парсер для произведения/деления термов
 parseMult :: Parser String String AST
-parseMult = parse <|> parseTerm
+parseMult = uncurry (foldl build) <$> sepBy1' parseMultDivOp parseTerm
   where
-    parse :: Parser String String AST
-    parse = return (flip BinOp) <*> parseTerm <*> parseMultDivOp <*> parseMult
+    build acc (oper, term) = BinOp oper acc term
     parseMultDivOp :: Parser String String Operator
     parseMultDivOp = (symbol '*' <|> symbol '/') >>= toOperator
 
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
-parseSum = parse <|> parseMult
+parseSum = uncurry (foldl buildTree) <$> sepBy1' parseSumSub parseMult
   where
-    parse :: Parser String String AST
-    parse = return (flip BinOp) <*> parseMult <*> parseSumSub <*> parseSum
+    buildTree tree (oper, term) = BinOp oper tree term
     parseSumSub = (symbol '+' <|> symbol '-') >>= toOperator
 
 -- Парсер чисел
@@ -37,7 +35,10 @@ toOperator '+' = return Plus
 toOperator '*' = return Mult
 toOperator '-' = return Minus
 toOperator '/' = return Div
-toOperator _   = fail "Failed toOperator"
+toOperator _   = fail' "Failed toOperator"
+
+fail' :: e -> Parser e i a
+fail' e = Parser $ \input -> Failure e
 
 -- Парсер для терма: либо число, либо выражение в скобках.
 -- Скобки не хранятся в AST за ненадобностью.

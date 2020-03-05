@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Combinators where
 
 import           AST                 (AST (..), Operator (..))
@@ -56,14 +58,20 @@ sepBy1 sepP elP = do
   elems <- many $ sepP >> elP
   return $ elem : elems
 
+-- как sepBy1, только еще собирает разделители
+sepBy1' :: Monoid e => Parser e i sep -> Parser e i a -> Parser e i (a, [(sep, a)])
+sepBy1' sepP elP = do
+  elem <- elP
+  elems <- many ((,) <$> sepP <*> elP)
+  return (elem, elems)
+
 -- Проверяет, что первый элемент входной последовательности удовлетворяет предикату
 satisfy :: (a -> Bool) -> Parser String [a] a
 satisfy p =
-  Parser $ \input ->
-    case input of
-      (x:xs)
-        | p x -> Success xs x
-      input -> Failure "Predicate failed"
+  Parser $ \case
+    (x:xs)
+      | p x -> Success xs x
+    input -> Failure "Predicate failed"
 
 -- Успешно завершается, если последовательность содержит как минимум один элемент
 elem' :: Parser String [a] a
