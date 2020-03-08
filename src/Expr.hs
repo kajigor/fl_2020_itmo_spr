@@ -4,14 +4,23 @@ import           AST         (AST (..), Operator (..))
 import           Combinators (Parser (..), Result (..), alt, elem', fail', map',
                               return', satisfy, seq', symbol)
 import           Data.Char   (isDigit, digitToInt)
+import UberExpr
+import Control.Applicative (Alternative (..))  
 
+multOrDiv  = (symbol '*' >>= toOperator) <|> (symbol '/' >>= toOperator)
+sumOrMinus  = (symbol '+' >>= toOperator) <|> (symbol '-' >>= toOperator)
+
+  
 -- Парсер для произведения/деления термов
 parseMult :: Parser String String AST
-parseMult = error "parseMult not implemented"
+parseMult = uberExpr [(multOrDiv, LeftAssoc)] parseTerm BinOp
 
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
-parseSum = error "parseSum not implemented"
+parseSum = uberExpr [ (sumOrMinus, LeftAssoc)
+                    ]
+                    parseMult
+                    BinOp
 
 -- Парсер чисел
 parseNum :: Parser String String Int
@@ -43,7 +52,7 @@ parseTerm :: Parser String String AST
 parseTerm =
     map' Num parseNum `alt`
     (lbr `seq'` \_ ->
-     parseTerm `seq'` \e ->
+     parseExpr `seq'` \e ->
      rbr `seq'` \_ ->
      return' e
     )

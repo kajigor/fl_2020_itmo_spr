@@ -13,28 +13,53 @@ newtype Parser error input result
   = Parser { runParser :: input -> Result error input result}
 
 instance Functor (Parser error input) where
-  fmap = error "fmap not implemented"
+  fmap f (Parser parser) = Parser (helper . parser) where
+    helper (Success i r) = Success i (f r)
+    helper (Failure err) = Failure err 
 
 instance Applicative (Parser error input) where
-  pure = error "pure not implemented"
-  (<*>) = error "<*> not implemented"
+  pure x = Parser (\i -> Success i x)
+  (Parser p1) <*> (Parser p2) = Parser $ helper . p1 where
+    helper (Success i f) = helper' f (p2 i)
+    helper (Failure err) = Failure err
+    helper' f (Success i a) = Success i (f a)
+    helper' _ (Failure err) = Failure err
+    
 
 instance Monad (Parser error input) where
-  return = error "return not implemented"
+  return x = pure x
 
-  (>>=) = error ">>= not implemented"
+  (Parser p) >>= f = Parser $ \i -> (helper $ p i)  where
+    helper (Success i a) = runParser (f a) i 
+    helper (Failure err) = Failure err
+
 
 instance Monoid error => Alternative (Parser error input) where
-  empty = error "empty not implemented"
-
-  (<|>) = error "<|> not implemented"
+  empty = Parser $ \_ -> Failure mempty
+  (Parser p1) <|> (Parser p2) = Parser $ \input -> case p1 input of
+    Failure e1  -> case p2 input of
+                    Failure e2 -> Failure e2
+                    x          -> x
+    x           -> x
 
 -- Принимает последовательность элементов, разделенных разделителем
 -- Первый аргумент -- парсер для разделителя
 -- Второй аргумент -- парсер для элемента
 -- В последовательности должен быть хотя бы один элемент
-sepBy1 :: Parser e i sep -> Parser e i a -> Parser e i [a]
-sepBy1 sep elem = error "sepBy1 not implemented"
+sepBy1 sep elem = do
+  a <- elem
+  xs <- (sep >>= \_-> sepBy1 sep elem) <|> return []
+  return $ a:xs
+
+sepBy1L sep elem = do
+  a <- elem
+  xs <- many' (sep >>= (\s -> fmap (\l -> (s, l)) elem)) <|> return []
+  return $ (a, xs)
+
+sepBy1R sep elem = do
+  xs <- many' (elem >>= (\el -> fmap (\s -> (el, s)) sep)) <|> return []
+  a <- elem
+  return (xs, a)
 
 -- Альтернатива: в случае неудачи разбора первым парсером, парсит вторым
 alt :: Parser e i a -> Parser e i a -> Parser e i a
