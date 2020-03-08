@@ -1,52 +1,43 @@
 module Expr where
 
 import           AST         (AST (..), Operator (..))
-import           Combinators (Parser (..), Result (..), alt, elem', fail', map',
-                              return', satisfy, seq', symbol)
+import           Combinators (Parser (..), Result (..), alt, fail',
+                              elem', satisfy, symbol, sepBy1)
 import           Data.Char   (isDigit, digitToInt)
+import           Control.Applicative (Alternative (..))
 
 -- Парсер для произведения/деления термов
 parseMult :: Parser String String AST
-parseMult = error "parseMult not implemented"
+parseMult = let parseMultOp = (symbol '*' <|> symbol '/') >>= toOperator in
+  ((\x f y -> BinOp f x y) <$> parseTerm <*> parseMultOp <*> parseMult) <|> parseTerm
 
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
-parseSum = error "parseSum not implemented"
+parseSum = let parseSumOp = (symbol '+' <|> symbol '-') >>= toOperator in
+  ((\x f y -> BinOp f x y) <$> parseMult <*> parseSumOp <*> parseSum) <|> parseMult
 
 -- Парсер чисел
 parseNum :: Parser String String Int
-parseNum =
-    map' toNum go
-  where
-    digit = satisfy isDigit
-    empty' = return' []
-    toNum = foldl (\acc d -> 10 * acc + digitToInt d) 0
-    go =
-      digit `seq'`
-      \d -> map' (d:) (go `alt` empty')
+parseNum = toNum <$> some digit where
+  toNum = foldl (\acc d -> 10 * acc + digitToInt d) 0
+  digit = satisfy isDigit
 
 -- Парсер для операторов
 parseOp :: Parser String String Operator
-parseOp = elem' `seq'` toOperator
+parseOp = elem' >>= toOperator
 
 -- Преобразование символов операторов в операторы
 toOperator :: Char -> Parser String String Operator
-toOperator '+' = return' Plus
-toOperator '*' = return' Mult
-toOperator '-' = return' Minus
-toOperator '/' = return' Div
+toOperator '+' = return Plus
+toOperator '*' = return Mult
+toOperator '-' = return Minus
+toOperator '/' = return Div
 toOperator _   = fail' "Failed toOperator"
 
 -- Парсер для терма: либо число, либо выражение в скобках.
 -- Скобки не хранятся в AST за ненадобностью.
 parseTerm :: Parser String String AST
-parseTerm =
-    map' Num parseNum `alt`
-    (lbr `seq'` \_ ->
-     parseTerm `seq'` \e ->
-     rbr `seq'` \_ ->
-     return' e
-    )
+parseTerm = Num <$> parseNum <|> (lbr *> parseSum <* rbr)
   where
     lbr = symbol '('
     rbr = symbol ')'
