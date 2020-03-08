@@ -3,18 +3,27 @@ module Expr where
 import           AST         (AST (..), Operator (..))
 import           Combinators (Parser (..), Result (..), alt, fail',
                               elem', satisfy, symbol, sepBy1)
+import           UberExpr
 import           Data.Char   (isDigit, digitToInt)
 import           Control.Applicative (Alternative (..))
 
 -- Парсер для произведения/деления термов
 parseMult :: Parser String String AST
-parseMult = let parseMultOp = (symbol '*' <|> symbol '/') >>= toOperator in
-  ((\x f y -> BinOp f x y) <$> parseTerm <*> parseMultOp <*> parseMult) <|> parseTerm
+parseMult = let
+    mult = symbol '*' >>= toOperator
+    div' = symbol '/' >>= toOperator
+  in uberExpr [(mult, RightAssoc), (div', LeftAssoc)]
+              parseTerm
+              BinOp
 
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
-parseSum = let parseSumOp = (symbol '+' <|> symbol '-') >>= toOperator in
-  ((\x f y -> BinOp f x y) <$> parseMult <*> parseSumOp <*> parseSum) <|> parseMult
+parseSum = let
+    plus = symbol '+' >>= toOperator
+    minus = symbol '-' >>= toOperator
+  in uberExpr [(plus, RightAssoc), (minus, LeftAssoc)]
+              parseMult
+              BinOp
 
 -- Парсер чисел
 parseNum :: Parser String String Int

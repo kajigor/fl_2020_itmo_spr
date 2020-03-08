@@ -4,7 +4,7 @@ import           AST                 (AST (..), Operator (..))
 import           Combinators         (symbol, Parser (..), Result (..), runParser)
 import           Control.Applicative ((<|>))
 import           Expr                (toOperator, parseNum)
-import           Test.Tasty.HUnit    (Assertion (..), (@?=))
+import           Test.Tasty.HUnit    (Assertion (..), (@?=), assertBool)
 import           Text.Printf         (printf)
 import           UberExpr            (Associativity (..), uberExpr)
 
@@ -12,6 +12,9 @@ mult  = symbol '*' >>= toOperator
 sum'  = symbol '+' >>= toOperator
 minus = symbol '-' >>= toOperator
 div'  = symbol '/' >>= toOperator
+
+isFailure (Failure _) = True
+isFailure  _          = False
 
 expr1 :: Parser String String AST
 expr1 =
@@ -42,7 +45,7 @@ unit_expr1 = do
 unit_expr2 :: Assertion
 unit_expr2 = do
   runParser expr2 "13" @?= Success "" (Num 13)
-  runParser expr2 "(((1)))" @?= Failure ""
+  assertBool "" $ isFailure $ runParser expr2 "(((1)))"
   runParser expr2 "1+2*3-4/5" @?= Success "" (BinOp Div (BinOp Minus (BinOp Mult (BinOp Plus (Num 1) (Num 2)) (Num 3)) (Num 4)) (Num 5))
   runParser expr2 "1+2+3" @?= Success "" (BinOp Plus (BinOp Plus (Num 1) (Num 2)) (Num 3))
   runParser expr2 "1*2*3" @?= Success "" (BinOp Mult (BinOp Mult (Num 1) (Num 2)) (Num 3))
