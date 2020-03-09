@@ -4,6 +4,7 @@ import           AST         (AST (..), Operator (..))
 import           Combinators (Parser (..), Result (..), symbol, satisfy, elem', fail', sepBy1, sepBy1')
 import           Data.Char   (isDigit, digitToInt)
 import           Control.Applicative (Alternative (..))
+import UberExpr (Associativity(..), uberExpr)
 
 -- Парсер для произведения/деления термов
 -- 3*4*2
@@ -47,7 +48,7 @@ parseTerm = Num <$> parseNum <|> parseBracketed where
 
 -- Парсер арифметических выражений над целыми числами с операциями +,-,*,/.
 parseExpr :: Parser String String AST
-parseExpr = parseSum
+parseExpr = uberExpr [(parseOp' '+' <|> parseOp' '-', LeftAssoc), (parseOp' '*' <|> parseOp' '/', LeftAssoc)] parseTerm BinOp
 
 compute :: AST -> Int
 compute (Num x) = x
