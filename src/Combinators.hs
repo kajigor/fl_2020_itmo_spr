@@ -23,12 +23,12 @@ instance Applicative (Parser error input) where
   f <*> x = Parser $ \input -> 
     case runParser f input of
       (Success input' g) -> case runParser x input' of
-                                    (Success input'' xs) -> (Success input'' (g xs))
-                                    (Failure err) -> (Failure err)
+                                (Success input'' xs) -> (Success input'' (g xs))
+                                (Failure err) -> Failure err
       (Failure error) -> Failure error
 
 instance Monad (Parser error input) where
-  return x = pure x
+  return = pure
 
   m >>= f = Parser $ \input ->
     case runParser m input of
@@ -56,9 +56,22 @@ sepBy1 sep elem = l <|> r
         r = return <$> elem
 
 sepBy1' :: Monoid e => Parser e i sep -> Parser e i a -> Parser e i (a, [(sep, a)])
-sepBy1' sep elem = do e <- elem
-                      rest <- many (sep >>= (\s -> elem >>= (\e -> return $ (s, e)))) 
-                      return $ (e, rest)
+sepBy1' sep elem = do
+  e <- elem
+  rest <- many (sep >>= (\s -> elem >>= (\e -> return (s, e))))
+  return (e, rest)
+
+sepBy1'' :: Monoid e => Parser e i sep -> Parser e i a -> Parser e i [(Maybe sep, a)]
+sepBy1'' sep elem = l <|> r
+  where
+    l = do
+      e <- elem
+      s <- sep
+      rest <- sepBy1'' sep elem
+      return $ (Just s, e) : rest
+    r = do
+      e <- elem
+      return [(Nothing, e)]
 
 -- Альтернатива: в случае неудачи разбора первым парсером, парсит вторым
 alt :: Parser e i a -> Parser e i a -> Parser e i a
@@ -78,10 +91,12 @@ seq' p f = Parser $ \input ->
 
 -- Проверяет, что первый элемент входной последовательности удовлетворяет предикату
 satisfy :: (a -> Bool) -> Parser String [a] a
-satisfy p = Parser $ \input ->
-  case input of
-    (x:xs) | p x -> Success xs x
-    input        -> Failure $ "Predicate failed"
+satisfy p =
+  Parser $ \input ->
+    case input of
+      (x:xs)
+        | p x -> Success xs x
+      input -> Failure "Predicate failed"
 
 -- Успешно завершается, если последовательность содержит как минимум один элемент
 elem' :: Parser String [a] a
