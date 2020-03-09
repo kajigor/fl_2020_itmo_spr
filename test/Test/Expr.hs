@@ -48,9 +48,11 @@ unit_parseOp = do
 
 unit_parseMult :: Assertion
 unit_parseMult = do
-    runParser parseMult "1*2*3" @?= Success "" (BinOp Mult (Num 1) (BinOp Mult (Num 2) (Num 3)))
+    runParser parseMult "1*2*3" @?= Success "" (BinOp Mult (BinOp Mult (Num 1) (Num 2)) (Num 3))
     runParser parseMult "123" @?= Success "" (Num 123)
     runParser parseMult "1*2+3*4" @?= Success "+3*4" (BinOp Mult (Num 1) (Num 2))
+    runParser parseMult "6/2*3" @?= Success "" (BinOp Mult (BinOp Div (Num 6) (Num 2)) (Num 3))
+
 
 unit_parseSum :: Assertion
 unit_parseSum = do
