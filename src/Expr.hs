@@ -7,32 +7,21 @@ import           Data.Char   (isDigit, digitToInt)
 
 -- Парсер для произведения/деления термов
 parseMult :: Parser String String AST
-parseMult = go `alt` parseMBin `alt` parseTerm
-  where parseMBin = do
-          el <- parseTerm
+parseMult = prsr `alt` parseTerm
+  where prsr = do
+          val <- parseTerm
           op <- parseMultDiv
-          el2 <- parseTerm
-          return (BinOp op el el2)
-        go = do
-          el <- parseMBin
-          op <- parseMultDiv
-          el2 <- parseMult
-          return (BinOp op el el2)
-
+          val2 <- parseMult
+          return $ BinOp op val val2
 
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
-parseSum = go `alt` parseBin `alt` parseMult
-  where parseBin = do
-          el <- parseMult
+parseSum = prsr `alt` parseMult
+  where prsr = do
+          val <- parseMult
           op <- parseOp
-          el2 <- parseMult
-          return (BinOp op el el2)
-        go = do
-          el <- parseBin
-          op <- parseOp
-          el2 <- parseSum
-          return (BinOp op el el2)
+          val2 <- parseSum
+          return $ BinOp op val val2
 
 -- Парсер чисел
 parseNum :: Parser String String Int
