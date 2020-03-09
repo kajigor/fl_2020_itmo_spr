@@ -5,23 +5,31 @@ import           Combinators (Parser (..), Result (..), alt, elem', fail', map',
                               return', satisfy, seq', symbol, empty', sepBy1, some')
 import           Data.Char   (isDigit, digitToInt)
 
--- Парсер для произведения/деления термов
-parseMult :: Parser String String AST
-parseMult = prsr `alt` parseTerm
+sepByOp :: Parser String String Operator -> Parser String String AST -> Parser String String [(Operator, AST)]
+sepByOp sep elem = prsr `alt` prsr'
   where prsr = do
-          val <- parseTerm
-          op <- parseMultDiv
-          val2 <- parseMult
-          return $ BinOp op val val2
+          el <- elem
+          op <- sep
+          elems <- sepByOp sep elem
+          return ((op, el):elems)
+        prsr' = do
+          el <- elem
+          return [(None, el)]
 
--- Парсер для сложения/вычитания множителей
+folder :: (Operator, AST) -> (Operator, AST) -> (Operator, AST)
+folder (op, ast) (op', ast') = (op', BinOp op ast ast')
+
+parseMult :: Parser String String AST
+parseMult = do
+      lst <- sepByOp parseMultDiv parseTerm
+      let (_, ans) = foldl1 folder lst
+      return ans
+
 parseSum :: Parser String String AST
-parseSum = prsr `alt` parseMult
-  where prsr = do
-          val <- parseMult
-          op <- parseOp
-          val2 <- parseSum
-          return $ BinOp op val val2
+parseSum = do
+      lst <- sepByOp parseOp parseMult
+      let (_, ans) = foldl1 folder lst
+      return ans
 
 -- Парсер чисел
 parseNum :: Parser String String Int

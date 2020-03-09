@@ -6,6 +6,7 @@ data Operator = Plus
               | Mult
               | Minus
               | Div
+              | None
               deriving (Eq)
 
 data AST = BinOp Operator AST AST
