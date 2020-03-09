@@ -19,16 +19,16 @@ unit_evaluate = do
     evaluate "31+24+777" @?= Just (31+24+777)
     evaluate "1+2*3+4" @?= Just (1+2*3+4)
     evaluate "12+23*34+456" @?= Just (12+23*34+456)
-    evaluate "1-2*3+4" @?= Just (1-(2*3+4))
-    evaluate "1-2-3" @?= Just (1-(2-3))
+    -- evaluate "1-2*3+4" @?= Just (1-(2*3+4))
+    evaluate "1-2*3+4" @?= Just ((1-2*3)+4)
+    -- evaluate "1-2-3" @?= Just (1-(2-3))
+    evaluate "1-2-3" @?= Just ((1-2)-3)
     evaluate "4/2-2" @?= Just ((4 `div` 2) - 2)
     evaluate "(1+2)*(3+4)" @?= Just ((1+2)*(3+4))
     evaluate "12+(23*(34)+456)" @?= Just (12+(23*(34)+456))
     evaluate "((1-(2*3))+4)" @?= Just ((1-(2*3))+4)
-    -- evaluate "1-2+3-4" @?= Just (1-2+3-4)
-    -- evaluate "6/2*3" @?= Just ((6 `div` 2) * 3)
-    evaluate "1-2+3-4" @?= Just (1-(2+(3-4)))
-    evaluate "6/2*3" @?= Just (6 `div` (2 * 3))
+    evaluate "1-2+3-4" @?= Just (1-2+3-4)
+    evaluate "6/2*3" @?= Just ((6 `div` 2) * 3)
 
 unit_parseNum :: Assertion
 unit_parseNum = do
@@ -54,7 +54,9 @@ unit_parseMult = do
 
 unit_parseSum :: Assertion
 unit_parseSum = do
-    runParser parseSum "1*2*3"   @?= Success "" (BinOp Mult (Num 1) (BinOp Mult (Num 2) (Num 3)))
+    -- runParser parseSum "1*2*3"   @?= Success "" (BinOp Mult (Num 1) (BinOp Mult (Num 2) (Num 3)))
+    runParser parseSum "1*2*3"   @?= Success "" (BinOp Mult (BinOp Mult (Num 1) (Num 2)) (Num 3))
     runParser parseSum "123"     @?= Success "" (Num 123)
     runParser parseSum "1*2+3*4" @?= Success "" (BinOp Plus (BinOp Mult (Num 1) (Num 2)) (BinOp Mult (Num 3) (Num 4)))
-    runParser parseSum "1+2*3+4" @?= Success "" (BinOp Plus (Num 1) (BinOp Plus (BinOp Mult (Num 2) (Num 3)) (Num 4)))
+    -- runParser parseSum "1+2*3+4" @?= Success "" (BinOp Plus (Num 1) (BinOp Plus (BinOp Mult (Num 2) (Num 3)) (Num 4)))
+    runParser parseSum "1+2*3+4" @?= Success "" (BinOp Plus (BinOp Plus (Num 1) (BinOp Mult (Num 2) (Num 3))) (Num 4))
