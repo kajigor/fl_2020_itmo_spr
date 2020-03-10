@@ -1,9 +1,10 @@
 module Test.Expr where
 
-import           AST         (AST (..), Operator (..))
-import           Combinators (Result (..), runParser)
-import           Expr        (evaluate, parseMult, parseNum, parseOp, parseSum)
-import           Test.HUnit  (Assertion, (@?=))
+import           AST              (AST (..), Operator (..))
+import           Combinators      (Result (..), runParser)
+import           Expr             (evaluate, parseMult, parseNum, parseOp,
+                                   parseSum)
+import           Test.Tasty.HUnit (Assertion, (@?=))
 
 isFailure (Failure _) = True
 isFailure  _          = False

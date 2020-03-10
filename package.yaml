@@ -1,6 +1,6 @@
-name:                fl2020-ifmo-spr
+name:                fl2020-itmo-spr
 version:             0.1.0.0
-github:              "kajigor/fl-2020-ifmo-spr"
+github:              "kajigor/fl-2020-itmo-spr"
 license:             BSD3
 author:              "Ekaterina Verbitskaia"
 maintainer:          "kajigor@gmail.com"
@@ -17,7 +17,7 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://https://github.com/kajigor/fl-2020-ifmo-spr>
+description:         Please see the README on GitHub at <https://https://github.com/kajigor/fl-2020-itmo-spr>
 
 dependencies:
 - base >= 4.7 && < 5
@@ -36,11 +36,11 @@ executables:
     main:                Main.hs
     source-dirs:         app/expr
     dependencies:
-    - fl2020-ifmo-spr
+    - fl2020-itmo-spr
 
 tests:
   test:
     main:                Test.hs
     source-dirs:         test
     dependencies:
-    - fl2020-ifmo-spr
+    - fl2020-itmo-spr
