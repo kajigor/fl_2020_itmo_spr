@@ -12,7 +12,7 @@ parseMult :: Parser String String AST
 parseMult = let
     mult = symbol '*' >>= toOperator
     div' = symbol '/' >>= toOperator
-  in uberExpr [(mult, RightAssoc), (div', LeftAssoc)]
+  in uberExpr [(mult <|> div', LeftAssoc)]
               parseTerm
               BinOp
 
@@ -21,7 +21,7 @@ parseSum :: Parser String String AST
 parseSum = let
     plus = symbol '+' >>= toOperator
     minus = symbol '-' >>= toOperator
-  in uberExpr [(plus, RightAssoc), (minus, LeftAssoc)]
+  in uberExpr [(plus <|> minus, LeftAssoc)]
               parseMult
               BinOp
 
