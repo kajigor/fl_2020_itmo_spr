@@ -7,19 +7,20 @@ import           Data.Char   (isDigit, digitToInt)
 import UberExpr
 import Control.Applicative (Alternative (..))  
 
-multOrDiv  = (symbol '*' >>= toOperator) <|> (symbol '/' >>= toOperator)
-sumOrMinus  = (symbol '+' >>= toOperator) <|> (symbol '-' >>= toOperator)
+sum'  = symbol '+' >>= toOperator
+minus = symbol '-' >>= toOperator
+mult  = symbol '*' >>= toOperator
+div'  = symbol '/' >>= toOperator
 
-  
 -- Парсер для произведения/деления термов
 parseMult :: Parser String String AST
-parseMult = uberExpr [(multOrDiv, LeftAssoc)] parseTerm BinOp
+parseMult = uberExpr [(mult, LeftAssoc), (div', LeftAssoc)] parseTerm BinOp
 
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
-parseSum = uberExpr [ (sumOrMinus, LeftAssoc)
+parseSum = uberExpr [ (sum', LeftAssoc), (minus, LeftAssoc), (mult, LeftAssoc), (div', LeftAssoc)
                     ]
-                    parseMult
+                    parseTerm
                     BinOp
 
 -- Парсер чисел
