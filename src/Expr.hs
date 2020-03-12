@@ -4,23 +4,18 @@ import           AST         (AST (..), Operator (..))
 import           Combinators (Parser (..), Result (..), sepBy1', elem', satisfy, symbol, fail')
 import           Data.Char   (isDigit, digitToInt)
 import           Control.Applicative (empty, (<|>))
+import           UberExpr    
 
 -- Парсер для произведения/деления термов
 parseMult :: Parser String String AST
-parseMult = parse <|> parseTerm
-	where parse = do
-		(elem, rest) <- sepBy1' parseMultOp parseTerm
-		return (foldl (\x (y, z) -> BinOp y x z) elem rest)
+parseMult = uberExpr [(parseMultOp, LeftAssoc)] parseTerm BinOp
 
 parseMultOp :: Parser String String Operator	
 parseMultOp = (symbol '*' <|> symbol '/') >>= toOperator
 
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
-parseSum = parse <|> parseMult
-	where parse = do
-		(elem, rest) <- sepBy1' parseSumOp parseMult
-		return (foldl (\x (y, z) -> BinOp y x z) elem rest)
+parseSum = uberExpr [(parseSumOp, LeftAssoc)] parseMult BinOp
 		
 parseSumOp :: Parser String String Operator	
 parseSumOp = (symbol '+' <|> symbol '-') >>= toOperator
