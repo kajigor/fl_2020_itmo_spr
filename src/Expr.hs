@@ -11,15 +11,18 @@ import           UberExpr
 -- Парсер для произведения/деления термов
 parseMult :: Parser String String AST
 parseMult = uberExpr
-  [ (symbol '/' *> pure Div <|> symbol '*' *> pure Mult, LeftAssoc) ]
+  [ (symbol '*' *> pure Mult, LeftAssoc)
+  , (symbol '/' *> pure Div,  LeftAssoc)
+  ]
   parseTerm
   BinOp
-
 
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
 parseSum = uberExpr
-  [ (symbol '+' *> pure Plus <|> symbol '-' *> pure Minus, LeftAssoc) ]
+  [ (symbol '+' *> pure Plus,  LeftAssoc)
+  , (symbol '-' *> pure Minus, LeftAssoc)
+  ]
   parseMult
   BinOp
 
