@@ -101,8 +101,8 @@ initial text={}
     \node[state]           (q_4) at (2,4) {$q_4$};
     \node[state]           (q_5) at (4,5) {$q_5$};
     % \node[state]           (q_6) at (5,4) {$q_6$};
-    \node[state]           (q_6) at (6,5) {$q_6$};
-    \node[state,accepting] (q_7) at (8,5) {$q_7$};
+%    \node[state]           (q_6) at (6,5) {$q_6$};
+%    \node[state,accepting] (q_7) at (8,5) {$q_7$};
 
     \path[->] (q_1) edge              node [above] {$1$}    (q_4)
               (q_1) edge              node [above] {$2$}    (q_2)
@@ -112,9 +112,9 @@ initial text={}
               (q_4) edge [loop] node [above] {$0$}    ()
               (q_4) edge              node [left] {$1$}    (q_5)
               % (q_6) edge              node [left] {$1$}    (q_5)
-              (q_5) edge              node [above] {$0$}    (q_6)
-              (q_6) edge              node [above] {$0$}    (q_7)
-              (q_7) edge [loop right] node [above] {$0$}    ()
+              (q_5) edge              node [above] {$0$}    (q_2)
+              % (q_6) edge              node [above] {$0$}    (q_3)
+              % (q_7) edge [loop right] node [above] {$0$}    ()
               %% (a_0b_1) edge              node [left] {$b$}    (a_0b_2)
               %% (a_0b_2) edge              node [above] {$a$}    (a_1b_2)
               %% (a_1b_2) edge              node [above] {$a$}    (a_2b_2)
