@@ -27,8 +27,6 @@ parseMult = uberExpr [(parseMultOp <|> parseDivOp, LeftAssoc)]
            BinOp
            where
                parseMultOp = symbol '*' >>= toOperator
-               parseAddOp = symbol '+' >>= toOperator
-               parseSubOp = symbol '-' >>= toOperator
                parseDivOp = symbol '/' >>= toOperator
 
 
@@ -71,7 +69,15 @@ parseTerm = Num <$> parseNum <|> parseBr
 
 -- Парсер арифметических выражений над целыми числами с операциями +,-,*,/.
 parseExpr :: Parser String String AST
-parseExpr = parseSum
+parseExpr = uberExpr [(parseAddOp <|> parseSubOp, LeftAssoc), (parseMultOp <|> parseDivOp, LeftAssoc)]
+           (Num <$> parseNum <|> symbol '(' *> parseExpr <* symbol ')')
+           BinOp
+           where
+               parseMultOp = symbol '*' >>= toOperator
+               parseAddOp = symbol '+' >>= toOperator
+               parseSubOp = symbol '-' >>= toOperator
+               parseDivOp = symbol '/' >>= toOperator
+
 
 compute :: AST -> Int
 compute (Num x) = x
