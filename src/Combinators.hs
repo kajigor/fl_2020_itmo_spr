@@ -55,6 +55,11 @@ satisfy p = Parser $ \input ->
 elem' :: Parser String [a] a
 elem' = satisfy (const True)
 
+eof :: Parser String [a] ()
+eof = Parser $ \input -> case input of
+  [] -> Success [] ()
+  _ -> Failure "Not an EOF"
+
 -- Проверяет, что первый элемент входной последовательности -- данный символ
 symbol :: (Eq a) => a -> Parser String [a] a
 symbol c = satisfy (==c)
