@@ -31,23 +31,31 @@ initial text={}
 \begin{document}
 \begin{center} {\LARGE Формальные языки} \end{center}
 
-\begin{center} \Large домашнее задание до 23:59 16.03 \end{center}
+\begin{center} \Large Домашнее задание 4\\Дмитрий Орехов \end{center}
 \bigskip
 
-\begin{enumerate}
-  \item Доказать или опровергнуть свойство регулярных выражений:
+\section{}
+Доказать или опровергнуть свойство регулярных выражений:
   \[
     \forall p, q \text{ --- регулярные выражения}: (p \mid q)^* = p^*(qp^*)^*
   \]
-  \item Доказать или опровергнуть свойство регулярных выражений:
+
+\section{}
+Доказать или опровергнуть свойство регулярных выражений:
   \[
     \forall p, q \text{ --- регулярные выражения}: (p q)^* p = p (q p)^*
   \]
-  \item Доказать или опровергнуть свойство регулярных выражений:
+
+\section{}
+Доказать или опровергнуть свойство регулярных выражений:
   \[
-    \forall p, q \text{ --- регулярные выражения}: (p q)^* = p^* q^*
+    \forall p, q \text{ --- регулярные выражения}: (p q)^* = p^* q^*\\
   \]
-  \item Для регулярного выражения:
+  Данное свойство не выполняется. Рассмотрим некоторое слово $w$, принимаеое выражением $q$, но не принимаемое выражением $p$. Выражение $p^*q^*$ принимает слово $w$, так как мы можем полностью пропустить $p$. Выражение $(pq)*$ не позволяет пропустить $p$ и не принимает слово $w$.\\
+  Таким образом, два выражение не эквивалентны.
+
+\section{}
+Для регулярного выражения:
    \[ (a \mid b)^+ (aa \mid bb \mid abab \mid baba)^* (a \mid b)^+\]
   Построить эквивалентные:
   \begin{enumerate}
@@ -56,6 +64,56 @@ initial text={}
     \item Минимальный полный детерминированный конечный автомат
   \end{enumerate}
 
-\end{enumerate}
+a. Нарисую отдельно автомат для выражения $(a|b)^+$, далее буду обозначать данный автомат как $P$: \\
+\begin{myauto}
+  \node[state,initial] (q_0) {A};
+  \node[state]         (q_1) [above right of=q_0] {B};
+  \node[state]         (q_2) [below right of=q_0] {C};
+  \node[state]         (q_3) [right of=q_1]       {D};
+  \node[state]         (q_4) [right of=q_2]       {E};
+  \node[state]         (q_5) [below right of=q_3] {F};
+  \node[state,accepting]         (q_6) [below of=q_0]       {G};
 
+  \path[->] (q_0) edge node [above] {$\epsilon$} (q_1)
+                  edge node [below] {$\epsilon$} (q_2)
+            (q_1) edge node [above] {$a$}        (q_3)
+            (q_2) edge node [below] {$b$} (q_4)
+            (q_3) edge node [above] {$\epsilon$} (q_5)
+            (q_4) edge node [below] {$\epsilon$} (q_5)
+            (q_5) edge [bend left=50] node [below] {$\epsilon$} (q_6)
+            (q_6) edge node [left] {$\epsilon$} (q_0);
+\end{myauto}\\
+Автомат для выражения $(aa|bb|abab|baba)^*$, далее буду обозначать его как $Q$:
+\begin{myauto}
+  \node[state] (q_0) {A};
+  \node[state,initial] (s) [above left of=q_0] {S};
+  \node[state,accepting] (t) [above right of=q_0] {T};
+  \node[state]         (q_2) [below left of=q_0]       {C};
+  \node[state]         (q_3) [below right of=q_0] {D};
+  \node[state]         (q_1) [left of=q_2] {B};
+  \node[state]         (q_4) [right of=q_3]       {E};
+  \node[state]         (q_5) [below of=q_1]       {F};
+  \node[state]         (q_6) [below of=q_2]       {G};
+  \node[state]         (q_7) [below of=q_3]       {H};
+  \node[state]         (q_8) [below of=q_4]       {I};
+  \node[state]         (q_9) [below right of=q_6]  {J};
+
+  \path[->] (s) edge node [below] {$\epsilon$} (q_0)
+            (q_0) edge node [above] {$\epsilon$}   (q_1)
+                  edge node [above] {$\epsilon$}   (q_2)
+                  edge node [above] {$\epsilon$}   (q_3)
+                  edge node [above] {$\epsilon$}   (q_4)
+                  edge node [below] {$\epsilon$}   (t)
+            (q_1) edge node [left]  {$aa$}         (q_5)
+            (q_2) edge node [left]  {$ab$}         (q_6)
+            (q_3) edge node [left]  {$abab$}       (q_7)
+            (q_4) edge node [left]  {$baba$}       (q_8)
+            (q_5) edge node [below] {$\epsilon$}   (q_9)
+            (q_6) edge node [below] {$\epsilon$}   (q_9)
+            (q_7) edge node [below] {$\epsilon$}   (q_9)
+            (q_8) edge node [below] {$\epsilon$}   (q_9)
+            (q_9) edge node [left] {$\epsilon$}    (q_0);
+\end{myauto}\\
+
+Конкатенируем $PQP$. Тут, кажется, все понятно. Две копии автомата $P$. Конкатенация по $\epsilon$-переходам. Убираем терминальность у всех терминальных, кроме второго $P$.
 \end{document}
