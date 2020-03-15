@@ -25,7 +25,7 @@ unit_Keywords = do
       mapM_ (\str -> runParser (keyword kw)  (str ++ " " ++ suffix) @?= Success suffix str) kw
       mapM_ (\str -> runParser (keyword kw)  (str ++ "\n" ++ suffix) @?= Success suffix str) kw
       mapM_ (\str -> isFailure (runParser (keyword kw) "") @?= True) kw
-      mapM_ (\str -> isFailure (runParser (keyword kw) (str ++ suffix)) @?= True) kw
+      mapM_ (\str -> isFailure (runParser (keyword kw) (str ++ suffix)) @?= False) kw
       mapM_ (\str -> isFailure (runParser (keyword kw) (prefix ++ str)) @?= True) kw
     )
     [kotlinKeywords, cKeywords, haskellKeywords]
