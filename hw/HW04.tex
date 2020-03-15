@@ -43,10 +43,23 @@ initial text={}
   \[
     \forall p, q \text{ --- регулярные выражения}: (p q)^* p = p (q p)^*
   \]
+  Решение: Представленный ниже автомат подходит для обоих выражений.
+  \begin{myauto}
+    \node[state,initial]   (q_0) {$q_0$};
+     \node[state, accepting] (q_1) [right=of q_0] {$q_1$};
+
+    \path[->] (q_0) edge [bend left]             node [above] {$p$}    (q_1)
+    		  (q_1) edge [bend left]             node [below] {$q$} (q_0)
+
+              
+    ;
+  \end{myauto}
   \item Доказать или опровергнуть свойство регулярных выражений:
   \[
     \forall p, q \text{ --- регулярные выражения}: (p q)^* = p^* q^*
   \]
+  Решение:
+  Строка $pqpq$ будет распознона первым выражением, но не вторым 
   \item Для регулярного выражения:
    \[ (a \mid b)^+ (aa \mid bb \mid abab \mid baba)^* (a \mid b)^+\]
   Построить эквивалентные:
