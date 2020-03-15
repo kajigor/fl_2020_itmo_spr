@@ -3,7 +3,6 @@ module Keyword where
 import Combinators (Parser (..), Result (..), fail', symbol)
 import Control.Applicative
 import Data.List (sort)
-import qualified Data.Set as Set
 
 -- Парсер ключевых слов: принимает список ключевых слов,
 -- проверяет, что вход начинается с ключевого слова.
@@ -52,3 +51,4 @@ isTerminal :: Parser String String String
 isTerminal = isEmpty <|> foldr1 (<|>) (terminateWith <$> spaceChars) where
   spaceChars = [' ', '\n', '\t', '\r', '\f']
   terminateWith c = (:) <$> symbol c *> pure ""
+

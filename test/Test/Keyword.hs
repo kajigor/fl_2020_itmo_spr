@@ -4,6 +4,7 @@ import           Combinators      (Result (..), runParser)
 import           Control.Monad    (forM)
 import           Keyword          (keyword)
 import           Test.Tasty.HUnit (Assertion, (@?=))
+import           Data.List        (isPrefixOf)
 
 kotlinKeywords = ["as", "as?", "break", "class", "continue", "do", "else", "false", "for", "fun", "if", "in", "!in", "interface", "is", "!is", "null", "object", "package", "return", "super", "this", "throw", "true", "try", "typealias", "typeof", "val", "var", "when", "while"]
 
@@ -13,6 +14,9 @@ haskellKeywords = ["as", "case", "of", "class", "data", "data family", "data ins
 
 isFailure (Failure _) = True
 isFailure  _          = False
+
+isSuccess (Success _ _) = True
+isSuccess _             = False
 
 unit_Keywords :: Assertion
 unit_Keywords = do
@@ -25,7 +29,10 @@ unit_Keywords = do
       mapM_ (\str -> runParser (keyword kw)  (str ++ " " ++ suffix) @?= Success suffix str) kw
       mapM_ (\str -> runParser (keyword kw)  (str ++ "\n" ++ suffix) @?= Success suffix str) kw
       mapM_ (\str -> isFailure (runParser (keyword kw) "") @?= True) kw
-      mapM_ (\str -> isFailure (runParser (keyword kw) (str ++ suffix)) @?= True) kw
+      mapM_ (\str -> (let result = runParser (keyword kw) (str ++ suffix) in
+                      if any (\p -> isPrefixOf (p ++ " ") str) kw
+                      then isSuccess result
+                      else isFailure result) @?= True) kw
       mapM_ (\str -> isFailure (runParser (keyword kw) (prefix ++ str)) @?= True) kw
     )
     [kotlinKeywords, cKeywords, haskellKeywords]
