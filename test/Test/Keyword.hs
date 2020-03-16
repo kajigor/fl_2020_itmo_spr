@@ -25,7 +25,13 @@ unit_Keywords = do
       mapM_ (\str -> runParser (keyword kw)  (str ++ " " ++ suffix) @?= Success suffix str) kw
       mapM_ (\str -> runParser (keyword kw)  (str ++ "\n" ++ suffix) @?= Success suffix str) kw
       mapM_ (\str -> isFailure (runParser (keyword kw) "") @?= True) kw
-      mapM_ (\str -> isFailure (runParser (keyword kw) (str ++ suffix)) @?= True) kw
+      mapM_ (\str -> isFailure (runParser (keyword kw) (str ++ suffix)) @?= True) (filter (' ' `notElem`) kw)
       mapM_ (\str -> isFailure (runParser (keyword kw) (prefix ++ str)) @?= True) kw
     )
     [kotlinKeywords, cKeywords, haskellKeywords]
+
+unit_keywordsWithSpaces :: Assertion
+unit_keywordsWithSpaces = do
+  runParser (keyword ["a", "a b", "b"]) "a bc" @?= Success "bc" "a"
+  runParser (keyword ["a", "a b", "b"]) "a b" @?= Success "" "a b"
+  runParser (keyword ["a", "a b", "b"]) "a " @?= Success "" "a"
