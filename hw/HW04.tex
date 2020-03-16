@@ -9,6 +9,7 @@
 \usepackage{pifont}
 \usepackage{tikz}
 \usepackage{verbatim}
+\usepackage{amsthm}
 
 \usetikzlibrary{shapes,arrows}
 \usetikzlibrary{positioning,automata}
@@ -39,14 +40,45 @@ initial text={}
   \[
     \forall p, q \text{ --- регулярные выражения}: (p \mid q)^* = p^*(qp^*)^*
   \]
+
   \item Доказать или опровергнуть свойство регулярных выражений:
   \[
     \forall p, q \text{ --- регулярные выражения}: (p q)^* p = p (q p)^*
   \]
+
+  \begin{proof}
+
+    \[
+      \forall p, q \text{ --- регулярные выражения}: (p q)^k p = p (q p)^k
+    \]
+    Индукция по k:
+    \begin{description}
+      \item База:
+        \[k = 0,   p = p\]
+      \item Переход:
+        \[(pq)^k p = p (qp)^k \]
+        \[ pq ~ (pq)^{k-1}p = pq~p(qp)^{k-1}\]
+        Верно, исходя из индукционного предположения:
+        \[(pq)^{k-1}p = p(qp)^{k-1}\]
+        Очевидно:
+        \[pq = pq\]
+
+    \end{description}
+    \[\]
+  \end{proof}
   \item Доказать или опровергнуть свойство регулярных выражений:
   \[
     \forall p, q \text{ --- регулярные выражения}: (p q)^* = p^* q^*
   \]
+
+  \begin{proof}
+    Контрпример, строка разбираемая лишь одним из двух выражений:
+    \[
+      p
+    \]
+
+  \end{proof}
+
   \item Для регулярного выражения:
    \[ (a \mid b)^+ (aa \mid bb \mid abab \mid baba)^* (a \mid b)^+\]
   Построить эквивалентные:
