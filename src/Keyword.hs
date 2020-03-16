@@ -13,17 +13,19 @@ import           Data.Map (Map)
 -- Должен строить по входным ключевым словам либо минимальный автомат, либо бор.
 -- Если префикс входа длиной n не является префиксом ни одного входного ключевого слова, чтение n+1-ого символа проводиться не должен.
 keyword :: [String] -> Parser String String String
-keyword ks = do
-  res <- trieParser
-  eof <|> void (symbol ' ') <|> void (symbol '\n')
-  pure res
+keyword ks = Parser (go trie)
   where
     trie = foldr (\ks -> insert ks ks) emptyTrie ks
-    trieParser = Parser (go trie)
 
+    continue input value = do
+      case runParser (eof <|> void (symbol ' ') <|> void (symbol '\n')) input of
+        Success input' _ -> Success input' value
+        Failure m -> Failure m
+
+    go :: Trie Char String -> String -> Result String String String
     go (Branch mbValue children) [] =
       case mbValue of
-        Just path -> Success [] path
+        Just path -> continue [] path
         Nothing -> Failure ""
     go (Branch mbValue children) input@(x:xs) =
       case mbValue of
@@ -32,9 +34,9 @@ keyword ks = do
           case M.lookup x children of
             Just trie ->
               case go trie xs of
-                Failure _ -> Success input value
+                Failure _ -> continue input value
                 s -> s
-            Nothing -> Success input value
+            Nothing -> continue input value
 
         Nothing ->
           case M.lookup x children of
