@@ -1,6 +1,6 @@
 module Keyword where
 
-import Combinators (Parser(..), Result(..), fail', satisfy, symbol, return')
+import Combinators (Parser(..), Result(..), fail', satisfy)
 import Control.Applicative
 import Control.Monad (guard)
 
@@ -31,15 +31,6 @@ findedge ch [] acc = acc
 findedge ch (tup@(x, node):xs) acc
   | x == ch = tup : (acc ++ xs)
   | otherwise = findedge ch xs (tup : acc)
-
-checkword :: String -> Trie -> Bool
-checkword _ Empty = False
-checkword "" (Node bool edges) = bool
-checkword (x:xs) (Node bool edges) =
-  let edges' = findedge x edges []
-   in case edges' of
-        (ch, node):rest -> (x == ch) && checkword xs node
-        [] -> False
 
 fromList :: [String] -> Trie -> Trie
 fromList [] acc = acc
