@@ -1,6 +1,6 @@
 module Keyword where
 
-import Combinators (Parser(..), Result(..), fail', satisfy, symbol)
+import Combinators (Parser(..), Result(..), fail', satisfy, symbol, return')
 import Control.Applicative
 import Control.Monad (guard)
 
@@ -32,29 +32,44 @@ findedge ch (tup@(x, node):xs) acc
   | x == ch = tup : (acc ++ xs)
   | otherwise = findedge ch xs (tup : acc)
 
+checkword :: String -> Trie -> Bool
+checkword _ Empty = False
+checkword "" (Node bool edges) = bool
+checkword (x:xs) (Node bool edges) =
+  let edges' = findedge x edges []
+   in case edges' of
+        (ch, node):rest -> (x == ch) && checkword xs node
+        [] -> False
+
 fromList :: [String] -> Trie -> Trie
 fromList [] acc = acc
 fromList (x:xs) acc = fromList xs (insert x acc)
 
-getnext :: Trie -> Parser String String String
-getnext Empty = empty
-getnext (Node bool edges) = parser <|> parser2 <|> parser3
+get :: Trie -> Parser String String String
+get Empty = empty
+get (Node bool edges) = parser <|> parser2
   where
     parser = do
-      x <- satisfy (const True)
-      case findedge x edges [] of
-        (x', node):etc
-          | x == x' -> do
-            rest <- getnext node
-            return (x : rest)
-        _ -> empty
-    parser2 = do
-      guard bool
-      satisfy (\x -> x == ' ' || x == '\n')
-      return ""
-    parser3 = do
-      guard bool
-      return ""
+      m <- satisfyME (const True)
+      case m of
+        [] -> empty
+        [x] -> case findedge x edges [] of
+            (x', node):etc
+              | x == x' -> do
+                rest <- get node
+                return (x:rest)
+            _ -> empty
+    parser2 = do 
+        guard bool
+        satisfyME (\x -> x == ' ' || x == '\n')
+        return ""
+
+satisfyME :: (Char -> Bool) -> Parser String String String
+satisfyME p = Parser $ \input ->
+  case input of
+    []           -> Success input []
+    (x:xs) | p x -> Success xs [x]
+    input        -> Failure $ "Predicate failed"
 
 keyword :: [String] -> Parser String String String
-keyword ks = getnext (fromList ks Empty)
+keyword ks = get (fromList ks Empty)
