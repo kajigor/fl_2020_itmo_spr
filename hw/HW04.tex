@@ -104,7 +104,7 @@ initial text={}
 
                 (q_1) edge              node [above] {$a$} (q_2)
                 (q_1) edge              node [above] {$b$} (q_3)
-                (q_1) edge [bend right=90] node [above] {$\epsilon$} (q_0)
+                (q_1) edge [bend right=90] node [above] {$\varepsilon$} (q_0)
                 (q_1) edge              node [above] {$a, b$} (q_12)
 
                 (q_2) edge              node [above] {$b$} (q_4)
@@ -115,10 +115,10 @@ initial text={}
 
                 (q_4) edge              node [above] {$a$} (q_8)
 
-                (q_5) edge              node [above] {$\epsilon$} (q_1)
+                (q_5) edge              node [above] {$\varepsilon$} (q_1)
                 (q_5) edge              node [above] {$a, b$} (q_12)
 
-                (q_6) edge              node [above] {$\epsilon$} (q_1)
+                (q_6) edge              node [above] {$\varepsilon$} (q_1)
                 (q_6) edge              node [above] {$a, b$} (q_12)
 
                 (q_7) edge              node [above] {$b$} (q_9)
@@ -127,10 +127,10 @@ initial text={}
 
                 (q_9) edge              node [above] {$a$} (q_11)
 
-                (q_10) edge [bend right=60]             node [above] {$\epsilon$} (q_1)
+                (q_10) edge [bend right=60]             node [above] {$\varepsilon$} (q_1)
                 (q_10) edge              node [right] {$a,b$} (q_12)
 
-                (q_11) edge [bend left=60]             node [below] {$\epsilon$} (q_1)
+                (q_11) edge [bend left=60]             node [below] {$\varepsilon$} (q_1)
                 (q_11) edge              node [right] {$a,b$} (q_12)
 
                 (q_12) edge [loop right]             node [above] {$a, b$} ()
@@ -138,6 +138,68 @@ initial text={}
       ;
     \end{myauto}
     \item Недетерминированный конечный автомат без $\varepsilon$-переходов
+
+    \begin{myauto}
+      \node[state,initial]   (q_0) {$q_0$};
+      \node[state]           (q_1) [right=of q_0] {$q_1$};
+      \node[state]           (q_2) [above right=of q_1] {$q_2$};
+      \node[state]           (q_3) [below right=of q_1] {$q_3$};
+      \node[state]           (q_4) [above right=of q_2] {$q_4$};
+      \node[state]           (q_5) [right=of q_2] {$q_5$};
+      \node[state]           (q_6) [right=of q_3] {$q_6$};
+      \node[state]           (q_7) [below right=of q_3] {$q_7$};
+      \node[state]           (q_8) [right=of q_4] {$q_8$};
+      \node[state]           (q_9) [right=of q_7] {$q_9$};
+      \node[state]           (q_10) [right=of q_8] {$q_{10}$};
+      \node[state]           (q_11) [right=of q_9] {$q_{11}$};
+      \node[state, accepting] (q_12) [below right=of q_5] {$q_{12}$};
+
+
+      \path[->] (q_0) edge              node  {$a, b$} (q_1)
+
+                (q_1) edge              node  {$a$} (q_2)
+                (q_1) edge              node  {$b$} (q_3)
+                % (q_1) edge [bend right=90] node [above] {$\epsilon$} (q_0)
+                (q_1) edge [loop] node  {$a,b$} ()
+                (q_1) edge              node [near start] {$a, b$} (q_12)
+
+                (q_2) edge              node [near end]  {$b$} (q_4)
+                (q_2) edge              node  {$a$} (q_5)
+
+                (q_3) edge              node  {$b$} (q_6)
+                (q_3) edge              node [near end] {$a$} (q_7)
+
+                (q_4) edge              node  {$a$} (q_8)
+
+                % (q_5) edge              node  {$\epsilon$} (q_1)
+                (q_5) edge              node  {$a$} (q_2)
+                (q_5) edge              node [near start] {$b$} (q_3)
+                (q_5) edge              node  {$a, b$} (q_12)
+
+                (q_6) edge              node [near start] {$a$} (q_2)
+                (q_6) edge              node  {$b$} (q_3)
+                (q_6) edge              node  {$a, b$} (q_12)
+
+                (q_7) edge              node  {$b$} (q_9)
+
+                (q_8) edge              node  {$b$} (q_10)
+
+                (q_9) edge              node  {$a$} (q_11)
+
+                % (q_10) edge [bend right=60]             node  {$\epsilon$} (q_1)
+                (q_10) edge              node  {$a$} (q_2)
+                (q_10) edge [bend left=90]      node [near start] {$b$} (q_3)
+                (q_10) edge              node  {$a,b$} (q_12)
+
+                % (q_11) edge [bend left=60]             node [below] {$\epsilon$} (q_1)
+                (q_11) edge              node {$a,b$} (q_12)
+                (q_11) edge  [bend right=90]            node [near start] {$a$} (q_2)
+                (q_11) edge              node  {$b$} (q_3)
+
+                (q_12) edge [loop right]             node  {$a, b$} ()
+
+      ;
+    \end{myauto}
     \item Минимальный полный детерминированный конечный автомат
   \end{enumerate}
 
