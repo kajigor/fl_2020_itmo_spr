@@ -55,7 +55,7 @@ parseTerm = (fmap Num parseNum) <|> parseBrackets
 
 -- Парсер арифметических выражений над целыми числами с операциями +,-,*,/.
 parseExpr :: Parser String String AST
-parseExpr = parseSum
+parseExpr = uberExpr [(parseSumOp, LeftAssoc), (parseMultOp, LeftAssoc)] parseTerm BinOp
 
 compute :: AST -> Int
 compute (Num x) = x
