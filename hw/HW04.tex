@@ -39,12 +39,172 @@ initial text={}
   \[
     \forall p, q \text{ --- регулярные выражения}: (p \mid q)^* = p^*(qp^*)^*
   \]
+Выражению $(p|q)^*$ соответсвует такой автомат:\\
+
+\begin{myauto}
+  \node[state,initial,accepting] (q_0) {A};
+
+  \path[->] (q_0) edge [loop above] node [above] {$p,q$} (q_0);
+\end{myauto}
+
+Кажется, это утверждение достаточно тривиально, чтобы не приводить пошаговое применение алгоритма перевода АРВ в автомат с удалением $\epsilon$-переходов. Логика такая: начальное состояние является принимающим, так как выражение принимает пустую строку (звезда Клини). Любое слово, принимаемое автоматом $p$ или $q$, приводит так же в принимающее состояние.\\
+Выражение $p^*(qp^*)^*$ устроено посложнее.\\
+Для начала приведу автомат для подвыражения $(qp^*)^*$, а после упрощу в нем $\epsilon$-переходы:
+\begin{myauto}
+  \node[state,initial]   (q_0) {S};
+  \node[state]           (q_1) [below right of=q_0] {A};
+  \node[state]           (q_2) [right of=q_1] {B};
+  \node[state,accepting] (q_3) [below left of=q_1] {T};
+
+  \path[->] (q_0) edge node [above] {$\epsilon$} (q_1)
+            (q_1) edge node [above] {$q$} (q_2)
+                  edge node [right] {$\epsilon$} (q_3)
+            (q_2) edge [loop above] node [above] {$p$} (q_2)
+                  edge [bend left=15] node [below] {$\epsilon$} (q_1);
+\end{myauto}
+После построения $\epsilon$-замыкания:
+\begin{myauto}
+  \node[state,initial,accepting] (q_0) {S};
+  \node[state,accepting] (q_1) [right of=q_0] {B};
+
+  \path[->] (q_0) edge node [above] {$q$} (q_1)
+            (q_1) edge [loop above] node [above] {$p,q$} (q_1);
+\end{myauto}
+Конкатенируем с автоматом для $p$:
+\begin{myauto}
+  \node[state,initial,accepting] (q_{-1}) {S'};
+  \node[state,accepting] (q_0) [right of=q_{-1}] {S};
+  \node[state,accepting] (q_1) [right of=q_0] {B};
+
+  \path[->] (q_{-1}) edge [loop above] node [above] {$p$} (q_{-1}) 
+                  edge node [above] {$\epsilon$} (q_0)
+            (q_0) edge node [above] {$q$} (q_1)
+            (q_1) edge [loop above] node [above] {$p,q$} (q_1);
+\end{myauto}
+После построения $\epsilon$-замыкания и удаления ставшего недостижимым S:
+\begin{myauto}
+  \node[state,initial,accepting] (q_{-1}) {S'};
+  \node[state,accepting] (q_1) [right of=q_{-1}] {B};
+
+  \path[->] (q_{-1}) edge [loop above] node [above] {$p$} (q_{-1}) 
+                  edge node [above] {$q$} (q_1)
+            (q_1) edge [loop above] node [above] {$p,q$} (q_1);
+\end{myauto}
+Состояния S' и B эквивалетны, упрощаем в:
+\begin{myauto}
+  \node[state,initial,accepting] (q_{-1}) {S'};
+
+  \path[->] (q_{-1}) edge [loop above] node [above] {$p,q$} (q_{-1});
+\end{myauto}
+Итак, получили эквивалентные автоматы для левого и правого выражения. А значит, выражения эквивалентны, а утверждение истинно.
 
 \section{}
 Доказать или опровергнуть свойство регулярных выражений:
   \[
     \forall p, q \text{ --- регулярные выражения}: (p q)^* p = p (q p)^*
   \]
+
+Разберем автомат для левого выражения.\\
+Сначала рассмотрим автомат для его подвыражения $(pq)^*$, он будет выглядеть так:
+\begin{myauto}
+  \node[state,initial,accepting] (q_0) {A};
+  \node[state] (q_1) [above of=q_0] {B};
+
+  \path[->] (q_0) edge [bend left=15]  node [left] {$p$} (q_1)
+            (q_1) edge [bend left=15] node [right] {$q$} (q_0);
+\end{myauto}
+
+Добавим к данному автомату автомат для $p$ по $\epsilon$ переходу:
+\begin{myauto}
+  \node[state,initial] (q_0) {A};
+  \node[state] (q_1) [above of=q_0] {B};
+  \node[state] (q_2) [right of=q_0] {C};
+  \node[state,accepting] (q_3) [right of=q_2] {D};
+
+  \path[->] (q_0) edge [bend left=15] node [left] {$p$} (q_1)
+                  edge                node [above] {$\epsilon$} (q_2)
+            (q_1) edge [bend left=15] node [right] {$q$} (q_0)
+            (q_2) edge                node [above] {$p$} (q_3);
+\end{myauto}
+Строя $\epsilon$-замыкания для состояния A и отбрасывая недостижимое без $\epsilon$-переходов состояние C, получаем:
+\begin{myauto}
+  \node[state,initial] (q_0) {A};
+  \node[state] (q_1) [above of=q_0] {B};
+  \node[state,accepting] (q_3) [right of=q_0] {D};
+
+  \path[->] (q_0) edge [bend left=15] node [left] {$p$} (q_1)
+                  edge                node [above] {$p$} (q_3)
+            (q_1) edge [bend left=15] node [right] {$q$} (q_0);
+\end{myauto}
+Данный автомат можно детерминировать в:
+\begin{myauto}
+  \node[state,initial] (q_0) {A};
+  \node[state,accepting] (q_1) [above of=q_0] {BD};
+
+  \path[->] (q_0) edge [bend left=15]  node [left] {$p$} (q_1)
+            (q_1) edge [bend left=15] node [right] {$q$} (q_0);
+\end{myauto}
+Переходы в НКА:\\
+\begin{tabular}{c|c|c}
+       & $p$ & $q$ \\
+     \hline
+     A & \{B,D\}      & $\emptyset$\\
+     B &  $\emptyset$ & \{A\}\\
+     D &  $\emptyset$ & $\emptyset$\\
+\end{tabular}\\
+Переходы в ДКА:\\
+\begin{tabular}{c|c|c}
+       & $p$ & $q$ \\
+     \hline
+     A & BD            & $\emptyset$\\
+     BD &  $\emptyset$ & A \\
+\end{tabular}\\
+\hspace{0.3cm}
+Рассмотрим теперь правое выражение, $p(qp)^*$.\\
+Будем действовать очень похоже, рассмотрим автомат для $(qp)^*$:
+\begin{myauto}
+  \node[state,initial,accepting] (q_0) {A};
+  \node[state] (q_1) [above of=q_0] {B};
+
+  \path[->] (q_0) edge [bend left=15]  node [left] {$q$} (q_1)
+            (q_1) edge [bend left=15] node [right] {$p$} (q_0);
+\end{myauto}
+Конкатенируем с автоматом для $p$:
+\begin{myauto}
+  \node[state,accepting] (q_0) {A};
+  \node[state] (q_1) [above of=q_0] {B};
+  \node[state] (q_2) [left of=q_0] {C};
+  \node[state,initial] (q_3) [left of=q_2] {D};
+
+  \path[->] (q_0) edge [bend left=15]  node [left] {$q$} (q_1)
+            (q_1) edge [bend left=15] node [right] {$p$} (q_0)
+            (q_3) edge                node [above] {$p$} (q_2)
+            (q_2) edge                node [above] {$\epsilon$} (q_0);
+\end{myauto}
+
+Автомат после построения $\epsilon$-замыкания:
+\begin{myauto}
+  \node[state,accepting] (q_0) {A};
+  \node[state] (q_1) [above of=q_0] {B};
+  \node[state,accepting] (q_2) [left of=q_0] {C};
+  \node[state,initial] (q_3) [left of=q_2] {D};
+
+  \path[->] (q_0) edge [bend left=15]  node [left] {$q$} (q_1)
+            (q_1) edge [bend left=15] node [right] {$p$} (q_0)
+            (q_3) edge                node [above] {$p$} (q_2)
+            (q_2) edge                node [above] {$q$} (q_1);
+\end{myauto}
+
+Данный автомат можно минимизировать в, имена состояний обозначают пары эквивалентных состояний в автомате выше:
+\begin{myauto}
+  \node[state,accepting] (q_0) {AC};
+  \node[state,initial] (q_1) [above of=q_0] {BD};
+
+  \path[->] (q_0) edge [bend left=15]  node [left] {$q$} (q_1)
+            (q_1) edge [bend left=15] node [right] {$p$} (q_0);
+\end{myauto}
+
+Теперь, посмотрев на итоговые автоматы для левого и правого выражений, видим, что они идентчины (не учитвая имена состояний и их ориентацию на картинке). Таким образом, два выражения эквивалентны.
 
 \section{}
 Доказать или опровергнуть свойство регулярных выражений:
@@ -115,5 +275,82 @@ a. Нарисую отдельно автомат для выражения $(a|
             (q_9) edge node [left] {$\epsilon$}    (q_0);
 \end{myauto}\\
 
-Конкатенируем $PQP$. Тут, кажется, все понятно. Две копии автомата $P$. Конкатенация по $\epsilon$-переходам. Убираем терминальность у всех терминальных, кроме второго $P$.
+Конкатенируем $PQP$. Тут, кажется, все понятно. Две копии автомата $P$. Конкатенация по $\epsilon$-переходам. Убираем терминальность у всех терминальных, кроме второго $P$.\\
+\\
+b. Уберем $\epsilon$-переходы:\\
+Сначала отдельно для автомата $P$:
+\begin{myauto}
+  \node[state,initial]   (q_0) {A};
+  \node[state,accepting] (q_1) [right of=q_0]       {B};
+
+  \path[->] (q_0) edge node [above] {$a,b$} (q_1)
+            (q_1) edge [loop above] node {$a,b$} (q_1); 
+\end{myauto}\\
+Для автомата $Q$:\\
+\begin{myauto}
+  \node[state,initial,accepting]   (q_0) {C};
+  \node[state] (q_1) [below of=q_0] {D};
+  \node[state] (q_2) [below right of=q_0] {E};
+  \node[state] (q_3) [above right of=q_2] {F};
+  \node[state] (q_4) [above right of=q_0] {G};
+  \path[->] (q_0) edge [bend right=15] node [left]  {$a$} (q_1)
+                  edge                 node [above] {$b$} (q_2)
+            (q_1) edge [bend right=15] node [right] {$a,b$} (q_0)
+            (q_2) edge                 node [above] {$a$} (q_3)
+            (q_3) edge                 node [above] {$b$} (q_4)
+            (q_4) edge                 node [above] {$a$} (q_0);
+\end{myauto}\\
+Конкатенация автоматов по $epsilon$-переходам:\\
+\begin{myauto}
+  \node[state]   (q_{-1}) [left of=q_0] {B};
+  \node[state,initial] (q_{-2}) [left of=q_{-1}] {A};
+  \node[state]   (q_0) {C};
+  \node[state] (q_1) [below of=q_0] {D};
+  \node[state] (q_2) [below right of=q_0] {E};
+  \node[state] (q_3) [above right of=q_2] {F};
+  \node[state] (q_4) [above right of=q_0] {G};
+  \node[state] (q_5) [above of=q_0]       {H};
+  \node[state,accepting] (q_6) [above of=q_5]       {I};
+
+  \path[->] (q_{-2}) edge node [above] {$a,b$} (q_{-1})
+            (q_{-1}) edge [loop above] node [above] {$a,b$} (q_{-1})
+                     edge              node [above] {$\epsilon$} (q_0)
+            (q_0) edge [bend right=15] node [left]  {$a$} (q_1)
+                  edge                 node [above] {$b$} (q_2)
+                  edge                 node [left] {$\epsilon$} (q_5)
+            (q_1) edge [bend right=15] node [right] {$a,b$} (q_0)
+            (q_2) edge                 node [above] {$a$} (q_3)
+            (q_3) edge                 node [above] {$b$} (q_4)
+            (q_4) edge                 node [above] {$a$} (q_0)
+            (q_5) edge                 node [left] {$a,b$} (q_6)
+            (q_6) edge [loop above] node [above] {$a,b$} (q_6);
+\end{myauto}
+Убираем $\epsilon$-переходы, построением $\epsilon$-замыкания:
+\begin{myauto}
+  \node[state]   (q_{-1}) [left of=q_0] {B};
+  \node[state,initial] (q_{-2}) [left of=q_{-1}] {A};
+  \node[state]   (q_0) {C};
+  \node[state] (q_1) [below of=q_0] {D};
+  \node[state] (q_2) [below right of=q_0] {E};
+  \node[state] (q_3) [above right of=q_2] {F};
+  \node[state] (q_4) [above right of=q_0] {G};
+  \node[state] (q_5) [above of=q_0]       {H};
+  \node[state,accepting] (q_6) [above of=q_5]       {I};
+
+  \path[->] (q_{-2}) edge node [above] {$a,b$} (q_{-1})
+            (q_{-1}) edge [loop above] node [above] {$a,b$} (q_{-1})
+                     edge [bend left=10] node [left] {$a,b$} (q_6)
+                     edge              node [below] {$a$} (q_1)
+                     edge [bend right=100]node [below] {$b$} (q_2)
+            (q_0) edge [bend right=15] node [left]  {$a$} (q_1)
+                  edge                 node [above] {$b$} (q_2)
+                  edge [bend right=15] node [right] {$a,b$} (q_6)
+            (q_1) edge [bend right=15] node [right] {$a,b$} (q_0)
+            (q_2) edge                 node [above] {$a$} (q_3)
+            (q_3) edge                 node [above] {$b$} (q_4)
+            (q_4) edge                 node [above] {$a$} (q_0)
+            (q_5) edge                 node [left] {$a,b$} (q_6)
+            (q_6) edge [loop above] node [above] {$a,b$} (q_6);
+\end{myauto}
+Также еще можно убрать недостижимое состояние H.\\Но, вроде, это уже не является обязательным шагом алгоритма построения $\epsilon$-замыкания.
 \end{document}
