@@ -35,3 +35,4 @@ unit_keywordsWithSpaces = do
   runParser (keyword ["a", "a b", "b"]) "a bc" @?= Success "bc" "a"
   runParser (keyword ["a", "a b", "b"]) "a b" @?= Success "" "a b"
   runParser (keyword ["a", "a b", "b"]) "a " @?= Success "" "a"
+  runParser (keyword ["a", "a b", "b"]) "a " @?= Success "" "a"
