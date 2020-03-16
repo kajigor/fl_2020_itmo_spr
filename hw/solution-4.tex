@@ -1,0 +1,219 @@
+\documentclass[12pt]{article}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm,bindingoffset=0cm]{geometry}
+\usepackage[utf8x]{inputenc}
+\usepackage[english,russian]{babel}
+\usepackage{cmap}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{url}
+\usepackage{pifont}
+\usepackage{tikz}
+\usepackage{verbatim}
+
+\usetikzlibrary{shapes,arrows}
+\usetikzlibrary{positioning,automata}
+\tikzset{every state/.style={minimum size=0.2cm},
+initial text={}
+}
+
+
+\newenvironment{myauto}[1][3]
+{
+  \begin{center}
+    \begin{tikzpicture}[> = stealth,node distance=#1cm, on grid, very thick]
+}
+{
+    \end{tikzpicture}
+  \end{center}
+}
+
+
+\begin{document}
+\begin{center} {\LARGE Формальные языки} \end{center}
+
+\begin{center} \Large домашнее задание до 23:59 16.03 \end{center}
+\begin{center}
+  Выполнил: Кальницкий Владимир
+\end{center}
+\bigskip
+
+\begin{enumerate}
+  \item Доказать или опровергнуть свойство регулярных выражений:
+  \[
+    \forall p, q \text{ --- регулярные выражения}: (p \mid q)^* = p^*(qp^*)^*
+    \]
+
+    Автомат для первого регулярного выражения (здесь и далее рёбра помечаются не символом, а целым регулярным выражением):
+
+    \begin{myauto}
+    \node[state,initial,accepting]   (q_1) at (0,2) {$q_1$};
+    \node[state,accepting] (q_2) at (2,0) {$q_2$};
+    \node[state,accepting] (q_3) at (4,0) {$q_3$};
+
+    \path[->] (q_1) edge              node [above] {$p$}    (q_2)
+              (q_1) edge              node [above] {$q$}    (q_3)
+              (q_2) edge              node [above] {$q$}    (q_3)
+              (q_2) edge[loop below]              node [] {$p$}    ()
+              (q_3) edge[bend left] node [below] {$p$}    (q_2)
+              (q_3) edge[loop above]             node [] {$q$}    ()
+    ;
+    % \draw[->] (q_3) .. controls +(down:7mm) and +(right:7mm) .. (q_2);
+  \end{myauto}
+
+    Минимальный ДКА:
+
+    \begin{myauto}
+    \node[state,initial,accepting]   (q_1) at (0,2) {$q_1$};
+
+    \path[->] (q_1) edge[loop above]             node [] {$p,q$}    ()
+    ;
+    % \draw[->] (q_3) .. controls +(down:7mm) and +(right:7mm) .. (q_2);
+    %
+    %
+
+    \end{myauto}
+
+    Автомат для второго регулярного выражения:
+
+
+    \begin{myauto}
+    \node[state,initial,accepting]   (q_1) at (0,2) {$q_1$};
+    \node[state,accepting] (q_2) at (2,0) {$q_2$};
+    \node[state,accepting] (q_3) at (4,0) {$q_3$};
+    \node[state,accepting] (q_4) at (4,2) {$q_4$};
+
+    \path[->] (q_1) edge              node [above] {$p$}    (q_2)
+              (q_1) edge              node [above] {$q$}    (q_3)
+              (q_2) edge              node [above] {$q$}    (q_3)
+              (q_2) edge[loop below]              node [] {$p$}    ()
+              (q_3) edge[bend left] node [below] {$p$}    (q_4)
+              (q_3) edge[loop below]             node [] {$q$}    ()
+              (q_4) edge[bend left] node [below] {$q$}    (q_3)
+              (q_4) edge[loop above]             node [] {$p$}    ()
+    ;
+    % \draw[->] (q_3) .. controls +(down:7mm) and +(right:7mm) .. (q_2);
+  \end{myauto}
+
+
+    Минимальный ДКА:
+
+    \begin{myauto}
+    \node[state,initial,accepting]   (q_1) at (0,2) {$q_1$};
+
+    \path[->] (q_1) edge[loop above]             node [] {$p,q$}    ()
+    ;
+    % \draw[->] (q_3) .. controls +(down:7mm) and +(right:7mm) .. (q_2);
+    %
+    %
+
+    \end{myauto}
+
+    Минимальные ДКА совпадают, поэтому регулярные выражения эквивалентны.
+
+  \item Доказать или опровергнуть свойство регулярных выражений:
+  \[
+    \forall p, q \text{ --- регулярные выражения}: (p q)^* p = p (q p)^*
+    \]
+
+    Автомат для первого регулярного выражения (здесь и далее рёбра помечаются не символом, а целым регулярным выражением):
+
+    \begin{myauto}
+    \node[state,initial]   (q_1) at (0,2) {$q_1$};
+    \node[state,accepting]           (q_2) at (2,0) {$q_2$};
+    \node[state] (q_3) at (4,0) {$q_3$};
+
+    \path[->] (q_1) edge              node [above] {$p$}    (q_2)
+              (q_2) edge[bend left] node [above] {$q$}    (q_3)
+              (q_3) edge[bend left] node [below] {$p$}    (q_2)
+    ;
+    % \draw[->] (q_3) .. controls +(down:7mm) and +(right:7mm) .. (q_2);
+  \end{myauto}
+
+    Минимизированный:
+
+    \begin{myauto}
+    \node[state,initial]   (q_1) at (0,2) {$q_1$};
+    \node[state,accepting]           (q_2) at (2,0) {$q_2$};
+
+    \path[->] (q_1) edge              node [above] {$p$}    (q_2)
+              (q_2) edge[bend left=20]              node [below] {$q$}    (q_1)
+    ;
+    % \draw[->] (q_3) .. controls +(down:7mm) and +(right:7mm) .. (q_2);
+  \end{myauto}
+
+    Автомат для второго регулярного выражения:
+
+    \begin{myauto}
+    \node[state,initial]   (q_1) at (0,2) {$q_1$};
+    \node[state,accepting]           (q_2) at (2,0) {$q_2$};
+    \node[state]            (q_3) at (4,0) {$q_3$};
+    \node[state,accepting] (q_4) at (2,2) {$q_4$};
+
+    \path[->] (q_1) edge              node [above] {$p$}    (q_2)
+              (q_2) edge[bend right] node [above] {$q$}    (q_3)
+              (q_3) edge[bend left] node [below] {$p$}    (q_4)
+              (q_4) edge[bend left] node [below] {$q$}    (q_3)
+    ;
+    % \draw[->] (q_3) .. controls +(down:7mm) and +(right:7mm) .. (q_2);
+  \end{myauto}
+
+    Минимизированный:
+
+    \begin{myauto}
+    \node[state,initial]   (q_1) at (0,2) {$q_1$};
+    \node[state,accepting]           (q_2) at (2,0) {$q_2$};
+
+    \path[->] (q_1) edge              node [above] {$p$}    (q_2)
+              (q_2) edge[bend left=20]              node [below] {$q$}    (q_1)
+    ;
+    % \draw[->] (q_3) .. controls +(down:7mm) and +(right:7mm) .. (q_2);
+  \end{myauto}
+
+    Минимизированные ДКА совпадают, поэтому регулярные выражения эквивалентны.
+
+  \item Доказать или опровергнуть свойство регулярных выражений:
+  \[
+    \forall p, q \text{ --- регулярные выражения}: (p q)^* = p^* q^*
+    \]
+
+    Опровержение: при p = 'a', q = 'b', первое выражение принимает строку abab, второе -- нет.
+
+  \item Для регулярного выражения:
+   \[ (a \mid b)^+ (aa \mid bb \mid abab \mid baba)^* (a \mid b)^+\]
+  Построить эквивалентные:
+  \begin{enumerate}
+    \item Недетерминированный конечный автомат
+    \item Недетерминированный конечный автомат без $\varepsilon$-переходов
+    \item Минимальный полный детерминированный конечный автомат
+
+      Решение:
+
+      (a|b)+ принимает любую цепочку символов a и b ненулевой длины.
+
+      Любой суффикс произвольной строки, которая может быть принята \[ (aa \mid bb \mid abab \mid baba)^*\], может быть принят (a|b)+.
+
+      Поэтому \[(aa \mid bb \mid abab \mid baba)^*\] можно просто убрать из регулярного выражения:
+
+   \[ (a \mid b)^+ (aa \mid bb \mid abab \mid baba)^* (a \mid b)^+ = (a \mid b)^+ (a \mid b)^+ \]
+
+   Поэтому минимальный ДКА для этого регулярного выражения такой:
+
+    \begin{myauto}
+    \node[state,initial]   (q_1) at (0,2) {$q_1$};
+    \node[state]           (q_2) at (2,0) {$q_2$};
+    \node[state,accepting] (q_3) at (2,2) {$q_3$};
+
+    \path[->] (q_1) edge node [above] {$a,b$}    (q_2)
+              (q_2) edge node [above] {$a,b$}    (q_3)
+              (q_3) edge [loop above]    node         {$a,b$} ()
+
+    ;
+    % \draw[->] (q_3) .. controls +(down:7mm) and +(right:7mm) .. (q_2);
+  \end{myauto}
+
+
+  \end{enumerate}
+
+\end{enumerate}
+
+\end{document}
