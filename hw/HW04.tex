@@ -43,6 +43,7 @@ initial text={}
   \[
     \forall p, q \text{ --- регулярные выражения}: (p q)^* p = p (q p)^*
   \]
+  \begin{comment}
   Решение: Представленный ниже автомат подходит для обоих выражений.
   \begin{myauto}
     \node[state,initial]   (q_0) {$q_0$};
@@ -54,19 +55,51 @@ initial text={}
               
     ;
   \end{myauto}
+  \end{comment}
   \item Доказать или опровергнуть свойство регулярных выражений:
   \[
     \forall p, q \text{ --- регулярные выражения}: (p q)^* = p^* q^*
   \]
   Решение:
-  Строка $pqpq$ будет распознона первым выражением, но не вторым 
+  Пусть $p=a$, $q=b$ (a, b - символы). Тогда abab распознается первым, но не вторым выражением. 
   \item Для регулярного выражения:
    \[ (a \mid b)^+ (aa \mid bb \mid abab \mid baba)^* (a \mid b)^+\]
   Построить эквивалентные:
   \begin{enumerate}
     \item Недетерминированный конечный автомат
+    
+    Добавить к автомату ниже  $\varepsilon$-переход	
+    
     \item Недетерминированный конечный автомат без $\varepsilon$-переходов
+    
+     \begin{myauto}
+    \node[state,initial]   (q_0) {$q_0$};
+     \node[state] (q_1) [right=of q_0] {$q_1$};
+       \node[state, accepting] (q_2) [right=of q_1] {$q_2$};
+
+    \path[->] (q_0) edge [bend left]             node [above] {$a, b$}    (q_1)
+    		  (q_1) edge [loop above]			 node [above] {$a, b$} () 
+    		        edge [bend left]             node [below] {$a, b$} (q_2)
+   		  		
+             
+    ;
+  \end{myauto}
+    
     \item Минимальный полный детерминированный конечный автомат
+    
+      \begin{myauto}
+    \node[state,initial]   (q_0) {$q_0$};
+     \node[state] (q_1) [right=of q_0] {$q_1$};
+       \node[state, accepting] (q_2) [right=of q_1] {$q_2$};
+
+    \path[->] (q_0) edge [bend left]             node [above] {$a, b$}    (q_1)
+    		  (q_1)  edge [bend left]             node [below] {$a, b$} (q_2)
+    		  (q_2) edge [loop above]			 node [above] {$a, b$} () 
+   		  		
+             
+    ;
+  \end{myauto}
+    
   \end{enumerate}
 
 \end{enumerate}
