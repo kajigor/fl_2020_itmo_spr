@@ -32,15 +32,6 @@ findedge ch (tup@(x, node):xs) acc
   | x == ch = tup : (acc ++ xs)
   | otherwise = findedge ch xs (tup : acc)
 
-checkword :: String -> Trie -> Bool
-checkword _ Empty = False
-checkword "" (Node bool edges) = bool
-checkword (x:xs) (Node bool edges) =
-  let edges' = findedge x edges []
-   in case edges' of
-        (ch, node):rest -> (x == ch) && checkword xs node
-        [] -> False
-
 fromList :: [String] -> Trie -> Trie
 fromList [] acc = acc
 fromList (x:xs) acc = fromList xs (insert x acc)
