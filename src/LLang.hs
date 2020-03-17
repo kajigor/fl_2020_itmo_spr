@@ -1,6 +1,6 @@
 module LLang where
 
-import Arith (AST (..), Operator (..))
+import AST (AST (..), Operator (..))
 
 type Expr = AST
 
@@ -8,7 +8,7 @@ type Var = String
 
 data LAst
   = If { cond :: Expr, thn :: LAst, els :: LAst }
-  | While { cond :: AST, body :: LAst }
+  | While { cond :: Expr, body :: LAst }
   | Assign { var :: Var, expr :: Expr }
   | Read { var :: Var }
   | Write { expr :: Expr }
