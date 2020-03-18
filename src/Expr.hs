@@ -14,11 +14,11 @@ div'  = symbol '/' >>= toOperator
 
 -- Парсер для произведения/деления термов
 parseMult :: Parser String String AST
-parseMult = uberExpr [(mult, LeftAssoc), (div', LeftAssoc)] parseTerm BinOp
+parseMult = uberExpr [(mult <|> div', LeftAssoc)] parseTerm BinOp
 
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
-parseSum = uberExpr [ (sum', LeftAssoc), (minus, LeftAssoc), (mult, LeftAssoc), (div', LeftAssoc)
+parseSum = uberExpr [ (sum' <|> minus, LeftAssoc), (mult <|> div', LeftAssoc)
                     ]
                     parseTerm
                     BinOp
