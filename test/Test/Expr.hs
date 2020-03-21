@@ -41,10 +41,10 @@ unit_parseNegNum :: Assertion
 unit_parseNegNum = do
     runParser parseNum "123" @?= Success "" 123
     runParser parseNum "-123" @?= Success "" (-123)
-    runParser parseNum "--123" @?= Success "" 123
     assertBool "" $ isFailure $ runParser parseNum "+-3"
     assertBool "" $ isFailure $ runParser parseNum "-+3"
     assertBool "" $ isFailure $ runParser parseNum "-a"
+    assertBool "" $ isFailure $ runParser parseNum "--1"
 
 unit_parseIdent :: Assertion
 unit_parseIdent = do
