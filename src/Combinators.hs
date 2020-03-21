@@ -67,7 +67,3 @@ symbol c = satisfy (==c)
 -- Всегда завершается ошибкой
 fail' :: e -> Parser e i a
 fail' e = Parser $ \input -> Failure e
-
--- Всегда завершается успехом, вход не читает, возвращает данное значение
-return' :: a -> Parser e i a
-return' x = Parser $ \input -> Success input x

@@ -1,7 +1,7 @@
 module Expr where
 
 import           AST         (AST (..), Operator (..))
-import           Combinators (Parser (..), Result (..), elem', fail', satisfy, symbol, sepBy1)
+import           Combinators (Parser (..), Result (..))
 import           Data.Char   (isDigit, digitToInt)
 import           Control.Applicative
 import           Data.Functor ((<&>))
@@ -72,6 +72,7 @@ compute (BinOp Plus x y) = compute x + compute y
 compute (BinOp Mult x y) = compute x * compute y
 compute (BinOp Minus x y) = compute x - compute y
 compute (BinOp Div x y) = compute x `div` compute y
+compute _ = error "compute undefined"
 
 evaluate :: String -> Maybe Int
 evaluate input = do

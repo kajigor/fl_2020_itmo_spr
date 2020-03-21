@@ -1,9 +1,10 @@
 module Test.Combinators where
 
-import           Combinators (Parser, Result (..), elem', runParser,
-                              satisfy, sepBy1, symbol)
-import           Test.HUnit  (Assertion, (@?=))
-import           Control.Applicative (some, many)
+import           Combinators         (Parser, Result (..), elem', runParser,
+                                      satisfy, sepBy1, symbol)
+import           Control.Applicative (many, some)
+import           Test.Tasty.HUnit    (Assertion, (@?=))
+
 
 predErrMsg :: String
 predErrMsg = "Predicate failed"
