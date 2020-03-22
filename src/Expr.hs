@@ -1,54 +1,67 @@
 module Expr where
 
 import           AST                 (AST (..), Operator (..))
-import           Combinators         (Parser (..), Result (..), elem', nat,
+import           Combinators         (Parser (..), Result (..), elem', int, nat,
                                       satisfy, sepBy1', symbol)
 import           Control.Applicative
-import           Data.Char           (digitToInt, isDigit)
+import           Data.Char           (digitToInt, isAlphaNum, isDigit, isLetter)
+import           Debug.Trace
 import           UberExpr            (Associativity (..), uberExpr)
 
 -- Парсер для произведения/деления термов
-parseMult :: Parser String String AST
-parseMult = uberExpr [(parseMultDivOp, LeftAssoc)] parseTerm BinOp
-  where
-    parseMultDivOp = (symbol '*' <|> symbol '/') >>= toOperator
-
--- Парсер для сложения/вычитания множителей
-parseSum :: Parser String String AST
-parseSum = uberExpr [(parseSumSub, LeftAssoc)] parseMult BinOp
-  where
-    parseSumSub = (symbol '+' <|> symbol '-') >>= toOperator
-
 -- Парсер чисел
 parseNum :: Parser String String Int
-parseNum = nat
+parseNum = int
 
 -- Парсер для операторов
 parseOp :: Parser String String Operator
 parseOp = elem' >>= toOperator
-
--- Преобразование символов операторов в операторы
-toOperator :: Char -> Parser String String Operator
-toOperator '+' = return Plus
-toOperator '*' = return Mult
-toOperator '-' = return Minus
-toOperator '/' = return Div
-toOperator _   = fail' "Failed toOperator"
+  -- Преобразование символов операторов в операторы
+  where
+    toOperator :: Char -> Parser String String Operator
+    toOperator '+' = return Plus
+    toOperator '*' = return Mult
+    toOperator '-' = return Minus
+    toOperator '/' = return Div
+    toOperator _   = fail' "Failed toOperator"
 
 fail' :: e -> Parser e i a
 fail' e = Parser $ \input -> Failure e
 
--- Парсер для терма: либо число, либо выражение в скобках.
--- Скобки не хранятся в AST за ненадобностью.
-parseTerm :: Parser String String AST
-parseTerm = Num <$> parseNum <|> (parseLeftBracket *> parseSum <* parseRightBracket)
+parseIdent :: Parser String String String
+parseIdent = (++) <$> some (char <|> control) <*> many (alphaNum <|> control)
   where
-    parseLeftBracket = symbol '('
-    parseRightBracket = symbol ')'
+    char = satisfy isLetter
+    digit = satisfy isDigit
+    control = satisfy (== '_')
+    alphaNum = satisfy isAlphaNum
 
 -- Парсер арифметических выражений над целыми числами с операциями +,-,*,/.
 parseExpr :: Parser String String AST
-parseExpr = parseSum
+parseExpr = uberExpr table ast builder
+  where
+    table :: [(Parser String String Operator, Associativity)]
+    table =
+      [ (Or <$ mapM symbol "||", RightAssoc)
+      , (And <$ mapM symbol "&&", RightAssoc)
+      , (Lt <$ mapM symbol "<", NoAssoc)
+      , (Gt <$ mapM symbol ">", NoAssoc)
+      , (Le <$ mapM symbol "<=", NoAssoc)
+      , (Ge <$ mapM symbol ">=", NoAssoc)
+      , (Nequal <$ mapM symbol "/=", NoAssoc)
+      , (Equal <$ mapM symbol "==", NoAssoc)
+      , (Plus <$ mapM symbol "+", LeftAssoc)
+      , (Minus <$ mapM symbol "-", LeftAssoc)
+      , (Mult <$ mapM symbol "*", LeftAssoc)
+      , (Div <$ mapM symbol "/", LeftAssoc)
+      , (Pow <$ mapM symbol "^", RightAssoc)
+      ]
+    ast = number <|> identifier <|> (parseLeftBracket *> parseExpr <* parseRightBracket)
+    number = Num <$> int
+    identifier = Ident <$> parseIdent
+    parseLeftBracket = symbol '('
+    parseRightBracket = symbol ')'
+    builder = BinOp
 
 compute :: AST -> Int
 compute (Num x)           = x

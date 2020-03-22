@@ -104,6 +104,11 @@ toNum = foldl (\rec x -> x + 10 * rec) 0
 nat :: Parser String String Int
 nat = toNum <$> some digit
 
+int = nat <|> (negate <$> (negative *> int))
+  where
+    negative = symbol '-'
+
+
 eof :: Parser String String ()
 eof = Parser result
   where

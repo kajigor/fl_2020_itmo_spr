@@ -22,9 +22,9 @@ uberExpr ((p, LeftAssoc):pa) ast builder = do
 uberExpr ((p, RightAssoc):pa) ast builder = do
   (terms, op) <- sepBy1'' p (uberExpr pa ast builder)
   return $ foldr (\(term, op) acc -> builder op term acc) op terms
-uberExpr ((p, NoAssoc):pa) ast builder = parse <|> ast
+uberExpr ((p, NoAssoc):pa) ast builder = parse <|> uberExpr pa ast builder
   where
     parse = do
-      lhs <- ast
+      lhs <- uberExpr pa ast builder
       op <- p
-      builder op lhs <$> ast
+      builder op lhs <$> uberExpr pa ast builder
