@@ -23,7 +23,7 @@ unit_evaluate = do
     evaluate "12+23*34+456" @?= Just (12+23*34+456)
     evaluate "1-2*3+4" @?= Just (1-2*3+4)
     evaluate "1-2-3" @?= Just (1-2-3)
-    evaluate "4/2-2" @?= Just (4 `div` 2 - 2)
+    evaluate "4/2-2" @?= Just ((4 `div` 2) - 2)
     evaluate "(1+2)*(3+4)" @?= Just ((1+2)*(3+4))
     evaluate "12+(23*(34)+456)" @?= Just (12+(23*(34)+456))
     evaluate "((1-(2*3))+4)" @?= Just ((1-(2*3))+4)
@@ -32,25 +32,41 @@ unit_evaluate = do
 
 unit_parseNum :: Assertion
 unit_parseNum = do
-    testSuccess (runParser parseNum "7") (toStream "" 1) (7)
-    testSuccess (runParser parseNum "12+3") (toStream "+3" 2) (12)
-    testSuccess (runParser parseNum "007") (toStream "" 3) (7)
-    testFailure (runParser parseNum "+3")
-    testFailure (runParser parseNum "a")
+    runParser parseNum "7" @?= Success "" 7
+    runParser parseNum "12+3" @?= Success "+3" 12
+    runParser parseNum "007" @?= Success "" 7
+    isFailure (runParser parseNum "+3") @?= True
+    isFailure (runParser parseNum "a") @?= True
+
+unit_parseNegNum :: Assertion
+unit_parseNegNum = do
+    runParser parseNum "123" @?= Success "" 123
+    runParser parseNum "-123" @?= Success "" (-123)
+    assertBool "" $ isFailure $ runParser parseNum "--123"
+    assertBool "" $ isFailure $ runParser parseNum "+-3"
+    assertBool "" $ isFailure $ runParser parseNum "-+3"
+    assertBool "" $ isFailure $ runParser parseNum "-a"
+
+unit_parseNegInExpr :: Assertion
+unit_parseNegInExpr = do
+    runParser parseExpr "-123+-10" @?= Success "" (BinOp Plus (Num $ -123) (Num $ -10))
+    runParser parseExpr "(abc*-50)--20" @?= Success "" (BinOp Minus (BinOp Mult (Ident "abc") (Num $ -50)) (Num $ -20))
+    assertBool "" $ isFailure $ runParser parseExpr "-(abc*20)"
+    runParser parseExpr "12*---20" @?= Success "*---20" (Num 12)
 
 unit_parseIdent :: Assertion
 unit_parseIdent = do
-    testSuccess (runParser parseIdent "abc def") (toStream " def" 3) "abc"
-    testSuccess (runParser parseIdent "AbC dEf") (toStream " dEf" 3) "AbC"
-    testSuccess (runParser parseIdent "_123") (toStream "" 4) "_123"
-    testSuccess (runParser parseIdent "a_b_c d_e") (toStream " d_e" 5) "a_b_c"
-    testSuccess (runParser parseIdent "x_ ") (toStream " " 2) "x_"
-    testSuccess (runParser parseIdent "abc123") (toStream "" 6) "abc123"
-    testSuccess (runParser parseIdent "_") (toStream "" 1) "_"
-    testSuccess (runParser parseIdent "abc*1") (toStream "*1" 3) "abc"
-    testFailure $ runParser parseIdent "123abc"
-    testFailure $ runParser parseIdent "123"
-    testFailure $ runParser parseIdent ""
+    runParser parseIdent "abc def" @?= Success " def" "abc"
+    runParser parseIdent "AbC dEf" @?= Success " dEf" "AbC"
+    runParser parseIdent "_123" @?= Success "" "_123"
+    runParser parseIdent "a_b_c d_e" @?= Success " d_e" "a_b_c"
+    runParser parseIdent "x_ " @?= Success " " "x_"
+    runParser parseIdent "abc123" @?= Success "" "abc123"
+    runParser parseIdent "_" @?= Success "" "_"
+    runParser parseIdent "abc*1" @?= Success "*1" "abc"
+    assertBool "" $ isFailure $ runParser parseIdent "123abc"
+    assertBool "" $ isFailure $ runParser parseIdent "123"
+    assertBool "" $ isFailure $ runParser parseIdent ""
 
 unit_parseOp :: Assertion
 unit_parseOp = do
@@ -106,3 +122,29 @@ unit_parseExpr = do
     testFailure $ runParser parseExpr "--1"
     testFailure $ runParser parseExpr "-!1"
 
+unit_ParseExprWithSpaces :: Assertion
+unit_ParseExprWithSpaces = do
+    runParser parseExpr "1 * 2  *  3"   @?= Success "" (BinOp Mult (BinOp Mult (Num 1) (Num 2)) (Num 3))
+    -- Произвольное число пробелов поддерживается только между операторами:
+    assertBool "" $ isFailure $ runParser parseExpr "  123   "
+    assertBool "" $ isFailure $ runParser parseExpr "  abc"
+    runParser parseExpr "1 *2  + 3*4" @?= Success "" (BinOp Plus (BinOp Mult (Num 1) (Num 2)) (BinOp Mult (Num 3) (Num 4)))
+    runParser parseExpr "1 + 2 *3+    4" @?= Success "" (BinOp Plus (BinOp Plus (Num 1) (BinOp Mult (Num 2) (Num 3))) (Num 4))
+    runParser parseExpr "1 * x * 3"   @?= Success "" (BinOp Mult (BinOp Mult (Num 1) (Ident "x")) (Num 3))
+    runParser parseExpr "1  *x +z   *4" @?= Success "" (BinOp Plus (BinOp Mult (Num 1) (Ident "x")) (BinOp Mult (Ident "z") (Num 4)))
+    runParser parseExpr "1+ y * 3+z" @?= Success "" (BinOp Plus (BinOp Plus (Num 1) (BinOp Mult (Ident "y") (Num 3))) (Ident "z"))
+    runParser parseExpr "1  +x" @?= Success "" (BinOp Plus (Num 1) (Ident "x"))
+    runParser parseExpr "1-  x" @?= Success "" (BinOp Minus (Num 1) (Ident "x"))
+    runParser parseExpr "1 * x" @?= Success "" (BinOp Mult (Num 1) (Ident "x"))
+    runParser parseExpr "1  / x" @?= Success "" (BinOp Div (Num 1) (Ident "x"))
+    runParser parseExpr "1  ^x" @?= Success "" (BinOp Pow (Num 1) (Ident "x"))
+    runParser parseExpr "1   == x" @?= Success "" (BinOp Equal (Num 1) (Ident "x"))
+    runParser parseExpr "1  /=x" @?= Success "" (BinOp Nequal (Num 1) (Ident "x"))
+    runParser parseExpr "1>  x" @?= Success "" (BinOp Gt (Num 1) (Ident "x"))
+    runParser parseExpr "1  >= x" @?= Success "" (BinOp Ge (Num 1) (Ident "x"))
+    runParser parseExpr "1  <x" @?= Success "" (BinOp Lt (Num 1) (Ident "x"))
+    runParser parseExpr "1<=  x" @?= Success "" (BinOp Le (Num 1) (Ident "x"))
+    runParser parseExpr "1     &&   x" @?= Success "" (BinOp And (Num 1) (Ident "x"))
+    runParser parseExpr "1||      x" @?= Success "" (BinOp Or (Num 1) (Ident "x"))
+    runParser parseExpr "(    1  == x+2  )  ||  3* 4< y-5   /6&&  (7  /=  z^8)||(id>12)&&abc<=13||xyz>=42" @?=
+      runParser parseExpr "(1  ==  (  x + 2  )  )||(((3*4) < (y-(5/6))  &&(7  /=  (z  ^  8)))||(((id>12)&&(abc<=13))||(xyz>=42)))"

@@ -3,9 +3,12 @@
 
 module Combinators where
 
-import Control.Applicative
 import Data.Char (digitToInt, isDigit, isSpace, isAlpha, isAlphaNum)
 import Data.List (sortBy, nub)
+import           AST                 (AST (..), Operator (..))
+import           Control.Applicative (Alternative (..))
+import           Text.Printf         (printf)
+import           Control.Monad (liftM, ap)
 
 data Result error input result
   = Success (InputStream input) (Maybe (ErrorMsg error)) result
