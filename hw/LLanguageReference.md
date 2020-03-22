@@ -1,0 +1,34 @@
+# L Language Reference
+
+```bash
+Language ::= Sequence
+Sequence ::= Statement ';' Sequence
+Statement ::= If | While | Assign | Read | Write
+If ::= 'if' Condition '{' Sequence '}' 'else' '{' Sequence '}'
+While ::= 'while' Condition '{' Sequence '}'
+Assign ::= 'let' Identifier '=' Expression
+Read ::= 'read' Identifier
+Write ::= 'write' Expression
+Expression ::= Identifier
+    | Number
+    | Expression Operator Expression
+    | '(' Expression ')'
+Condition ::= Expression Operator Expression
+    | Identifier
+    | '(' Condition ')'
+Operator ::= '^' | '*' | '/' | '+' | '-' | '==' | '/=' | '<=' | '>=' | '>' | '<' | '&&' | '||'
+Letter ::= a | b | ... | z | A | B | ... | Z
+Digit ::= 0 | 1 | ... | 9
+Natural = Digit | Digit Natural
+Identifier ::= Letter Identifier | '_' Identifier | Identifier Digit
+Number ::= '+'Natural | '-'Natural | Natural
+```
+
+ | Приоритет | Оператор             | Ассоциативность   |
+ | :-------- | :------------------- | :---------------- |
+ | Высший    | ^                    | Правоассоциативна |
+ |           | *, /                 | Левоассоциативна  |
+ |           | +, -                 | Левоассоциативна  |
+ |           | ==, /=, <=, <, >=, > | Неассоциативна    |
+ |           | &&                   | Правоассоциативна |
+ | Низший    | \|\|                 | Правоассоциативна |
