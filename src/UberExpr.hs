@@ -1,6 +1,7 @@
 module UberExpr where
 
 import           Combinators (Parser (..))
+import           Control.Applicative(Alternative (..))
 
 data Associativity = LeftAssoc | RightAssoc | NoAssoc
 
@@ -9,5 +10,17 @@ uberExpr :: Monoid e
          -> Parser e i ast
          -> (op -> ast -> ast -> ast)
          -> Parser e i ast
-uberExpr = error "uberExpr undefined"
-
+uberExpr [] elemParser _ = elemParser
+uberExpr ((opParser,assoc):ps) elemParser opFunc = 
+  let elemParser' = uberExpr ps elemParser opFunc
+      rightParser = ((\x f y -> opFunc f x y) <$> elemParser' <*> opParser <*> rightParser) <|> elemParser'
+      noAssocParser = ((\x f y -> opFunc f x y) <$> elemParser' <*> opParser <*> elemParser') <|> elemParser'
+      leftParser = elemParser' >>= continueLeftParsing
+      continueLeftParsing left = (do
+        op <- opParser
+        right <- elemParser'
+        continueLeftParsing $ opFunc op left right) <|> return left
+  in case assoc of
+    LeftAssoc -> leftParser
+    RightAssoc -> rightParser
+    NoAssoc -> noAssocParser

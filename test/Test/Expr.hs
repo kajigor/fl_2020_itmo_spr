@@ -19,8 +19,8 @@ unit_evaluate = do
     evaluate "31+24+777" @?= Just (31+24+777)
     evaluate "1+2*3+4" @?= Just (1+2*3+4)
     evaluate "12+23*34+456" @?= Just (12+23*34+456)
-    evaluate "1-2*3+4" @?= Just (1-(2*3+4))
-    evaluate "1-2-3" @?= Just (1-(2-3))
+    evaluate "1-2*3+4" @?= Just (1-2*3+4)
+    evaluate "1-2-3" @?= Just (1-2-3)
     evaluate "4/2-2" @?= Just ((4 `div` 2) - 2)
     evaluate "(1+2)*(3+4)" @?= Just ((1+2)*(3+4))
     evaluate "12+(23*(34)+456)" @?= Just (12+(23*(34)+456))
@@ -40,10 +40,17 @@ unit_parseNegNum :: Assertion
 unit_parseNegNum = do
     runParser parseNum "123" @?= Success "" 123
     runParser parseNum "-123" @?= Success "" (-123)
-    runParser parseNum "--123" @?= Success "" 123
+    assertBool "" $ isFailure $ runParser parseNum "--123"
     assertBool "" $ isFailure $ runParser parseNum "+-3"
     assertBool "" $ isFailure $ runParser parseNum "-+3"
     assertBool "" $ isFailure $ runParser parseNum "-a"
+
+unit_parseNegInExpr :: Assertion
+unit_parseNegInExpr = do
+    runParser parseExpr "-123+-10" @?= Success "" (BinOp Plus (Num $ -123) (Num $ -10))
+    runParser parseExpr "(abc*-50)--20" @?= Success "" (BinOp Minus (BinOp Mult (Ident "abc") (Num $ -50)) (Num $ -20))
+    assertBool "" $ isFailure $ runParser parseExpr "-(abc*20)"
+    runParser parseExpr "12*---20" @?= Success "*---20" (Num 12)
 
 unit_parseIdent :: Assertion
 unit_parseIdent = do
@@ -58,7 +65,6 @@ unit_parseIdent = do
     assertBool "" $ isFailure $ runParser parseIdent "123abc"
     assertBool "" $ isFailure $ runParser parseIdent "123"
     assertBool "" $ isFailure $ runParser parseIdent ""
-
 
 unit_parseOp :: Assertion
 unit_parseOp = do
@@ -95,3 +101,29 @@ unit_parseExpr = do
     runParser parseExpr "(1==x+2)||3*4<y-5/6&&(7/=z^8)||(id>12)&&abc<=13||xyz>=42" @?=
       runParser parseExpr "(1==(x+2))||(((3*4)<(y-(5/6))&&(7/=(z^8)))||(((id>12)&&(abc<=13))||(xyz>=42)))"
 
+unit_ParseExprWithSpaces :: Assertion
+unit_ParseExprWithSpaces = do
+    runParser parseExpr "1 * 2  *  3"   @?= Success "" (BinOp Mult (BinOp Mult (Num 1) (Num 2)) (Num 3))
+    -- Произвольное число пробелов поддерживается только между операторами:
+    assertBool "" $ isFailure $ runParser parseExpr "  123   "
+    assertBool "" $ isFailure $ runParser parseExpr "  abc"
+    runParser parseExpr "1 *2  + 3*4" @?= Success "" (BinOp Plus (BinOp Mult (Num 1) (Num 2)) (BinOp Mult (Num 3) (Num 4)))
+    runParser parseExpr "1 + 2 *3+    4" @?= Success "" (BinOp Plus (BinOp Plus (Num 1) (BinOp Mult (Num 2) (Num 3))) (Num 4))
+    runParser parseExpr "1 * x * 3"   @?= Success "" (BinOp Mult (BinOp Mult (Num 1) (Ident "x")) (Num 3))
+    runParser parseExpr "1  *x +z   *4" @?= Success "" (BinOp Plus (BinOp Mult (Num 1) (Ident "x")) (BinOp Mult (Ident "z") (Num 4)))
+    runParser parseExpr "1+ y * 3+z" @?= Success "" (BinOp Plus (BinOp Plus (Num 1) (BinOp Mult (Ident "y") (Num 3))) (Ident "z"))
+    runParser parseExpr "1  +x" @?= Success "" (BinOp Plus (Num 1) (Ident "x"))
+    runParser parseExpr "1-  x" @?= Success "" (BinOp Minus (Num 1) (Ident "x"))
+    runParser parseExpr "1 * x" @?= Success "" (BinOp Mult (Num 1) (Ident "x"))
+    runParser parseExpr "1  / x" @?= Success "" (BinOp Div (Num 1) (Ident "x"))
+    runParser parseExpr "1  ^x" @?= Success "" (BinOp Pow (Num 1) (Ident "x"))
+    runParser parseExpr "1   == x" @?= Success "" (BinOp Equal (Num 1) (Ident "x"))
+    runParser parseExpr "1  /=x" @?= Success "" (BinOp Nequal (Num 1) (Ident "x"))
+    runParser parseExpr "1>  x" @?= Success "" (BinOp Gt (Num 1) (Ident "x"))
+    runParser parseExpr "1  >= x" @?= Success "" (BinOp Ge (Num 1) (Ident "x"))
+    runParser parseExpr "1  <x" @?= Success "" (BinOp Lt (Num 1) (Ident "x"))
+    runParser parseExpr "1<=  x" @?= Success "" (BinOp Le (Num 1) (Ident "x"))
+    runParser parseExpr "1     &&   x" @?= Success "" (BinOp And (Num 1) (Ident "x"))
+    runParser parseExpr "1||      x" @?= Success "" (BinOp Or (Num 1) (Ident "x"))
+    runParser parseExpr "(    1  == x+2  )  ||  3* 4< y-5   /6&&  (7  /=  z^8)||(id>12)&&abc<=13||xyz>=42" @?=
+      runParser parseExpr "(1  ==  (  x + 2  )  )||(((3*4) < (y-(5/6))  &&(7  /=  (z  ^  8)))||(((id>12)&&(abc<=13))||(xyz>=42)))"
