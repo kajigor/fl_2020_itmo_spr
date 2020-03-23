@@ -2,7 +2,7 @@
 
 ```bash
 Language ::= Sequence
-Sequence ::= Statement ';' Sequence
+Sequence ::= Statement ';' | Statement ';' Sequence
 Statement ::= If | While | Assign | Read | Write
 If ::= 'if' Condition '{' Sequence '}' 'else' '{' Sequence '}'
 While ::= 'while' Condition '{' Sequence '}'
@@ -20,7 +20,7 @@ Operator ::= '^' | '*' | '/' | '+' | '-' | '==' | '/=' | '<=' | '>=' | '>' | '<'
 Letter ::= a | b | ... | z | A | B | ... | Z
 Digit ::= 0 | 1 | ... | 9
 Natural = Digit | Digit Natural
-Identifier ::= Letter Identifier | '_' Identifier | Identifier Digit
+Identifier ::= [a-zA-Z_][a-zA-Z0-9_]*
 Number ::= '+'Natural | '-'Natural | Natural
 ```
 

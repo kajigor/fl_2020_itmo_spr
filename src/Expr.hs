@@ -5,6 +5,7 @@ import           Combinators         (Parser (..), Result (..), elem', int, nat,
                                       satisfy, sepBy1', symbol)
 import           Control.Applicative
 import           Data.Char           (digitToInt, isAlphaNum, isDigit, isLetter)
+import           Data.Foldable       (asum)
 import           Debug.Trace
 import           UberExpr            (Associativity (..), uberExpr)
 
@@ -44,16 +45,17 @@ parseExpr = uberExpr table ast builder
     table =
       [ (Or <$ mapM symbol "||", RightAssoc)
       , (And <$ mapM symbol "&&", RightAssoc)
-      , (Lt <$ mapM symbol "<", NoAssoc)
-      , (Gt <$ mapM symbol ">", NoAssoc)
-      , (Le <$ mapM symbol "<=", NoAssoc)
-      , (Ge <$ mapM symbol ">=", NoAssoc)
-      , (Nequal <$ mapM symbol "/=", NoAssoc)
-      , (Equal <$ mapM symbol "==", NoAssoc)
-      , (Plus <$ mapM symbol "+", LeftAssoc)
-      , (Minus <$ mapM symbol "-", LeftAssoc)
-      , (Mult <$ mapM symbol "*", LeftAssoc)
-      , (Div <$ mapM symbol "/", LeftAssoc)
+      , ( asum
+            [ Ge <$ mapM symbol ">="
+            , Le <$ mapM symbol "<="
+            , Lt <$ mapM symbol "<"
+            , Gt <$ mapM symbol ">"
+            , Nequal <$ mapM symbol "/="
+            , Equal <$ mapM symbol "=="
+            ]
+        , NoAssoc)
+      , (asum [Plus <$ mapM symbol "+", Minus <$ mapM symbol "-"], LeftAssoc)
+      , (asum [Mult <$ mapM symbol "*", Div <$ mapM symbol "/"], LeftAssoc)
       , (Pow <$ mapM symbol "^", RightAssoc)
       ]
     ast = number <|> identifier <|> (parseLeftBracket *> parseExpr <* parseRightBracket)
