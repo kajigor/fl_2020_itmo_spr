@@ -50,11 +50,8 @@ parseIdent = (:) <$> letter <*> many (letter <|> digit) where
 
 -- Парсер чисел
 parseNum :: Parser String String Int
-parseNum = baseNumParser <|> (signAsAction <$> sign <*> (spaces *> baseNumParser)) where
+parseNum = baseNumParser <|> (negate <$ sign <*> (spaces *> baseNumParser)) where
   sign = symbol '-'
-  signAsAction c = case c of
-                     '-' -> negate
-                     _   -> error "signAsAction failed"
   spaces = many $ symbol ' '
   baseNumParser = toNum <$> some digit
   toNum = foldl (\acc d -> 10 * acc + digitToInt d) 0
