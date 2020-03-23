@@ -1,23 +1,67 @@
 module Expr where
 
 import           AST         (AST (..), Operator (..))
+<<<<<<< HEAD
 import           Combinators (Parser (..), Result (..))
+=======
+import           Combinators (Parser (..), Result (..), sepBy1', elem', satisfy, symbol, fail')
+>>>>>>> HW04
 import           Data.Char   (isDigit, digitToInt)
+import           Control.Applicative (empty, (<|>))
+import           UberExpr    
 
--- Парсер арифметических выражений над целыми числами
-parseExpr :: Parser String String AST
-parseExpr = error "parseExpr undefined"
 
-parseIdent :: Parser String String String
-parseIdent = error "parseIdent undefined"
+-- Парсер для произведения/деления термов
+parseMult :: Parser String String AST
+parseMult = uberExpr [(parseMultOp, LeftAssoc)] parseTerm BinOp
+
+parseMultOp :: Parser String String Operator	
+parseMultOp = (symbol '*' <|> symbol '/') >>= toOperator
+
+-- Парсер для сложения/вычитания множителей
+parseSum :: Parser String String AST
+parseSum = uberExpr [(parseSumOp, LeftAssoc)] parseMult BinOp
+		
+parseSumOp :: Parser String String Operator	
+parseSumOp = (symbol '+' <|> symbol '-') >>= toOperator
 
 -- Парсер чисел
 parseNum :: Parser String String Int
-parseNum = error "parseNum undefined"
+parseNum =
+    fmap toNum go
+  where
+    digit = satisfy isDigit
+    empty' = return []
+    toNum = foldl (\acc d -> 10 * acc + digitToInt d) 0
+    go =
+      digit >>= \d -> fmap (d:) (go <|> empty')
 
 -- Парсер для операторов
 parseOp :: Parser String String Operator
-parseOp = error "parseOp undefined"
+parseOp = elem' >>= toOperator
+
+-- Преобразование символов операторов в операторы
+toOperator :: Char -> Parser String String Operator
+toOperator '+' = return Plus
+toOperator '*' = return Mult
+toOperator '-' = return Minus
+toOperator '/' = return Div
+toOperator _   = fail' "Failed toOperator"
+
+-- Парсер для терма: либо число, либо выражение в скобках.
+-- Скобки не хранятся в AST за ненадобностью.
+parseTerm :: Parser String String AST
+parseTerm = (fmap Num parseNum) <|> parseBrackets 
+	where parseBrackets = do
+		symbol '('
+		x <- parseExpr
+		symbol ')'
+		return x
+
+-- Парсер арифметических выражений над целыми числами с операциями +,-,*,/.
+parseExpr :: Parser String String AST
+parseExpr = uberExpr [(parseSumOp, LeftAssoc), (parseMultOp, LeftAssoc)] parseTerm BinOp
+
 
 compute :: AST -> Int
 compute (Num x) = x
