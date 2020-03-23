@@ -2,8 +2,7 @@ module Test.Expr where
 
 import           AST              (AST (..), Operator (..))
 import           Combinators      (Result (..), runParser)
-import           Expr             (evaluate, parseNum, parseOp,
-                                   parseExpr, parseIdent)
+import           Expr             
 import           Test.Tasty.HUnit (Assertion, (@?=), assertBool)
 
 isFailure (Failure _) = True
@@ -94,6 +93,14 @@ unit_parseExpr = do
     runParser parseExpr "1||x" @?= Success "" (BinOp Or (Num 1) (Ident "x"))
     runParser parseExpr "(1==x+2)||3*4<y-5/6&&(7/=z^8)||(id>12)&&abc<=13||xyz>=42" @?=
       runParser parseExpr "(1==(x+2))||(((3*4)<(y-(5/6))&&(7/=(z^8)))||(((id>12)&&(abc<=13))||(xyz>=42)))"
+
+unit_parseExpr' :: Assertion
+unit_parseExpr' = do
+  isFailure (runParser parseExpr "-1>3") @?= False
+  isFailure (runParser parseExpr "--1>3") @?= False
+  isFailure (runParser parseExpr "--1+_a+c+d+23+--15*-29") @?= False
+
+
 
 unit_parseMult :: Assertion
 unit_parseMult = do

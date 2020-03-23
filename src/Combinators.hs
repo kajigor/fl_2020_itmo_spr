@@ -27,9 +27,9 @@ instance Applicative (Parser error input) where
     
 
 instance Monad (Parser error input) where
-  return x = pure x
+  return = pure
 
-  (Parser p) >>= f = Parser $ \i -> (helper $ p i)  where
+  (Parser p) >>= f = Parser $ \i -> helper $ p i  where
     helper (Success i a) = runParser (f a) i 
     helper (Failure err) = Failure err
 
@@ -53,11 +53,11 @@ sepBy1 sep elem = do
 
 sepBy1L sep elem = do
   a <- elem
-  xs <- many' (sep >>= (\s -> fmap (\l -> (s, l)) elem)) <|> return []
+  xs <- many (sep >>= (\s -> fmap (\l -> (s, l)) elem)) <|> return []
   return $ (a, xs)
 
 sepBy1R sep elem = do
-  xs <- many' (elem >>= (\el -> fmap (\s -> (el, s)) sep)) <|> return []
+  xs <- many (elem >>= (\el -> fmap (\s -> (el, s)) sep)) <|> return []
   a <- elem
   return (xs, a)
 
@@ -75,6 +75,11 @@ elem' = satisfy (const True)
 -- Проверяет, что первый элемент входной последовательности -- данный символ
 symbol :: (Eq a) => a -> Parser String [a] a
 symbol c = satisfy (==c)
+
+symbols s = Parser $ \i ->  helper s i where
+  helper (x:xs) (y:ys) | x == y  = helper xs ys
+  helper [] ys = Success ys s
+  helper _ _ = Failure ""
 
 -- Всегда завершается ошибкой
 fail' :: e -> Parser e i a

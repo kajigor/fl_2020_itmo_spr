@@ -18,9 +18,9 @@ uberExpr ((p,RightAssoc):ps) prim f = do
      (ops, n) <- sepBy1R p (uberExpr ps prim f)
      return $ foldr (\(term, op) acc -> f op term acc) n ops
 
-uberExpr ((p,NoAssoc):ps) prim f = (do
-    l <- prim
-    op <- p
-    r <- prim
-    return $ f op l r
-    ) <|> prim
+uberExpr ((p, NoAssoc):ps) prim f =
+  (do l <- uberExpr ps prim f
+      op <- p
+      r <- uberExpr ps prim f
+      return $ f op l r) <|>
+  uberExpr ps prim f
