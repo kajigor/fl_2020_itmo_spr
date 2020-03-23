@@ -1,19 +1,24 @@
 # concrete syntax spec
 
-Lisp-подобный синтаксис.
+Пробелы допустимы везде.
 
 ```bash
 LANG := SEQ
 STMT := IF | WHILE | ASSIGN | READ | WRITE | SEQ
-IF := 'if' EXPR STMT STMT
-WHILE := 'while' EXPR STMT
+IF := 'if' '(' EXPR ')' '{' STMT '}' 'else' '{' STMT '}'
+WHILE := 'while' '(' EXPR ')' '{' STMT '}'
 ASSIGN := IDENT ':=' EXPR
 READ := 'read' IDENT
-WRITE := EXPR
+WRITE := 'write' EXPR
 SEQ := '(' 'do' ( '(' STMT ')' )* ')'
-EXPR := EXPR OP EXPR
-     | IDENT
-     | NUMBER
+EXPR := OPEXPR1
+OPEXPR1 := OPEXPR2 ('||' OPEXPR2)*
+OPEXPR2 := OPEXPR3 ('&&' OPEXPR3)*
+OPEXPR3 := OPEXPR4 (('==' | '/=' | '<=' | '<' | '>=' | '>') OPEXPR4)*
+OPEXPR4 := OPEXPR5 (('+' | '-') OPEXPR5)*
+OPEXPR5 := OPEXPR6 (('*' | '/') OPEXPR6)*
+OPEXPR6 := OPEXPR7 ('^' OPEXPR7)*
+OPEXPR7 := '(' EXPR ')' | IDENT | NUMBER
 OP := '+' | '-' | '*'| '/' | '^' | '==' | '!=' | '>' | '>=' | '<' | '<=' | '&&' | '||'
 IDENT :=
   ('a' | .. | 'z' | 'A' | .. | 'Z' | '_')
