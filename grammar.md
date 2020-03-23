@@ -46,7 +46,7 @@ Pow -> Term '^' Term | Term
 
 If -> 'if' '(' Expr ')' '{' Statements '}' 'else' '{' Statements '}' 
 
-While -> 'while' '(' Expr ')' '{' Statement+ '}'
+While -> 'while' '(' Expr ')' '{' Statements '}'
 
 Assign -> ident '=' Expr
 
