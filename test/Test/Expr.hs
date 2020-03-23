@@ -51,6 +51,9 @@ unit_parseNegInExpr = do
     runParser parseExpr "(abc*-50)--20" @?= Success "" (BinOp Minus (BinOp Mult (Ident "abc") (Num $ -50)) (Num $ -20))
     assertBool "" $ isFailure $ runParser parseExpr "-(abc*20)"
     runParser parseExpr "12*---20" @?= Success "*---20" (Num 12)
+    runParser parseExpr "12  *   -  20" @?= Success "" (BinOp Mult (Num 12) (Num $ -20))
+    runParser parseExpr "(  300 +  - 40)   ^  -  1" @?= Success "" (BinOp Pow (BinOp Plus (Num 300) (Num $ -40)) (Num $ -1))
+    runParser parseExpr "100 --   10--    12" @?= Success "" (BinOp Minus (BinOp Minus (Num 100) (Num $ -10)) (Num $ -12))
 
 unit_parseIdent :: Assertion
 unit_parseIdent = do
