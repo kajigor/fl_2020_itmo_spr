@@ -45,6 +45,8 @@ unit_parseNegNum = do
     assertBool "" $ isFailure $ runParser parseNum "-+3"
     assertBool "" $ isFailure $ runParser parseNum "-a"
     runParser parseNum "-  20" @?= Success "" (-20)
+    assertBool "" $ isFailure $ runParser parseNum "-  +20"
+    assertBool "" $ isFailure $ runParser parseNum "- - 20"
 
 unit_parseNegInExpr :: Assertion
 unit_parseNegInExpr = do
