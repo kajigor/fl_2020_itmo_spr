@@ -1,5 +1,8 @@
 # L Language Reference
 
+Пробельные символы важны только для разделения ключевых слов.
+То есть табы, пробелы, newline и т.д. не влияют на поведение программы.
+
 ```bash
 Language ::= Sequence
 Sequence ::= Statement ';' | Statement ';' Sequence
