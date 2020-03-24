@@ -1,6 +1,7 @@
 module LLang where
 
 import AST (AST (..), Operator (..))
+import Combinators (Parser (..))
 
 type Expr = AST
 
@@ -29,3 +30,6 @@ stmt =
                 )
          )
     ]
+
+parseL :: Parser String String LAst
+parseL = error "parseL undefined"

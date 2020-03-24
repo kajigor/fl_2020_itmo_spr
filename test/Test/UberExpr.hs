@@ -6,7 +6,7 @@ import           Control.Applicative ((<|>))
 import           Expr                (parseNum)
 import           Test.Tasty.HUnit    (Assertion (..), (@?=))
 import           Text.Printf         (printf)
-import           UberExpr            (Associativity (..), uberExpr)
+import           UberExpr            (Associativity (..), uberExpr, OpType (..))
 
 toOperator :: Char -> Parser String String Operator
 toOperator '+' = return Plus
@@ -22,18 +22,20 @@ div'  = symbol '/' >>= toOperator
 
 expr1 :: Parser String String AST
 expr1 =
-  uberExpr [ (mult, LeftAssoc)
-           , (minus <|> div', RightAssoc)
-           , (sum', NoAssoc)
+  uberExpr [ (mult, Binary LeftAssoc)
+           , (minus <|> div', Binary RightAssoc)
+           , (sum', Binary NoAssoc)
            ]
            (Num <$> parseNum <|> symbol '(' *> expr1 <* symbol ')')
            BinOp
+           UnaryOp
 
 expr2 :: Parser String String AST
 expr2 =
-  uberExpr [(mult <|> div' <|> minus <|> sum', LeftAssoc)]
+  uberExpr [(mult <|> div' <|> minus <|> sum', Binary LeftAssoc)]
            (Num <$> parseNum)
            BinOp
+           UnaryOp
 
 unit_expr1 :: Assertion
 unit_expr1 = do
