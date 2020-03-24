@@ -13,11 +13,11 @@ uberExpr :: Monoid e
 
 uberExpr [] elemParser f = elemParser
 
-uberExpr ((parser, NoAssoc):ps) elemParser f = parse <|> elemParser
+uberExpr ((parser, NoAssoc):ps) elemParser f = parse <|> uberExpr ps elemParser f
 	where parse = do
-		x <- elemParser
+		x <- uberExpr ps elemParser f
 		s <- parser
-		y <- elemParser
+		y <- uberExpr ps elemParser f
 		return (f s x y)
 
 uberExpr ((parser, LeftAssoc):ps) elemParser f = parse <|> elemParser

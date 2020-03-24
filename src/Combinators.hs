@@ -82,6 +82,11 @@ elem' = satisfy (const True)
 symbol :: (Eq a) => a -> Parser String [a] a
 symbol c = satisfy (==c)
 
+multi_symbol op = Parser $ \input -> parse_symbols op input
+    where parse_symbols (c:chars) (i:inputs) = if c==i then parse_symbols chars inputs else Failure "Wrong Operator"
+          parse_symbols [] inputs = Success inputs op
+          parse_symbols _ _ = Failure "Wrong Operator"
+
 -- Последовательное применение одного и того же парсера 0 или более раз
 many' :: Monoid e => Parser e i a -> Parser e i [a]
 many' p = some' p <|> return []
