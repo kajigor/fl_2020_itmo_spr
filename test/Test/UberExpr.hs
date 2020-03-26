@@ -8,6 +8,7 @@ import           Test.Tasty.HUnit    (Assertion (..), (@?=), assertBool)
 import           Text.Printf         (printf)
 import           UberExpr            (Associativity (..), uberExpr, OpType (..))
 
+
 isFailure (Failure _) = True
 isFailure  _          = False
 
