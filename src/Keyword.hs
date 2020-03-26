@@ -21,7 +21,7 @@ keyword ks = construct (sort ks) isTerminal
 -- Используется для парсинга операторов внутри AST
 keywordWeak :: [String] -> Parser String String String
 keywordWeak ks = spaces *> construct (sort ks) isTerminalWeak <* spaces where
-  spaces = many $ symbol ' '
+  spaces = many $ (symbol ' ' <|> symbol '\n' <|> symbol '\t')
 
 construct :: [String] -> Parser String String String -> Parser String String String
 construct [] terminalP = fail' predErrMsg

@@ -14,17 +14,20 @@ uberExpr :: Monoid e
          -> (op -> ast -> ast -> ast) -- конструктор узла дерева для бинарной операции
          -> (op -> ast -> ast)        -- конструктор узла для унарной операции
          -> Parser e i ast
-uberExpr [] elemParser _ = elemParser
-uberExpr ((opParser,assoc):ps) elemParser opFunc = 
-  let elemParser' = uberExpr ps elemParser opFunc
-      rightParser = ((\x f y -> opFunc f x y) <$> elemParser' <*> opParser <*> rightParser) <|> elemParser'
-      noAssocParser = ((\x f y -> opFunc f x y) <$> elemParser' <*> opParser <*> elemParser') <|> elemParser'
+uberExpr [] elemParser _ _ = elemParser
+uberExpr ((opParser, optype):ps) elemParser binOpFunc unOpFunc = 
+  let elemParser' = uberExpr ps elemParser binOpFunc unOpFunc
+      rightParser = ((\x f y -> binOpFunc f x y) <$> elemParser' <*> opParser <*> rightParser) <|> elemParser'
+      noAssocParser = ((\x f y -> binOpFunc f x y) <$> elemParser' <*> opParser <*> elemParser') <|> elemParser'
       leftParser = elemParser' >>= continueLeftParsing
       continueLeftParsing left = (do
         op <- opParser
         right <- elemParser'
-        continueLeftParsing $ opFunc op left right) <|> return left
-  in case assoc of
-    LeftAssoc -> leftParser
-    RightAssoc -> rightParser
-    NoAssoc -> noAssocParser
+        continueLeftParsing $ binOpFunc op left right) <|> return left
+      unaryParser = ((\f x -> unOpFunc f x) <$> opParser <*> elemParser') <|> elemParser'
+  in case optype of
+    Unary -> unaryParser
+    (Binary assoc) -> case assoc of
+      LeftAssoc -> leftParser
+      RightAssoc -> rightParser
+      NoAssoc -> noAssocParser

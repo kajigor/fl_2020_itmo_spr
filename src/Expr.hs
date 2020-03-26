@@ -10,14 +10,17 @@ import           Control.Applicative (Alternative (..))
 
 parseExpr :: Parser String String AST
 parseExpr = uberExpr 
-              [(makeOpParser ["||"], RightAssoc),
-               (makeOpParser ["&&"], RightAssoc),
-               (makeOpParser ["==", "/=", "<=", "<", ">=", ">"], NoAssoc),
-               (makeOpParser ["+", "-"], LeftAssoc),
-               (makeOpParser ["*", "/"], LeftAssoc),
-               (makeOpParser ["^"], RightAssoc)]
+              [(makeOpParser ["||"], Binary RightAssoc),
+               (makeOpParser ["&&"], Binary RightAssoc),
+               (makeOpParser ["!"], Unary),
+               (makeOpParser ["==", "/=", "<=", "<", ">=", ">"], Binary NoAssoc),
+               (makeOpParser ["+", "-"], Binary LeftAssoc),
+               (makeOpParser ["*", "/"], Binary LeftAssoc),
+               (makeOpParser ["-"], Unary),
+               (makeOpParser ["^"], Binary RightAssoc)]
               (parseTerm <|> Ident <$> parseIdent)
               BinOp
+              UnaryOp
 
 -- Парсер операторов на основе keyword парсера
 -- Допускает произвольное число пробелов вокруг операторов
@@ -37,6 +40,7 @@ makeOpParser ops = keywordWeak ops >>= asOperator where
       ">=" -> return Ge
       "<"  -> return Lt
       "<=" -> return Le
+      "!"  -> return Not
       "&&" -> return And
       "||" -> return Or
       _    -> fail' "Failed to parse an operator"
@@ -48,17 +52,18 @@ parseIdent = (:) <$> letter <*> many (letter <|> digit) where
   letter = satisfy isLetter <|> underscore
   digit = satisfy isDigit
 
--- Парсер чисел
-parseNum :: Parser String String Int
-parseNum = baseNumParser <|> (negate <$ sign <*> (spaces *> baseNumParser)) where
-  sign = symbol '-'
-  spaces = many $ symbol ' '
-  baseNumParser = toNum <$> some digit
+parseNatural :: Parser String String Int
+parseNatural = toNum <$> some digit where
   toNum = foldl (\acc d -> 10 * acc + digitToInt d) 0
   digit = satisfy isDigit
 
+parseNum :: Parser String String Int
+parseNum = parseNatural <|> (negate <$ sign <*> (spaces *> parseNatural)) where
+  sign = symbol '-'
+  spaces = many $ symbol ' '
+
 parseTerm :: Parser String String AST
-parseTerm = Num <$> parseNum <|> (lbr *> spaces *> parseExpr <* spaces <* rbr)
+parseTerm = Num <$> parseNatural <|> (lbr *> spaces *> parseExpr <* spaces <* rbr)
   where
     lbr = symbol '('
     rbr = symbol ')'
