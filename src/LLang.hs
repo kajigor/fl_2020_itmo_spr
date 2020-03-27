@@ -2,7 +2,7 @@ module LLang where
 
 import AST (AST (..), Operator (..))
 
-import Combinators (Parser (..), symbol)
+import Combinators (Parser (..), Result (..), symbol, fail')
 import Expr
 import Control.Applicative(Alternative (..))
 import Keyword
@@ -35,6 +35,22 @@ stmt =
          )
     ]
 
+
+lLangKW :: Parser String String String
+lLangKW = keyword ["if",
+                   "then",
+                   "else",
+                   "while",
+                   "read",
+                   "write"]
+
+parseVarName = do
+  varName <- parseIdent
+  case runParser lLangKW varName of
+    Failure _ -> return varName
+    _ -> fail' "Variable name can't be a language keyword"
+    
+
 spaceChars = (symbol ' ' <|> symbol '\t' <|> symbol '\n')
 manySpace = many spaceChars
 someSpace = some spaceChars
@@ -64,7 +80,7 @@ parseL = lFromList <$> some parseStatement where
   parseL' = parseL <|> (const (Seq []) <$> manySpace)
   parseStatement :: Parser String String LAst
   parseStatement = parseAssign <|> parseCond <|> parseWhile <|> parseWrite <|> parseRead
-  parseAssign = manySpace *> (Assign <$> parseIdent <* assignOpParser <*> parseExpr) <* semiOpParser
+  parseAssign = manySpace *> (Assign <$> parseVarName <* assignOpParser <*> parseExpr) <* semiOpParser
   parseCond = manySpace *> (If <$> (parseString "if" *> parseRound parseExpr) <*> 
                                    (parseString "then" *> parseCurly parseL')  <*>
                                    (parseString "else" *> parseCurly parseL'))

@@ -103,6 +103,23 @@ unit_parseLFailures = do
   assertBool "" $ isFailure $ runParser parseL "while (x < 5) {while (y > 5) {x = 12}}"
   assertBool "" $ isFailure $ runParser parseL "if (x == 5) then { while (y < 12) { y = y + 1;}} else { x = 5}"
 
+unit_parseLAssignToKeyword :: Assertion
+unit_parseLAssignToKeyword = do
+  assertBool "" $ isFailure $ runParser parseL "write = 15;"
+  runParser parseL "writeToLog = 20;" @?= Success "" (Assign "writeToLog" (Num 20))
+  assertBool "" $ isFailure $ runParser parseL "if (x > 5) then {x = 5;} else {read=15;}"
+  runParser parseL "readCount = 15 + 5;" @?= Success "" (Assign "readCount" (BinOp Plus (Num 15) (Num 5)))
+  assertBool "" $ isFailure $ runParser parseL "if = 12;"
+  assertBool "" $ isFailure $ runParser parseL "then = 10;"
+  assertBool "" $ isFailure $ runParser parseL "else = 15 * 2;"
+  runParser parseL "ifcase = 10; thendo = 15; elseStay = 13;" @?= Success ""
+    (Seq [(Assign "ifcase" $ Num 10),
+          (Assign "thendo" $ Num 15),
+          (Assign "elseStay" $ Num 13)])
+  assertBool "" $ isFailure $ runParser parseL "while (x > 5) {while = 13;}"
+  runParser parseL "whileCase = 13;" @?= Success "" (Assign "whileCase" $ Num 13)
+
+
 unit_parseLPartialParse :: Assertion
 unit_parseLPartialParse = do
   runParser parseL " x = 20; y = 5 " @?= Success "y = 5 " (Assign "x" (Num 20))
