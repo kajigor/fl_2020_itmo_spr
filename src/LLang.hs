@@ -1,7 +1,7 @@
 module LLang where
 
 import AST (AST (..), Operator (..), Subst (..))
-import Combinators (Parser (..))
+import Combinators (Parser (..), Result(..), symbol, fail')
 import qualified Data.Map as Map
 import Data.List (intercalate)
 import Text.Printf (printf)
@@ -52,15 +52,8 @@ stmt =
          )
     ]
 
-<<<<<<< HEAD
-parseL :: Parser String String LAst
-parseL = error "parseL undefined"
-
 initialConf :: [Int] -> Configuration
 initialConf input = Conf Map.empty input []
-
-eval :: LAst -> Configuration -> Maybe Configuration
-eval = error "eval not defined"
 
 instance Show Function where
   show (Function name args funBody) =
@@ -94,7 +87,22 @@ instance Show LAst where
 ident = (+1)
 
 identation n = if n > 0 then printf "%s|_%s" (concat $ replicate (n - 1) "| ") else id
-=======
+
+lLangKW :: Parser String String String
+lLangKW = keyword ["if",
+                   "then",
+                   "else",
+                   "while",
+                   "read",
+                   "write"]
+
+parseVarName = do
+  varName <- parseIdent
+  case runParser lLangKW varName of
+    Failure _ -> return varName
+    _ -> fail' "Variable name can't be a language keyword"
+    
+
 spaceChars = (symbol ' ' <|> symbol '\t' <|> symbol '\n')
 manySpace = many spaceChars
 someSpace = some spaceChars
@@ -124,7 +132,7 @@ parseL = lFromList <$> some parseStatement where
   parseL' = parseL <|> (const (Seq []) <$> manySpace)
   parseStatement :: Parser String String LAst
   parseStatement = parseAssign <|> parseCond <|> parseWhile <|> parseWrite <|> parseRead
-  parseAssign = manySpace *> (Assign <$> parseIdent <* assignOpParser <*> parseExpr) <* semiOpParser
+  parseAssign = manySpace *> (Assign <$> parseVarName <* assignOpParser <*> parseExpr) <* semiOpParser
   parseCond = manySpace *> (If <$> (parseString "if" *> parseRound parseExpr) <*> 
                                    (parseString "then" *> parseCurly parseL')  <*>
                                    (parseString "else" *> parseCurly parseL'))
@@ -132,4 +140,3 @@ parseL = lFromList <$> some parseStatement where
                                        parseCurly parseL')
   parseWrite = manySpace *> (Write <$> (parseString "write" *> parseRound parseExpr)) <* semiOpParser
   parseRead = manySpace *> (Read <$> (parseString "read" *> someSpace *> parseIdent)) <* semiOpParser
->>>>>>> First commit
