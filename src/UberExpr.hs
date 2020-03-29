@@ -14,15 +14,13 @@ uberExpr [] termP _ = termP
 
 uberExpr ((op, LeftAssoc):opParsers) termP f = do
   lst <- sepByOp op (uberExpr opParsers termP f)
-  let (op, ast) = foldl1' f lst
-  return ast
+  return $ snd (foldl1' f lst)
 
 uberExpr ((op, RightAssoc):opParsers) termP f = do
   lst <- sepByOp op (uberExpr opParsers termP f)
-  let (op, ast) = foldr1' f lst
-  return ast
+  return $ snd (foldr1' f lst)
 
-uberExpr all@((op, NoAssoc):opParsers) termP f = parser `alt` termP
+uberExpr ((op, NoAssoc):opParsers) termP f = parser `alt` termP
    where parser = do
           term <- termP
           operator <- op

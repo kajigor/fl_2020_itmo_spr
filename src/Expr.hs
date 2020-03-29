@@ -2,34 +2,30 @@ module Expr where
 
 import           AST         (AST (..), Operator (..))
 import           Combinators (Parser (..), Result (..), alt, elem', fail', map',
-                              return', satisfy, seq', symbol, empty', sepBy1, some')
+                              return', satisfy, symbol, empty')
 import           Data.Char   (isDigit, digitToInt)
+import           UberExpr    (foldl1')
 
-sepByOp :: Parser String String Operator -> Parser String String AST -> Parser String String [(Operator, AST)]
+sepByOp :: Parser String String Operator -> Parser String String AST -> Parser String String [(Maybe Operator, AST)]
 sepByOp sep elem = prsr `alt` prsr'
   where prsr = do
           el <- elem
           op <- sep
           elems <- sepByOp sep elem
-          return ((op, el):elems)
+          return ((Just op, el):elems)
         prsr' = do
           el <- elem
-          return [(None, el)]
-
-folder :: (Operator, AST) -> (Operator, AST) -> (Operator, AST)
-folder (op, ast) (op', ast') = (op', BinOp op ast ast')
+          return [(Nothing, el)]
 
 parseMult :: Parser String String AST
 parseMult = do
       lst <- sepByOp parseMultDiv parseTerm
-      let (_, ans) = foldl1 folder lst
-      return ans
+      return $ snd (foldl1' BinOp lst)
 
 parseSum :: Parser String String AST
 parseSum = do
       lst <- sepByOp parseOp parseMult
-      let (_, ans) = foldl1 folder lst
-      return ans
+      return $ snd (foldl1' BinOp lst)
 
 -- Парсер чисел
 parseNum :: Parser String String Int
@@ -68,7 +64,6 @@ parseTerm = map' Num parseNum `alt` do
       e <- parseSum
       symbol ')'
       return e
-
 
 -- Парсер арифметических выражений над целыми числами с операциями +,-,*,/.
 parseExpr :: Parser String String AST
