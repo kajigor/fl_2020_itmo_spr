@@ -64,6 +64,9 @@ eof = Parser $ \input -> case input of
 symbol :: (Eq a) => a -> Parser String [a] a
 symbol c = satisfy (==c)
 
+string :: (Eq a) => [a] -> Parser String [a] [a]
+string = mapM symbol
+
 -- Всегда завершается ошибкой
 fail' :: e -> Parser e i a
 fail' e = Parser $ \input -> Failure e

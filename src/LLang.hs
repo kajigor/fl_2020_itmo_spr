@@ -1,7 +1,13 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 module LLang where
 
-import AST (AST (..), Operator (..))
-import Combinators (Parser (..))
+import AST
+import Combinators
+import Expr
+
+import Control.Monad
+import Control.Applicative
+
 
 type Expr = AST
 
@@ -32,4 +38,51 @@ stmt =
     ]
 
 parseL :: Parser String String LAst
-parseL = error "parseL undefined"
+parseL = seq
+  where
+    -- seq :: Parser String String LAast
+    seq :: Parser String String LAst =
+      Seq <$>
+      (symbol '(' *>
+      string "do" *>
+      many (symbol '(' *> stmt <* symbol ')') <*
+      symbol ')'
+      )
+
+    stmt = if' <|> while <|> assign <|> read <|> write <|> seq
+
+    if' =
+      If <$>
+      (
+        string "if" *> symbol '(' *> expr <* symbol ')'
+      ) <*>
+      (
+        symbol '{' *> stmt <* symbol '}'
+      ) <*>
+      (
+        symbol '{' *> stmt <* symbol '}'
+      )
+
+    while =
+      While <$>
+      (
+        string "while" *> symbol '(' *> expr <* symbol ')'
+      ) <*>
+      (
+        symbol '{' *> stmt <* symbol '}'
+      )
+
+    assign = Assign <$> ident <*> (string ":=" *> expr)
+    read = Read <$> (string "read" *> ident)
+    write = Write <$> (string "write" *> spc *> expr)
+    expr = parseExpr
+    spc = many (symbol ' ')
+    ident = (:) <$> firstLetter <*> rest
+      where
+        firstLetter = lowerCase <|> upperCase <|> symbol '_'
+        rest = many $ (firstLetter <|> number)
+
+        lowerCase = between 'a' 'z'
+        upperCase = between 'A' 'Z'
+        number = between '0' '9'
+        between f t = satisfy (\x -> x >= f && x <= t)

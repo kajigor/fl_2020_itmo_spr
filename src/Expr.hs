@@ -12,25 +12,27 @@ import           Control.Monad
 -- Парсер для произведения/деления термов
 parseMult :: Parser String String AST
 parseMult = uberExpr
-  [ (symbol '*' *> pure Mult, LeftAssoc)
-  , (symbol '/' *> pure Div,  LeftAssoc)
+  [ (symbol '*' *> pure Mult, Binary LeftAssoc)
+  , (symbol '/' *> pure Div,  Binary LeftAssoc)
   ]
   parseTerm
   BinOp
+  UnaryOp
 
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
 parseSum = uberExpr
-  [ (symbol '+' *> pure Plus,  LeftAssoc)
-  , (symbol '-' *> pure Minus, LeftAssoc)
+  [ (symbol '+' *> pure Plus,  Binary LeftAssoc)
+  , (symbol '-' *> pure Minus, Binary LeftAssoc)
   ]
   parseMult
   BinOp
+  UnaryOp
 
 -- Парсер чисел
 parseNum :: Parser String String Int
 parseNum =
-  number <|> symbol '-' *> (negate <$> number)
+  number
   where
     number = fmap toNum go
     digit = satisfy isDigit
@@ -68,24 +70,31 @@ parseTerm =
 parseExpr :: Parser String String AST
 parseExpr =
   uberExpr
-  [ (mapM symbol "||" *> pure Or, RightAssoc)
-  , (mapM symbol "&&" *> pure And, RightAssoc)
-  , (asum [ mapM symbol "==" *> pure Equal
-          , mapM symbol "/=" *> pure Nequal
-          , mapM symbol "<=" *> pure Le
+  [ (string "||" *> pure Or,                    Binary RightAssoc)
+  , (string "&&" *> pure And,                   Binary RightAssoc)
+  , (symbol '!' *> pure Not,                    Unary)
+  , (asum [ string "==" *> pure Equal
+          , string "/=" *> pure Nequal
+          , string "<=" *> pure Le
           , symbol          '<' *> pure Lt
-          , mapM symbol ">=" *> pure Ge
+          , string ">=" *> pure Ge
           , symbol          '>' *> pure Gt
-          ], NoAssoc)
-  , (symbol '+' *> pure Plus <|> symbol '-' *> pure Minus, LeftAssoc)
-  , (symbol '*' *> pure Mult <|> symbol '/' *> pure Div, LeftAssoc)
-  , (symbol '^' *> pure Pow, RightAssoc)
+          ],                                    Binary NoAssoc)
+  , (symbol '+' *> pure Plus <|>
+     symbol '-' *> pure Minus,                  Binary LeftAssoc)
+  , (symbol '*' *> pure Mult <|>
+     symbol '/' *> pure Div,                    Binary LeftAssoc)
+  , (symbol '-' *> pure Minus,                  Unary)
+  , (symbol '^' *> pure Pow,                    Binary RightAssoc)
   ]
+
   ( (Num <$> parseNum) <|>
     (Ident <$> parseIdent) <|>
     (symbol '(' *> parseExpr <* symbol ')')
   )
+
   BinOp
+  UnaryOp
 
 parseIdent :: Parser String String String
 parseIdent = liftM2 (:) alpha (many alphaNumeric)

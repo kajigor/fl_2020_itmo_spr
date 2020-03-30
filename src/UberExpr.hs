@@ -14,23 +14,26 @@ uberExpr :: Monoid e
          -> (op -> ast -> ast -> ast) -- конструктор узла дерева для бинарной операции
          -> (op -> ast -> ast)        -- конструктор узла для унарной операции
          -> Parser e i ast
-uberExpr table child cont =
+uberExpr table child binary unary =
   foldr step child table
   where
-    step (opParser, LeftAssoc)  child = do
+    step (opParser, Binary LeftAssoc)  child = do
         c <- child
-        foldl (\x (op, t) -> cont op x t) c <$>
+        foldl (\x (op, t) -> binary op x t) c <$>
           many ((,) <$> opParser <*> child)
 
-    step (opParser, RightAssoc) child = go
+    step (opParser, Binary RightAssoc) child = go
       where
         go = do
           c <- child
           (do
               op <- opParser
               nxt <- go
-              pure $ cont op c nxt
+              pure $ binary op c nxt
             ) <|> pure c
 
-    step (opParser, NoAssoc)    child =
-      (flip cont <$> child <*> opParser <*> child) <|> child
+    step (opParser, Binary NoAssoc)    child =
+      (flip binary <$> child <*> opParser <*> child) <|> child
+
+    step (opParser, Unary)             child =
+      (unary <$> opParser <*> child) <|> child
