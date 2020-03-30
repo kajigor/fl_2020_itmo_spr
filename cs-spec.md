@@ -5,12 +5,12 @@
 ```bash
 LANG := SEQ
 STMT := IF | WHILE | ASSIGN | READ | WRITE | SEQ
-IF := 'if' '(' EXPR ')' '{' STMT '}' 'else' '{' STMT '}'
-WHILE := 'while' '(' EXPR ')' '{' STMT '}'
+IF := 'if' '(' EXPR ')' '{' SEQ '}' '{' SEQ '}'
+WHILE := 'while' '(' EXPR ')' '{' SEQ '}'
 ASSIGN := IDENT ':=' EXPR
 READ := 'read' IDENT
 WRITE := 'write' EXPR
-SEQ := '(' 'do' ( '(' STMT ')' )* ')'
+SEQ := ( '(' STMT ')' )*
 EXPR := OPEXPR1
 OPEXPR1 := OPEXPR2 ('||' OPEXPR2)*
 OPEXPR2 := OPEXPR3 ('&&' OPEXPR3)*
