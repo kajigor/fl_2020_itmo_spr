@@ -5,6 +5,7 @@ import           Combinators         (Parser, Result (..), elem', runParser,
 import           Control.Applicative (many, some)
 import           Test.Tasty.HUnit    (Assertion, (@?=))
 
+
 predErrMsg :: String
 predErrMsg = "Predicate failed"
 
