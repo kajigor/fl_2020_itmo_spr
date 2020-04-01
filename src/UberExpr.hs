@@ -20,12 +20,12 @@ uberExpr ((op, RightAssoc):opParsers) termP f = do
   lst <- sepByOp op (uberExpr opParsers termP f)
   return $ snd (foldr1' f lst)
 
-uberExpr ((op, NoAssoc):opParsers) termP f = parser `alt` termP
+uberExpr ((op, NoAssoc):opParsers) termP f = parser `alt` uberExpr opParsers termP f 
    where parser = do
-          term <- termP
-          operator <- op
-          term2 <- uberExpr opParsers termP f
-          return $ f operator term term2
+            term <- uberExpr opParsers termP f 
+            operator <- op
+            term2 <- uberExpr opParsers termP f 
+            return $ f operator term term2 
 
 foldl1' :: (op -> ast -> ast -> ast) -> [(Maybe op, ast)] -> (Maybe op, ast)
 foldl1' f [x] = x

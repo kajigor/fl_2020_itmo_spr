@@ -2,9 +2,9 @@ module Expr where
 
 import           AST         (AST (..), Operator (..))
 import           Combinators (Parser (..), Result (..), alt, elem', fail', map',
-                              return', satisfy, symbol, empty')
+                              return', satisfy, symbol, empty', many', some')
 import           Data.Char   (isDigit, digitToInt)
-import           UberExpr    (foldl1')
+import           UberExpr    (uberExpr, foldl1', Associativity (..))
 
 sepByOp :: Parser String String Operator -> Parser String String AST -> Parser String String [(Maybe Operator, AST)]
 sepByOp sep elem = prsr `alt` prsr'
@@ -27,10 +27,36 @@ parseSum = do
       lst <- sepByOp parseOp parseMult
       return $ snd (foldl1' BinOp lst)
 
+
+fullAlphabet :: [Char]
+fullAlphabet = symbolsOfAlphabet ++ digitsOfAlphabet ++ suffixCharsOfAlphabet
+
+symbolsOfAlphabet :: [Char]
+symbolsOfAlphabet =  ['A'..'Z'] ++ ['a'..'z'] ++ ['_']
+
+digitsOfAlphabet :: [Char]
+digitsOfAlphabet = ['0'..'9']
+
+suffixCharsOfAlphabet :: [Char]
+suffixCharsOfAlphabet = ['\'']
+
+ofList :: [Char] -> Parser String String Char
+ofList list = satisfy (\x -> x `elem` list)
+
+parseIdent :: Parser String String String
+parseIdent = noDigitsAtTheStart >>= whateverLetter >>= ticksAtTheEnd
+    where noDigitsAtTheStart = some' (ofList symbolsOfAlphabet)
+          whateverLetter = \x -> do
+                rest <- many' (ofList (symbolsOfAlphabet ++ digitsOfAlphabet))
+                return $ x ++ rest
+          ticksAtTheEnd = \x -> do
+                ticks <- many' (ofList suffixCharsOfAlphabet)
+                return $ x ++ ticks
+          
 -- Парсер чисел
 parseNum :: Parser String String Int
 parseNum =
-    map' toNum go
+    map' toNum go `alt` (symbol '-' *> map' negate parseNum)
   where
     digit = satisfy isDigit
     empty' = return' []
@@ -54,20 +80,62 @@ toOperator '+' = return' Plus
 toOperator '*' = return' Mult
 toOperator '-' = return' Minus
 toOperator '/' = return' Div
+toOperator '^' = return' Pow
 toOperator _   = fail' "Failed toOperator"
+
+symbols :: String -> Parser String String String
+symbols [] = return' []
+symbols (x:xs) = do
+    c <- symbol x
+    rest <- symbols xs
+    return $ x:xs
+
+toOp :: String -> Parser String String Operator
+toOp "==" = return' Equal
+toOp "/=" = return' Nequal
+toOp "<=" = return' Le
+toOp "<"  = return' Lt
+toOp ">=" = return' Ge 
+toOp ">"  = return' Gt
+toOp "&&" = return' And
+toOp "||" = return' Or
+toOp _     = fail' "Failed toOp"
+
+mult  = symbol '*' >>= toOperator
+sum'  = symbol '+' >>= toOperator
+minus = symbol '-' >>= toOperator
+div'  = symbol '/' >>= toOperator
+pow   = symbol '^' >>= toOperator
+eq    = symbols "=="  >>= toOp
+neq   = symbols "/=" >>= toOp
+leq   = symbols "<="  >>= toOp
+lt    = symbols "<"   >>= toOp
+geq   = symbols ">="  >>= toOp
+gt    = symbols ">"   >>= toOp
+and'  = symbols "&&"  >>= toOp
+or'   = symbols "||"  >>= toOp
 
 -- Парсер для терма: либо число, либо выражение в скобках.
 -- Скобки не хранятся в AST за ненадобностью.
 parseTerm :: Parser String String AST
-parseTerm = map' Num parseNum `alt` do
+parseTerm = map' Num parseNum `alt` map' Ident parseIdent `alt` do
       symbol '('
       e <- parseSum
       symbol ')'
       return e
 
--- Парсер арифметических выражений над целыми числами с операциями +,-,*,/.
+-- Парсер арифметических выражений над целыми числами с арифметическими операциями +,-,*,/,^ и бинарными логическими операциями.
 parseExpr :: Parser String String AST
-parseExpr = parseSum
+parseExpr =
+     uberExpr [ (or', RightAssoc)
+              , (and', RightAssoc)
+              , (eq `alt` neq `alt` leq `alt` lt `alt` geq `alt` gt, NoAssoc)
+              , (sum' `alt` minus, LeftAssoc)
+              , (mult `alt` div', LeftAssoc)
+              , (pow, RightAssoc)
+              ] 
+              (map' Num parseNum `alt` map' Ident parseIdent `alt` (symbol '(' *> parseExpr <* symbol ')') )
+              BinOp
 
 compute :: AST -> Int
 compute (Num x) = x

@@ -3,7 +3,7 @@ module Test.Expr where
 import           AST              (AST (..), Operator (..))
 import           Combinators      (Result (..), runParser)
 import           Expr             (evaluate, parseNum, parseOp,
-                                   parseExpr, parseIdent)
+                                   parseExpr, parseMult, parseSum, parseIdent)
 import           Test.Tasty.HUnit (Assertion, (@?=), assertBool)
 
 isFailure (Failure _) = True
@@ -60,6 +60,10 @@ unit_parseIdent = do
     assertBool "" $ isFailure $ runParser parseIdent "123abc"
     assertBool "" $ isFailure $ runParser parseIdent "123"
     assertBool "" $ isFailure $ runParser parseIdent ""
+    runParser parseIdent "hello'" @?= Success "" "hello'"
+    runParser parseIdent "hello'''''''" @?= Success "" "hello'''''''"
+    runParser parseIdent "hel''lo" @?= Success "lo" "hel''"
+    assertBool "" $ isFailure $ runParser parseIdent "'hello"
 
 
 unit_parseOp :: Assertion
