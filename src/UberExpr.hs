@@ -4,10 +4,14 @@ import           Combinators (Parser (..), alt)
 
 data Associativity = LeftAssoc | RightAssoc | NoAssoc
 
+data OpType = Binary Associativity
+            | Unary
+
 uberExpr :: Monoid e
-         => [(Parser e i op, Associativity)]
-         -> Parser e i ast
-         -> (op -> ast -> ast -> ast)
+         => [(Parser e i op, OpType)] -- список операций с их арностью и, в случае бинарных, ассоциативностью
+         -> Parser e i ast            -- парсер элементарного выражения
+         -> (op -> ast -> ast -> ast) -- конструктор узла дерева для бинарной операции
+         -> (op -> ast -> ast)        -- конструктор узла для унарной операции
          -> Parser e i ast
 
 uberExpr [] termP _ = termP
