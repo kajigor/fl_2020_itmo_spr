@@ -1,6 +1,6 @@
 
 
-## **L** is for stripped down [Lua](http://lua-users.org/wiki/LuaFourOneGrammar)
+## **L** is for stripped down [Lua]
 
 ### Grammar
 ```
@@ -182,8 +182,7 @@ num ::= digit | digit num
 
 6. Как выглядят ключевые слова?
 
-Cм. [```reserved```][reserved].
+Cм. [```reserved```].
 
-
-[reserved](#grammar)
-
+[Lua]: http://lua-users.org/wiki/LuaFourOneGrammar
+[```reserved```]: #grammar
