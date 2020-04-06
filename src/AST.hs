@@ -16,7 +16,6 @@ data Operator = Plus
               | Ge
               | Le
               | Not
-              | UnaryMinus
               deriving (Eq)
 
 
@@ -42,7 +41,6 @@ instance Show Operator where
   show Ge = ">="
   show Le = "<="
   show Not = "!"
-  show UnaryMinus = "-"
 
 
 instance Show AST where

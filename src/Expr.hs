@@ -63,6 +63,7 @@ toOperator '/' = return Div
 toOperator '^' = return Pow
 toOperator '<' = return Lt
 toOperator '>' = return Gt
+toOperator '!' = return Not
 toOperator _   = fail' "Failed toOperator"
 
 
@@ -91,9 +92,11 @@ parseTerm = Num <$> parseNum <|> parseBr
 parseExpr :: Parser String String AST
 parseExpr =  uberExpr [(parseOrOp, Binary RightAssoc),
                      (parseAndOp, Binary RightAssoc),
+                     (parseNotOp, Unary),
                      (parseGeqOp <|> parseLeqOp <|> parseLtOp <|> parseGtOp <|> parseEqOp <|> parseNeqOp, Binary NoAssoc),
                      (parseAddOp <|> parseSubOp, Binary LeftAssoc),
                      (parseMultOp <|> parseDivOp, Binary LeftAssoc),
+                     (parseSubOp, Unary),
                      (parsePowOp, Binary RightAssoc)]
            (Num <$> parseNum <|> symbol '(' *> parseExpr <* symbol ')' <|> Ident <$> parseIdent)
            BinOp
@@ -106,6 +109,7 @@ parseExpr =  uberExpr [(parseOrOp, Binary RightAssoc),
                parsePowOp = symbol '^' >>= toOperator
                parseLtOp = symbol '<' >>= toOperator
                parseGtOp = symbol '>' >>= toOperator
+               parseNotOp = symbol '!' >>= toOperator
                parseOrOp = (:) <$> (symbol '|') <*> ((:[]) <$> (symbol '|')) >>= toOperatorStr
                parseAndOp = (:) <$> (symbol '&') <*> ((:[]) <$> (symbol '&')) >>= toOperatorStr
                parseLeqOp = (:) <$> (symbol '<') <*> ((:[]) <$> (symbol '=')) >>= toOperatorStr
