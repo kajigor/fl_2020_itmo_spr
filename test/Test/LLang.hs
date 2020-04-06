@@ -9,6 +9,8 @@ import           Test.Tasty.HUnit
 isFailure (Failure _) = True
 isFailure  _          = False
 
+isSuccess x = not (isFailure x) @?= True
+
 unit_unaryEpxr = do
   runParser ident "asd" @?= Success "" "asd"
 
@@ -56,3 +58,6 @@ unit_unaryEpxr = do
             ]
           ]
     )
+
+  isSuccess $ runParser parseL "(a := 1)"
+  isSuccess $ runParser parseL "(a:=1)"

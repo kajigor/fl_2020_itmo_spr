@@ -60,7 +60,7 @@ while =
     symbol '{' *> spc *> seq <* spc <* symbol '}'
   )
 
-assign = Assign <$> ident <*> (space *> string ":=" *> spc *> parseExpr)
+assign = Assign <$> ident <*> (spc *> string ":=" *> spc *> parseExpr)
 read = Read <$> (string "read" *> space *> ident)
 write = Write <$> (string "write" *> space *> parseExpr)
 spc = many (satisfy isSpace)
