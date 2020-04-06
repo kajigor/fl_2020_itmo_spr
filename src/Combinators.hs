@@ -13,28 +13,47 @@ newtype Parser error input result
   = Parser { runParser :: input -> Result error input result}
 
 instance Functor (Parser error input) where
-  fmap = error "fmap not implemented"
+  fmap f p =  Parser $ \input ->
+        case runParser p input of
+            Success i a -> Success i (f a)
+            Failure e   -> Failure e
 
 instance Applicative (Parser error input) where
-  pure = error "pure not implemented"
-  (<*>) = error "<*> not implemented"
+  pure = return
+  (<*>) p1 p2 = Parser $ \input ->
+         case runParser p1 input of
+            Success i a -> runParser (a <$> p2) i                           
+            Failure e   -> Failure e
 
 instance Monad (Parser error input) where
-  return = error "return not implemented"
+  return x = Parser (\input -> Success input x)
+  (>>=) p f = Parser $ \input ->
+       case runParser p input of
+           Success i a -> runParser (f a) i
+           Failure e   -> Failure e
 
-  (>>=) = error ">>= not implemented"
 
 instance Monoid error => Alternative (Parser error input) where
-  empty = error "empty not implemented"
+  empty = Parser (\input -> Failure mempty)
+  (<|>) p q = Parser $ \input ->
+       case runParser p input of
+           Failure _ -> runParser q input
+           x         -> x
 
-  (<|>) = error "<|> not implemented"
 
 -- Принимает последовательность элементов, разделенных разделителем
 -- Первый аргумент -- парсер для разделителя
 -- Второй аргумент -- парсер для элемента
 -- В последовательности должен быть хотя бы один элемент
-sepBy1 :: Parser e i sep -> Parser e i a -> Parser e i [a]
-sepBy1 sep elem = error "sepBy1 not implemented"
+sepBy1 :: Monoid e => Parser e i sep -> Parser e i a -> Parser e i [a]
+sepBy1 sep elem = (:) <$> elem <*> many' p
+         where 
+           p = sep *> elem
+
+sepBy1' :: Monoid e => Parser e i sep -> Parser e i a -> Parser e i (a, [(sep, a)])
+sepBy1' sep elem = (,) <$> elem <*> (many' ((,) <$> sep <*> elem))
+
+
 
 -- Проверяет, что первый элемент входной последовательности удовлетворяет предикату
 satisfy :: (a -> Bool) -> Parser String [a] a
@@ -51,6 +70,22 @@ elem' = satisfy (const True)
 symbol :: (Eq a) => a -> Parser String [a] a
 symbol c = satisfy (==c)
 
+
+
 -- Всегда завершается ошибкой
 fail' :: e -> Parser e i a
 fail' e = Parser $ \input -> Failure e
+
+-- Всегда завершается успехом, вход не читает, возвращает данное значение
+return' :: a -> Parser e i a
+return' x = Parser $ \input -> Success input x
+
+--Последовательное применение одного и того же парсера 0 или более раз
+many' :: Monoid e => Parser e i a -> Parser e i [a]
+many' p = some' p <|> return []
+
+
+--Последовательное применения одного и того же парсера 1 или более раз
+some' :: Monoid e => Parser e i a -> Parser e i [a]
+some' p = p >>= \r -> (r:) <$> (some' p <|> return [])
+
