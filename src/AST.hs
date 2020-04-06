@@ -1,3 +1,4 @@
+ 
 module AST where
 
 import Text.Printf (printf)
@@ -15,9 +16,11 @@ data Operator = Plus
               | Le
               | And
               | Or
+              | Not
               deriving (Eq)
 
 data AST = BinOp Operator AST AST
+         | UnaryOp Operator AST
          | Ident String
          | Num Int
          deriving (Eq)
@@ -36,6 +39,7 @@ instance Show Operator where
   show Le     = "<="
   show And    = "&&"
   show Or     = "||"
+  show Not    = "!"
 
 
 instance Show AST where
@@ -45,6 +49,7 @@ instance Show AST where
         (if n > 0 then printf "%s|_%s" (concat $ replicate (n - 1) "| ") else id) $
         case t of
           BinOp op l r -> printf "%s\n%s\n%s" (show op) (go (ident n) l) (go (ident n) r)
+          UnaryOp op x -> printf "%s\n%s" (show op) (go (ident n) x)
           Ident x -> x
           Num i -> show i
       ident = (+1)

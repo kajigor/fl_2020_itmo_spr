@@ -5,6 +5,9 @@ import           Control.Applicative(Alternative (..))
 
 data Associativity = LeftAssoc | RightAssoc | NoAssoc
 
+data OpType = Binary Associativity
+            | Unary
+
 uberExpr :: Monoid e
          => [(Parser e i op, Associativity)]
          -> Parser e i ast
