@@ -67,10 +67,10 @@ toOperator _   = fail' "Failed toOperator"
 toOperatorStr :: String -> Parser String String Operator
 toOperatorStr "||" = return Or
 toOperatorStr "&&" = return And
-toOperatorStr "==" = return Eq
-toOperatorStr "/=" = return Neq
-toOperatorStr ">=" = return Geq
-toOperatorStr "<=" = return Leq
+toOperatorStr "==" = return Equal
+toOperatorStr "/=" = return Nequal
+toOperatorStr ">=" = return Ge
+toOperatorStr "<=" = return Le
 toOperatorStr _   = fail' "Failed toOperator"
 
 -- Парсер для терма: либо число, либо выражение в скобках.

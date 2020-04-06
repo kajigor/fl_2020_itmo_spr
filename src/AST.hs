@@ -9,12 +9,12 @@ data Operator = Plus
               | Pow
               | And
               | Or
-              | Eq
-              | Neq 
+              | Equal
+              | Nequal
               | Lt
               | Gt
-              | Geq
-              | Leq	
+              | Ge
+              | Le
               deriving (Eq)
 
 data AST = BinOp Operator AST AST
@@ -30,12 +30,12 @@ instance Show Operator where
   show Pow = "^"
   show And = "&&"
   show Or = "||"
-  show Eq = "=="
-  show Neq = "/="
+  show Equal = "=="
+  show Nequal = "/="
   show Lt = "<"
   show Gt = ">"
-  show Geq = ">="
-  show Leq = "<="
+  show Ge = ">="
+  show Le = "<="
 
 
 instance Show AST where
