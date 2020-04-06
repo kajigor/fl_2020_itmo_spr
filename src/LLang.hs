@@ -46,10 +46,8 @@ ignoreWhitespace parser = parseWhitespace *> parser <* parseWhitespace
 
 inBrackets :: Parser String String a -> Parser String String a
 inBrackets parser = symbol '(' *> parser <* symbol ')' 
--- inBrackets parser = parseWhitespace *> symbol '(' *> parseWhitespace *> parser <* parseWhitespace <* symbol ')' <* parseWhitespace
 
 parseCondition :: Parser String String AST
--- parseCondition = ignoreWhitespace $ inBrackets parseExpr
 parseCondition = inBrackets parseExpr
 
 parseRepeats :: Parser String String a -> Char -> Parser String String [a]
@@ -64,8 +62,6 @@ parseRepeats parser sep = parser' `alt` parser'' `alt` return []
             rest <- parseRepeats parser sep
             return $ var:rest
 
--- parseParams = inBrackets $ parseRepeats (ignoreWhitespace parseIdent) funcSeparator
--- parseArgs = inBrackets $ parseRepeats (ignoreWhitespace parseExpr) funcSeparator
 parseParams = inBrackets $ parseRepeats parseVarName paramsSeparator
 parseArgs = inBrackets $ parseRepeats parseExpr argsSeparator
 
@@ -80,7 +76,7 @@ parseVarName :: Parser String String String
 parseVarName = do
     name <- parseIdent
     guard (name `notElem` keywords)
-    return $ name
+    return name
 
 -- Проверяет, что переданная строка является ключевым словом и находится в начале input'а. 
 checkKeyword :: String -> Parser String String String
@@ -115,7 +111,6 @@ parseStatement "let" =  parseVarAssign `alt` parseFuncAssign
                 name <- parseVarName
                 symbol '='
                 expr <- parseExpr
-                --symbol ';'
                 return $ Let name expr 
           parseFuncAssign = do
                 func <- keyword keywords
@@ -143,5 +138,3 @@ parseStatements = map' Seq $ parseRepeats (keyword keywords >>= parseStatement) 
 parseL :: Parser String String LAst
 parseL = parseStatements
 
--- example:
-example = "if (1+1)then do done"
