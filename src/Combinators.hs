@@ -80,6 +80,13 @@ elem' = satisfy (const True)
 symbol :: (Eq a) => a -> Parser String [a] a
 symbol c = satisfy (==c)
 
+symbols :: String -> Parser String String String
+symbols [] = return []
+symbols (x:xs) = do
+    c <- symbol x
+    rest <- symbols xs
+    return $ x:xs
+
 -- В случае успешного разбора модифицирует результат при помощи функции f
 map' :: (a -> b) -> Parser e i a -> Parser e i b
 map' = fmap

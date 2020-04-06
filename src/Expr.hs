@@ -2,31 +2,9 @@ module Expr where
 
 import           AST         (AST (..), Operator (..))
 import           Combinators (Parser (..), Result (..), alt, elem', fail', map',
-                              return', satisfy, symbol, empty', many', some')
+                              return', satisfy, symbol, empty', many', some', symbols)
 import           Data.Char   (isDigit, digitToInt)
-import           UberExpr    (uberExpr, foldl1', Associativity (..))
-
-sepByOp :: Parser String String Operator -> Parser String String AST -> Parser String String [(Maybe Operator, AST)]
-sepByOp sep elem = prsr `alt` prsr'
-  where prsr = do
-          el <- elem
-          op <- sep
-          elems <- sepByOp sep elem
-          return ((Just op, el):elems)
-        prsr' = do
-          el <- elem
-          return [(Nothing, el)]
-
-parseMult :: Parser String String AST
-parseMult = do
-      lst <- sepByOp parseMultDiv parseTerm
-      return $ snd (foldl1' BinOp lst)
-
-parseSum :: Parser String String AST
-parseSum = do
-      lst <- sepByOp parseOp parseMult
-      return $ snd (foldl1' BinOp lst)
-
+import           UberExpr    (uberExpr, foldl1', Associativity (..), OpType (..))
 
 fullAlphabet :: [Char]
 fullAlphabet = symbolsOfAlphabet ++ digitsOfAlphabet ++ suffixCharsOfAlphabet
@@ -55,8 +33,11 @@ parseIdent = noDigitsAtTheStart >>= whateverLetter >>= ticksAtTheEnd
           
 -- Парсер чисел
 parseNum :: Parser String String Int
-parseNum =
-    map' toNum go `alt` (symbol '-' *> map' negate parseNum)
+parseNum = parseNatural `alt` (symbol '-' *> map' negate parseNum)
+
+parseNatural :: Parser String String Int
+parseNatural =
+    map' toNum go
   where
     digit = satisfy isDigit
     empty' = return' []
@@ -69,11 +50,6 @@ parseNum =
 parseOp :: Parser String String Operator
 parseOp = elem' >>= toOperator
 
--- Не уверен считается ли это сравнением с образцом, но иначе не знаю
--- как сделать функцию parseMult.
-parseMultDiv :: Parser String String Operator
-parseMultDiv = satisfy (\x -> x == '/' || x == '*') >>= toOperator
-
 -- Преобразование символов операторов в операторы
 toOperator :: Char -> Parser String String Operator
 toOperator '+' = return' Plus
@@ -81,14 +57,8 @@ toOperator '*' = return' Mult
 toOperator '-' = return' Minus
 toOperator '/' = return' Div
 toOperator '^' = return' Pow
+toOperator '!' = return' Not
 toOperator _   = fail' "Failed toOperator"
-
-symbols :: String -> Parser String String String
-symbols [] = return' []
-symbols (x:xs) = do
-    c <- symbol x
-    rest <- symbols xs
-    return $ x:xs
 
 toOp :: String -> Parser String String Operator
 toOp "==" = return' Equal
@@ -106,6 +76,7 @@ sum'  = symbol '+' >>= toOperator
 minus = symbol '-' >>= toOperator
 div'  = symbol '/' >>= toOperator
 pow   = symbol '^' >>= toOperator
+not'  = symbol '!' >>= toOperator
 eq    = symbols "=="  >>= toOp
 neq   = symbols "/=" >>= toOp
 leq   = symbols "<="  >>= toOp
@@ -115,27 +86,21 @@ gt    = symbols ">"   >>= toOp
 and'  = symbols "&&"  >>= toOp
 or'   = symbols "||"  >>= toOp
 
--- Парсер для терма: либо число, либо выражение в скобках.
--- Скобки не хранятся в AST за ненадобностью.
-parseTerm :: Parser String String AST
-parseTerm = map' Num parseNum `alt` map' Ident parseIdent `alt` do
-      symbol '('
-      e <- parseSum
-      symbol ')'
-      return e
-
 -- Парсер арифметических выражений над целыми числами с арифметическими операциями +,-,*,/,^ и бинарными логическими операциями.
 parseExpr :: Parser String String AST
 parseExpr =
-     uberExpr [ (or', RightAssoc)
-              , (and', RightAssoc)
-              , (eq `alt` neq `alt` leq `alt` lt `alt` geq `alt` gt, NoAssoc)
-              , (sum' `alt` minus, LeftAssoc)
-              , (mult `alt` div', LeftAssoc)
-              , (pow, RightAssoc)
+     uberExpr [ (or', Binary RightAssoc)
+              , (and', Binary RightAssoc)
+              , (not', Unary)
+              , (eq `alt` neq `alt` leq `alt` lt `alt` geq `alt` gt, Binary NoAssoc)
+              , (sum' `alt` minus, Binary LeftAssoc)
+              , (mult `alt` div', Binary LeftAssoc)
+              , (minus, Unary)
+              , (pow, Binary RightAssoc)
               ] 
-              (map' Num parseNum `alt` map' Ident parseIdent `alt` (symbol '(' *> parseExpr <* symbol ')') )
+              (map' Num parseNatural `alt` map' Ident parseIdent `alt` (symbol '(' *> parseExpr <* symbol ')') )
               BinOp
+              UnaryOp
 
 compute :: AST -> Int
 compute (Num x) = x
@@ -143,6 +108,7 @@ compute (BinOp Plus x y) = compute x + compute y
 compute (BinOp Mult x y) = compute x * compute y
 compute (BinOp Minus x y) = compute x - compute y
 compute (BinOp Div x y) = compute x `div` compute y
+compute (UnaryOp Minus x) = 0 - (compute x)
 compute _ = error "compute undefined"
 
 evaluate :: String -> Maybe Int

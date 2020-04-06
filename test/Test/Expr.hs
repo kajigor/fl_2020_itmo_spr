@@ -3,7 +3,7 @@ module Test.Expr where
 import           AST              (AST (..), Operator (..))
 import           Combinators      (Result (..), runParser)
 import           Expr             (evaluate, parseNum, parseOp,
-                                   parseExpr, parseMult, parseSum, parseIdent)
+                                   parseExpr, parseIdent)
 import           Test.Tasty.HUnit (Assertion, (@?=), assertBool)
 
 isFailure (Failure _) = True
@@ -65,7 +65,6 @@ unit_parseIdent = do
     runParser parseIdent "hel''lo" @?= Success "lo" "hel''"
     assertBool "" $ isFailure $ runParser parseIdent "'hello"
 
-
 unit_parseOp :: Assertion
 unit_parseOp = do
     runParser parseOp "+1" @?= Success "1" Plus
@@ -100,23 +99,6 @@ unit_parseExpr = do
     runParser parseExpr "1||x" @?= Success "" (BinOp Or (Num 1) (Ident "x"))
     runParser parseExpr "(1==x+2)||3*4<y-5/6&&(7/=z^8)||(id>12)&&abc<=13||xyz>=42" @?=
       runParser parseExpr "(1==(x+2))||(((3*4)<(y-(5/6))&&(7/=(z^8)))||(((id>12)&&(abc<=13))||(xyz>=42)))"
-
-unit_parseMult :: Assertion
-unit_parseMult = do
-    runParser parseMult "1*2*3" @?= Success "" (BinOp Mult (BinOp Mult (Num 1) (Num 2)) (Num 3))
-    runParser parseMult "123" @?= Success "" (Num 123)
-    runParser parseMult "1*2+3*4" @?= Success "+3*4" (BinOp Mult (Num 1) (Num 2))
-    runParser parseMult "6/2*3" @?= Success "" (BinOp Mult (BinOp Div (Num 6) (Num 2)) (Num 3))
-
-
-unit_parseSum :: Assertion
-unit_parseSum = do
-    -- runParser parseSum "1*2*3"   @?= Success "" (BinOp Mult (Num 1) (BinOp Mult (Num 2) (Num 3)))
-    runParser parseSum "1*2*3"   @?= Success "" (BinOp Mult (BinOp Mult (Num 1) (Num 2)) (Num 3))
-    runParser parseSum "123"     @?= Success "" (Num 123)
-    runParser parseSum "1*2+3*4" @?= Success "" (BinOp Plus (BinOp Mult (Num 1) (Num 2)) (BinOp Mult (Num 3) (Num 4)))
-    -- runParser parseSum "1+2*3+4" @?= Success "" (BinOp Plus (Num 1) (BinOp Plus (BinOp Mult (Num 2) (Num 3)) (Num 4)))
-    runParser parseSum "1+2*3+4" @?= Success "" (BinOp Plus (BinOp Plus (Num 1) (BinOp Mult (Num 2) (Num 3))) (Num 4))
 
 unit_unaryEpxr = do
     runParser parseExpr "-1+2" @?= Success "" (BinOp Plus (UnaryOp Minus (Num 1)) (Num 2))

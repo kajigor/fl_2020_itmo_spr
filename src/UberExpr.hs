@@ -14,22 +14,28 @@ uberExpr :: Monoid e
          -> (op -> ast -> ast)        -- конструктор узла для унарной операции
          -> Parser e i ast
 
-uberExpr [] termP _ = termP
+uberExpr [] termP _  _ = termP
 
-uberExpr ((op, LeftAssoc):opParsers) termP f = do
-  lst <- sepByOp op (uberExpr opParsers termP f)
+uberExpr ((op, Binary LeftAssoc):opParsers) termP f g = do
+  lst <- sepByOp op (uberExpr opParsers termP f g)
   return $ snd (foldl1' f lst)
 
-uberExpr ((op, RightAssoc):opParsers) termP f = do
-  lst <- sepByOp op (uberExpr opParsers termP f)
+uberExpr ((op, Binary RightAssoc):opParsers) termP f g = do
+  lst <- sepByOp op (uberExpr opParsers termP f g)
   return $ snd (foldr1' f lst)
 
-uberExpr ((op, NoAssoc):opParsers) termP f = parser `alt` uberExpr opParsers termP f 
+uberExpr ((op, Binary NoAssoc):opParsers) termP f g = parser `alt` uberExpr opParsers termP f g
    where parser = do
-            term <- uberExpr opParsers termP f 
+            term <- uberExpr opParsers termP f g 
             operator <- op
-            term2 <- uberExpr opParsers termP f 
+            term2 <- uberExpr opParsers termP f g 
             return $ f operator term term2 
+
+uberExpr ((op, Unary):opParsers) termP f g = parser `alt` uberExpr opParsers termP f g
+    where parser = do
+            operator <- op
+            term <- uberExpr opParsers termP f g 
+            return $ g operator term
 
 foldl1' :: (op -> ast -> ast -> ast) -> [(Maybe op, ast)] -> (Maybe op, ast)
 foldl1' f [x] = x
