@@ -52,5 +52,5 @@ instance Show AST where
           BinOp op l r -> printf "%s\n%s\n%s" (show op) (go (ident n) l) (go (ident n) r)
           Num i -> show i
           Ident i -> show i
-          UnaryOp op e -> printf "%s\n%s\n%s" (show op) (go (ident n) e) 
+          UnaryOp op e -> printf "%s\n%s" (show op) (go (ident n) e) 
       ident = (+1)
