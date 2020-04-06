@@ -2,12 +2,12 @@ module Expr where
 
 import           AST                 (AST (..), Operator (..))
 import           Combinators         (Parser (..), Result (..), elem', int, nat,
-                                      satisfy, sepBy1', symbol)
+                                      satisfy, sepBy1', space, symbol)
 import           Control.Applicative
 import           Data.Char           (digitToInt, isAlphaNum, isDigit, isLetter)
 import           Data.Foldable       (asum)
 import           Debug.Trace
-import           UberExpr            (Associativity (..), uberExpr)
+import           UberExpr            (Associativity (..), OpType (..), uberExpr)
 
 -- Парсер для произведения/деления термов
 -- Парсер чисел
@@ -38,32 +38,39 @@ parseIdent = (++) <$> some (char <|> control) <*> many (alphaNum <|> control)
     alphaNum = satisfy isAlphaNum
 
 -- Парсер арифметических выражений над целыми числами с операциями +,-,*,/.
+spaces = many space
+
+spaced p = spaces *> p <* spaces
+
 parseExpr :: Parser String String AST
-parseExpr = uberExpr table ast builder
+parseExpr = uberExpr table ast binary unary
   where
-    table :: [(Parser String String Operator, Associativity)]
+    table :: [(Parser String String Operator, OpType)]
     table =
-      [ (Or <$ mapM symbol "||", RightAssoc)
-      , (And <$ mapM symbol "&&", RightAssoc)
+      [ (Or <$ spaced (mapM symbol "||"), Binary RightAssoc)
+      , (And <$ spaced (mapM symbol "&&"), Binary RightAssoc)
+      , (Not <$ spaced (mapM symbol "!"), Unary)
       , ( asum
-            [ Ge <$ mapM symbol ">="
-            , Le <$ mapM symbol "<="
-            , Lt <$ mapM symbol "<"
-            , Gt <$ mapM symbol ">"
-            , Nequal <$ mapM symbol "/="
-            , Equal <$ mapM symbol "=="
+            [ Ge <$ spaced (mapM symbol ">=")
+            , Le <$ spaced (mapM symbol "<=")
+            , Lt <$ spaced (mapM symbol "<")
+            , Gt <$ spaced (mapM symbol ">")
+            , Nequal <$ spaced (mapM symbol "/=")
+            , Equal <$ spaced (mapM symbol "==")
             ]
-        , NoAssoc)
-      , (asum [Plus <$ mapM symbol "+", Minus <$ mapM symbol "-"], LeftAssoc)
-      , (asum [Mult <$ mapM symbol "*", Div <$ mapM symbol "/"], LeftAssoc)
-      , (Pow <$ mapM symbol "^", RightAssoc)
+        , Binary NoAssoc)
+      , (asum [Plus <$ spaced (mapM symbol "+"), Minus <$ spaced (mapM symbol "-")], Binary LeftAssoc)
+      , (asum [Mult <$ spaced (mapM symbol "*"), Div <$ spaced (mapM symbol "/")], Binary LeftAssoc)
+      , (Minus <$ spaced (mapM symbol "-"), Unary)
+      , (Pow <$ spaced (mapM symbol "^"), Binary RightAssoc)
       ]
     ast = number <|> identifier <|> (parseLeftBracket *> parseExpr <* parseRightBracket)
-    number = Num <$> int
-    identifier = Ident <$> parseIdent
+    number = Num <$> spaced nat
+    identifier = Ident <$> spaced parseIdent
     parseLeftBracket = symbol '('
     parseRightBracket = symbol ')'
-    builder = BinOp
+    binary = BinOp
+    unary = UnaryOp
 
 compute :: AST -> Int
 compute (Num x)           = x

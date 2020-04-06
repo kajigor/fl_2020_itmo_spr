@@ -5,7 +5,7 @@ module Combinators where
 import           AST                 (AST (..), Operator (..))
 import           Control.Applicative (Alternative (..))
 import           Control.Monad       (ap, liftM2)
-import           Data.Char           (digitToInt, isAlpha, isDigit)
+import           Data.Char           (digitToInt, isAlpha, isDigit, isSeparator)
 import           Debug.Trace         (traceShow)
 import           Text.Printf         (printf)
 
@@ -88,12 +88,12 @@ satisfy p =
 elem' :: Parser String [a] a
 elem' = satisfy (const True)
 
-many1 :: Monoid e => Parser e i a -> Parser e i [a]
-many1 p = liftM2 (:) p (many p)
-
 -- Проверяет, что первый элемент входной последовательности -- данный символ
 symbol :: (Eq a) => a -> Parser String [a] a
 symbol c = satisfy (== c)
+
+string :: (Eq a) => [a] -> Parser String [a] [a]
+string = mapM symbol
 
 digit :: Parser String String Int
 digit = digitToInt <$> satisfy isDigit
@@ -107,7 +107,6 @@ nat = toNum <$> some digit
 int = nat <|> (negate <$> (negative *> int))
   where
     negative = symbol '-'
-
 
 eof :: Parser String String ()
 eof = Parser result
@@ -124,7 +123,11 @@ endLine :: Parser String String Char
 endLine = symbol '\n'
 
 word :: Parser String String String
-word = many1 letter
+word = some letter
 
 space :: Parser String String Char
 space = symbol ' '
+
+separator = satisfy isSeparator
+  where
+    isSeparator ch = ch == ' ' || ch == '\n'
