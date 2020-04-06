@@ -17,5 +17,11 @@ README.html
 
 *.synctex.gz
 
+<<<<<<< Updated upstream
 .idea/
 out/
+=======
+.idea/*
+
+out/*
+>>>>>>> Stashed changes
