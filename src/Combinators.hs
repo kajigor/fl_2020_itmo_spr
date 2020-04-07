@@ -1,9 +1,10 @@
 module Combinators where
 
+import Control.Monad.Fail
 import           AST                 (AST (..), Operator (..))
 import           Control.Applicative (Alternative (..))
 import           Text.Printf         (printf)
-
+import Data.Char
 data Result error input result
   = Success input result
   | Failure error
@@ -33,6 +34,8 @@ instance Monad (Parser error input) where
     helper (Success i a) = runParser (f a) i 
     helper (Failure err) = Failure err
 
+instance Monoid error => MonadFail (Parser error input) where
+  fail s = Parser $ \_ -> Failure mempty
 
 instance Monoid error => Alternative (Parser error input) where
   empty = Parser $ \_ -> Failure mempty
@@ -84,3 +87,11 @@ symbols s = Parser $ \i ->  helper s i where
 -- Всегда завершается ошибкой
 fail' :: e -> Parser e i a
 fail' e = Parser $ \input -> Failure e
+
+whiteSpace = Parser $ \i -> helper i where
+  helper (x:xs) | isSpace x = Success xs ()
+  helper _ = Failure ""
+
+spaceis = Parser helper where
+  helper (x:xs) | isSpace x = Success (dropWhile isSpace xs) ()
+  helper xs = Success xs ()

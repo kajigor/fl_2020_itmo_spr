@@ -35,14 +35,6 @@ unit_parseNum = do
     isFailure (runParser parseNum "+3") @?= True
     isFailure (runParser parseNum "a") @?= True
 
-unit_parseNegNum :: Assertion
-unit_parseNegNum = do
-    runParser parseNum "123" @?= Success "" 123
-    runParser parseNum "-123" @?= Success "" (-123)
-    runParser parseNum "--123" @?= Success "" 123
-    assertBool "" $ isFailure $ runParser parseNum "+-3"
-    assertBool "" $ isFailure $ runParser parseNum "-+3"
-    assertBool "" $ isFailure $ runParser parseNum "-a"
 
 unit_parseIdent :: Assertion
 unit_parseIdent = do
@@ -97,8 +89,7 @@ unit_parseExpr = do
 unit_parseExpr' :: Assertion
 unit_parseExpr' = do
   isFailure (runParser parseExpr "-1>3") @?= False
-  isFailure (runParser parseExpr "--1>3") @?= False
-  isFailure (runParser parseExpr "--1+_a+c+d+23+--15*-29") @?= False
+  isFailure (runParser parseExpr "-1+_a+c+d+23+-15*-29") @?= False
 
 
 

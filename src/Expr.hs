@@ -7,7 +7,7 @@ import UberExpr
 import Control.Applicative (Alternative (..))  
 import Keyword
 import Ops
-operators = ["+", "-", "*", "/", "^", "==", "/=", ">", "<", ">=", "<=", "&&", "||"]
+operators = ["+", "-", "*", "/", "^", "==", "/=", ">", "<", ">=", "<=", "&&", "||", "!"]
 
 sum'  = symbols "+" >>= toOperator
 minus = symbols "-" >>= toOperator
@@ -22,26 +22,35 @@ gt = symbols ">" >>= toOperator
 lt = symbols "<" >>= toOperator
 and' = symbols "&&" >>= toOperator
 or' = symbols "||" >>= toOperator
+not'= symbols "!" >>= toOperator
 
 
 parseExpr :: Parser String String AST
 
-parseExpr = uberExpr [(or', RightAssoc), (and', RightAssoc), (eq <|> neq <|>  ge <|> le <|> gt <|> lt, NoAssoc),
-                    (sum' <|> minus, LeftAssoc), (mult <|> div', LeftAssoc), (pow, RightAssoc)]
+parseExpr = uberExpr [(or', Binary RightAssoc),
+                    (and',Binary RightAssoc),
+                    (not', Unary),
+                    (eq <|> neq <|>  ge <|> le <|> gt <|> lt,Binary NoAssoc),
+                    (sum' <|> minus,Binary LeftAssoc),
+                    (mult <|> div',Binary LeftAssoc),
+                    (minus, Unary),
+                    (pow,Binary RightAssoc)]
                     parseTerm
                     BinOp
+                    UnaryOp
 
 
 -- Парсер для произведения/деления термов
 parseMult :: Parser String String AST
-parseMult = uberExpr [(mult <|> div', LeftAssoc)] parseTerm BinOp
+parseMult = uberExpr [(mult <|> div',Binary LeftAssoc)] parseTerm BinOp UnaryOp
 
 -- Парсер для сложения/вычитания множителей
 parseSum :: Parser String String AST
-parseSum = uberExpr [ (sum' <|> minus, LeftAssoc), (mult <|> div', LeftAssoc)
+parseSum = uberExpr [ (sum' <|> minus,Binary LeftAssoc), (mult <|> div',Binary LeftAssoc)
                     ]
                     parseTerm
                     BinOp
+                    UnaryOp
 
 parseIdent :: Parser String String String
 parseIdent = do
@@ -69,6 +78,7 @@ toOperator "<" = return Lt
 toOperator "<=" = return Le
 toOperator "&&" = return And
 toOperator "||" = return Or
+toOperator "!" = return Not
 
 toOperator _   = fail' "Failed toOperator"
 
@@ -77,22 +87,19 @@ toOperator _   = fail' "Failed toOperator"
 parseTerm :: Parser String String AST
 parseTerm =
     fmap Num parseNum <|>
-    (lbr *> parseExpr <* rbr
-    ) <|> fmap Ident parseIdent
+    (lbr *> spaceis *> parseExpr <* spaceis <* rbr
+    ) <|> (spaceis *> fmap Ident parseIdent <* spaceis) 
   where
-    lbr = symbol '('
+    lbr = spaceis *> symbol '('
     rbr = symbol ')'
 
 -- Парсер арифметических выражений над целыми числами с операциями +,-,*,/.
 
 parseNum = res where
   res = do
-    minuses <- parseMinus
     l <- parseNumStr
-    let numb = foldl (\acc a -> acc * 10 + (digitToInt a)) 0 l
-    if even (length minuses) then return numb else return (-numb)
+    return $ foldl (\acc a -> acc * 10 + (digitToInt a)) 0 l
 
-  parseMinus = many $ symbol '-'
   parseNumStr = do
         digit <- satisfy isDigit
         number <- parseNumStr <|> (return "")

@@ -43,7 +43,6 @@ MultOrDiv -> MultOrDiv ['*'|'-'] Pow | Pow
 
 Pow -> Term '^' Term | Term
 
-
 If -> 'if' '(' Expr ')' '{' Statements '}' 'else' '{' Statements '}' 
 
 While -> 'while' '(' Expr ')' '{' Statements '}'
@@ -54,6 +53,6 @@ Read -> 'read' '(' Ident ')'
 
 Write -> 'write' '(' Expr ')'
 
-Statement = If | While | Assign | Read | Write 
+Statement = If ';' | While ';' | Assign ';' | Read ';' | Write ';'
 
-Statements = Statement | Statement ';' Statements
+Statements = Statement | Statement Statements

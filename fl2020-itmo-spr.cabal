@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1c4f9d25889af59ba29dcc136d263a1a7224be113798e3633772524617be8824
+-- hash: ae9e8c81a1ad4268008a734e4d48fa3efd302159ed1278a73779df58cf26747e
 
 name:           fl2020-itmo-spr
 version:        0.1.0.0
@@ -32,6 +32,7 @@ library
       Expr
       Keyword
       LLang
+      LLangParser
       Ops
       UberExpr
   other-modules:
@@ -74,6 +75,7 @@ test-suite test
       Test.Combinators
       Test.Expr
       Test.Keyword
+      Test.LLangParser
       Test.UberExpr
       Paths_fl2020_itmo_spr
   hs-source-dirs:
