@@ -17,7 +17,7 @@ uberExpr :: Monoid e
 
 uberExpr [] elemParser _ _ = elemParser
 
-uberExpr ((parser, Unary):ps) elemParser f unary_f = parse <|> elemParser
+uberExpr ((parser, Unary):ps) elemParser f unary_f = parse <|> uberExpr ps elemParser f unary_f
 	where parse = do
 		s <- parser
 		x <- uberExpr ps elemParser f unary_f
@@ -30,13 +30,13 @@ uberExpr ((parser, Binary NoAssoc):ps) elemParser f unary_f  = parse <|> uberExp
 		y <- uberExpr ps elemParser f unary_f 
 		return (f s x y)
 
-uberExpr ((parser, Binary LeftAssoc):ps) elemParser f unary_f = parse <|> elemParser
+uberExpr ((parser, Binary LeftAssoc):ps) elemParser f unary_f = parse <|> uberExpr ps elemParser f unary_f
 	where parse = do
 		(x, rest) <- sepLeftHelper parser (uberExpr ps elemParser f unary_f)
 		return (foldl (\x (y, z) -> f y x z) x rest)
 
 
-uberExpr ((parser, Binary RightAssoc):ps) elemParser f unary_f = parse <|> elemParser
+uberExpr ((parser, Binary RightAssoc):ps) elemParser f unary_f = parse <|> uberExpr ps elemParser f unary_f
 	where parse = do
 		(rest, x) <- sepRightHelper parser (uberExpr ps elemParser f unary_f)
 		return (foldr (\(x, y) z -> f y x z) x rest)

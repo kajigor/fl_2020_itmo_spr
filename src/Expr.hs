@@ -39,28 +39,24 @@ parseAndOp = (multi_symbol "&&")  >>= toOperator'
 parseOrOp :: Parser String String Operator 
 parseOrOp = (multi_symbol "||")  >>= toOperator'
 
+parseNotOp :: Parser String String Operator 
+parseNotOp = (symbol '!') >>= toOperator
+
 parseIdent :: Parser String String String
 parseIdent = do
             letter <- satisfy isLetter <|> symbol '_'
             others <- many' (satisfy isLetter <|> satisfy isDigit <|> symbol '_')
             return (letter:others)
 
--- Парсер чисел
-parseNumHelper :: Parser String String Int
-parseNumHelper =
-    fmap toNum go 
+parseNum :: Parser String String Int
+parseNum =
+    fmap toNum go
   where
     digit = satisfy isDigit
     empty' = return []
     toNum = foldl (\acc d -> 10 * acc + digitToInt d) 0
     go =
       digit >>= \d -> fmap (d:) (go <|> empty')
-
-parseNum:: Parser String String Int
-parseNum = do
-    minus_list <- many' (symbol '-')
-    number <- parseNumHelper
-    if even (length minus_list) then return number else return (negate number)
 
 -- Парсер для операторов
 parseOp :: Parser String String Operator
@@ -75,6 +71,7 @@ toOperator '/' = return Div
 toOperator '^' = return Pow
 toOperator '<' = return Lt
 toOperator '>' = return Gt
+toOperator '!' = return Not
 toOperator _   = fail' "Failed toOperator"
 
 toOperator' :: String -> Parser String String Operator
@@ -100,9 +97,11 @@ parseTerm = (fmap Num parseNum) <|> (fmap Ident parseIdent) <|> parseBrackets
 parseExpr :: Parser String String AST
 parseExpr = uberExpr [(parseOrOp, Binary RightAssoc),
                       (parseAndOp, Binary RightAssoc),
+                      (parseNotOp, Unary),
                       (parseEqOp <|> parseNeqOp <|> parseLeqOp <|> parseLtOp <|> parseGeqOp <|> parseGtOp, Binary NoAssoc),
                       (parseSumOp, Binary LeftAssoc),
-                      (parseMultOp, Binary LeftAssoc), 
+                      (parseMultOp, Binary LeftAssoc),
+                      (parseSumOp, Unary), 
                       (parsePowOp, Binary RightAssoc)] 
                       parseTerm BinOp UnaryOp
 
