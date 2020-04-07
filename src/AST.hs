@@ -24,6 +24,8 @@ data AST = BinOp Operator AST AST
          | UnaryOp Operator AST
          | Num Int
          | Ident String
+         | F
+         | T
          deriving (Eq)
 
 instance Show Operator where
@@ -53,4 +55,6 @@ instance Show AST where
           Num i -> show i
           Ident i -> show i
           UnaryOp op e -> printf "%s\n%s" (show op) (go (ident n) e) 
+          T -> show "true"
+          F -> show "false"
       ident = (+1)

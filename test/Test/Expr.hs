@@ -25,7 +25,6 @@ unit_evaluate = do
     evaluate "12+(23*(34)+456)" @?= Just (12+(23*(34)+456))
     evaluate "((1-(2*3))+4)" @?= Just ((1-(2*3))+4)
     evaluate "1-2+3-4" @?= Just (1-2+3-4)
-    evaluate "1-2+-3-4" @?= Just (1-2-3-4)
     evaluate "6/2*3" @?= Just ((6 `div` 2) * 3)
 
 unit_parseNum :: Assertion
@@ -71,6 +70,9 @@ unit_parseOp = do
     runParser parseOp "/1" @?= Success "1" Div
     isFailure (runParser parseOp "12") @?= True
 
+
+
+
 unit_parseExpr :: Assertion
 unit_parseExpr = do
     runParser parseExpr "1*2*3"   @?= Success "" (BinOp Mult (BinOp Mult (Num 1) (Num 2)) (Num 3))
@@ -97,4 +99,10 @@ unit_parseExpr = do
     runParser parseExpr "1||x" @?= Success "" (BinOp Or (Num 1) (Ident "x"))
     runParser parseExpr "(1==x+2)||3*4<y-5/6&&(7/=z^8)||(id>12)&&abc<=13||xyz>=42" @?=
       runParser parseExpr "(1==(x+2))||(((3*4)<(y-(5/6))&&(7/=(z^8)))||(((id>12)&&(abc<=13))||(xyz>=42)))"
+    runParser parseExpr "!(x==1)" @?= Success "" (UnaryOp Not (BinOp Equal (Ident "x") (Num 1)))
+    runParser parseExpr "!x==1" @?= Success "" (UnaryOp Not (BinOp Equal (Ident "x") (Num 1)))
+    runParser parseExpr "-x" @?= Success "" (UnaryOp Minus  (Ident "x"))
+    runParser parseExpr "!(y&&x<=1)" @?= Success "" (UnaryOp Not (BinOp And (Ident "y") (BinOp Le (Ident "x") (Num 1))))
+
+    
 
