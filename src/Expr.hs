@@ -98,14 +98,13 @@ parseTerm = (fmap Num parseNum) <|> (fmap Ident parseIdent) <|> parseBrackets
 
 -- Парсер арифметических выражений над целыми числами с операциями +,-,*,/.
 parseExpr :: Parser String String AST
-parseExpr = uberExpr [(parseOrOp, RightAssoc),
-                      (parseAndOp, RightAssoc),
-                      (parseEqOp <|> parseNeqOp <|> parseLeqOp <|> parseLtOp <|> parseGeqOp <|> parseGtOp, NoAssoc),
-                      (parseSumOp, LeftAssoc),
-                      (parseMultOp, LeftAssoc), 
-                      (parsePowOp, RightAssoc)] 
-                      parseTerm BinOp
-
+parseExpr = uberExpr [(parseOrOp, Binary RightAssoc),
+                      (parseAndOp, Binary RightAssoc),
+                      (parseEqOp <|> parseNeqOp <|> parseLeqOp <|> parseLtOp <|> parseGeqOp <|> parseGtOp, Binary NoAssoc),
+                      (parseSumOp, Binary LeftAssoc),
+                      (parseMultOp, Binary LeftAssoc), 
+                      (parsePowOp, Binary RightAssoc)] 
+                      parseTerm BinOp UnaryOp
 
 compute :: AST -> Int
 compute (Num x) = x

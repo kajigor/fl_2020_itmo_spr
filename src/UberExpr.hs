@@ -9,29 +9,36 @@ data OpType = Binary Associativity
             | Unary
 
 uberExpr :: Monoid e
-         => [(Parser e i op, Associativity)]
-         -> Parser e i ast
-         -> (op -> ast -> ast -> ast)
+         => [(Parser e i op, OpType)] -- список операций с их арностью и, в случае бинарных, ассоциативностью
+         -> Parser e i ast            -- парсер элементарного выражения
+         -> (op -> ast -> ast -> ast) -- конструктор узла дерева для бинарной операции
+         -> (op -> ast -> ast)        -- конструктор узла для унарной операции
          -> Parser e i ast
 
-uberExpr [] elemParser f = elemParser
+uberExpr [] elemParser _ _ = elemParser
 
-uberExpr ((parser, NoAssoc):ps) elemParser f = parse <|> uberExpr ps elemParser f
+uberExpr ((parser, Unary):ps) elemParser f unary_f = parse <|> elemParser
 	where parse = do
-		x <- uberExpr ps elemParser f
 		s <- parser
-		y <- uberExpr ps elemParser f
+		x <- uberExpr ps elemParser f unary_f
+		return (unary_f s x)
+
+uberExpr ((parser, Binary NoAssoc):ps) elemParser f unary_f  = parse <|> uberExpr ps elemParser f unary_f
+	where parse = do
+		x <- uberExpr ps elemParser f unary_f 
+		s <- parser
+		y <- uberExpr ps elemParser f unary_f 
 		return (f s x y)
 
-uberExpr ((parser, LeftAssoc):ps) elemParser f = parse <|> elemParser
+uberExpr ((parser, Binary LeftAssoc):ps) elemParser f unary_f = parse <|> elemParser
 	where parse = do
-		(x, rest) <- sepLeftHelper parser (uberExpr ps elemParser f)
+		(x, rest) <- sepLeftHelper parser (uberExpr ps elemParser f unary_f)
 		return (foldl (\x (y, z) -> f y x z) x rest)
 
 
-uberExpr ((parser, RightAssoc):ps) elemParser f = parse <|> elemParser
+uberExpr ((parser, Binary RightAssoc):ps) elemParser f unary_f = parse <|> elemParser
 	where parse = do
-		(rest, x) <- sepRightHelper parser (uberExpr ps elemParser f)
+		(rest, x) <- sepRightHelper parser (uberExpr ps elemParser f unary_f)
 		return (foldr (\(x, y) z -> f y x z) x rest)
 
 
