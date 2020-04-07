@@ -1,6 +1,7 @@
 module AST where
 
-import Text.Printf (printf)
+import qualified Data.Map    as Map
+import           Text.Printf (printf)
 
 data Operator = Plus
               | Mult
@@ -17,6 +18,8 @@ data Operator = Plus
               | Or
               | Not
               deriving (Eq)
+
+type Subst = Map.Map String Int
 
 data AST = BinOp Operator AST AST
          | UnaryOp Operator AST

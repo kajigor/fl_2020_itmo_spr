@@ -1,8 +1,12 @@
 module Expr where
 
-import           AST         (AST (..), Operator (..))
+import           AST         (AST (..), Operator (..), Subst (..))
 import           Combinators (Parser (..), Result (..))
 import           Data.Char   (isDigit, digitToInt)
+
+
+evalExpr :: Subst -> AST -> Maybe Int
+evalExpr = error "evalExpr undefined"
 
 -- Парсер арифметических выражений над целыми числами
 parseExpr :: Parser String String AST
