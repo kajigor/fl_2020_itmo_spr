@@ -6,6 +6,7 @@ import           Expr             (evaluate, parseNum, parseOp,
                                    parseExpr, parseIdent)
 import           Test.Tasty.HUnit (Assertion, (@?=), assertBool)
 
+
 isFailure (Failure _) = True
 isFailure  _          = False
 
@@ -19,8 +20,8 @@ unit_evaluate = do
     evaluate "31+24+777" @?= Just (31+24+777)
     evaluate "1+2*3+4" @?= Just (1+2*3+4)
     evaluate "12+23*34+456" @?= Just (12+23*34+456)
-    evaluate "1-2*3+4" @?= Just (1-(2*3+4))
-    evaluate "1-2-3" @?= Just (1-(2-3))
+    evaluate "1-2*3+4" @?= Just ((1-2*3)+4)
+    evaluate "1-2-3" @?= Just (1-2-3)
     evaluate "4/2-2" @?= Just ((4 `div` 2) - 2)
     evaluate "(1+2)*(3+4)" @?= Just ((1+2)*(3+4))
     evaluate "12+(23*(34)+456)" @?= Just (12+(23*(34)+456))
@@ -40,10 +41,10 @@ unit_parseNegNum :: Assertion
 unit_parseNegNum = do
     runParser parseNum "123" @?= Success "" 123
     runParser parseNum "-123" @?= Success "" (-123)
-    runParser parseNum "--123" @?= Success "" 123
     assertBool "" $ isFailure $ runParser parseNum "+-3"
     assertBool "" $ isFailure $ runParser parseNum "-+3"
     assertBool "" $ isFailure $ runParser parseNum "-a"
+    assertBool "" $ isFailure $ runParser parseNum "--1"
 
 unit_parseIdent :: Assertion
 unit_parseIdent = do
@@ -80,6 +81,8 @@ unit_parseExpr = do
     runParser parseExpr "1*x+z*4" @?= Success "" (BinOp Plus (BinOp Mult (Num 1) (Ident "x")) (BinOp Mult (Ident "z") (Num 4)))
     runParser parseExpr "1+y*3+z" @?= Success "" (BinOp Plus (BinOp Plus (Num 1) (BinOp Mult (Ident "y") (Num 3))) (Ident "z"))
     runParser parseExpr "1+x" @?= Success "" (BinOp Plus (Num 1) (Ident "x"))
+    runParser parseExpr "1+-1" @?= Success "" (BinOp Plus (Num 1) (Num (-1)))
+    runParser parseExpr "1--1" @?= Success "" (BinOp Minus (Num 1) (Num (-1)))
     runParser parseExpr "1-x" @?= Success "" (BinOp Minus (Num 1) (Ident "x"))
     runParser parseExpr "1*x" @?= Success "" (BinOp Mult (Num 1) (Ident "x"))
     runParser parseExpr "1/x" @?= Success "" (BinOp Div (Num 1) (Ident "x"))
