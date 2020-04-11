@@ -7,6 +7,7 @@ import Data.List (intercalate)
 import Text.Printf (printf)
 import Expr
 import Control.Applicative(Alternative (..))
+import Control.Monad (foldM)
 import Keyword
 
 type Expr = AST
@@ -144,7 +145,28 @@ initialConf :: [Int] -> Configuration
 initialConf input = Conf Map.empty input []
 
 eval :: LAst -> Configuration -> Maybe Configuration
-eval = error "eval not defined"
+eval (If cond thn els) conf@(Conf map _ _) = do
+  cond' <- evalExpr map cond
+  if numToBool cond'
+  then eval thn conf
+  else eval els conf
+eval wh@(While cond body) conf@(Conf map _ _) = do
+  cond' <- evalExpr map cond
+  if numToBool cond'
+  then do
+    conf' <- eval body conf
+    eval wh conf'
+  else return conf
+eval (Assign var expr) (Conf map inp out) = do
+  expr' <- evalExpr map expr
+  return $ Conf (Map.insert var expr' map) inp out
+eval (Read var) (Conf map inp out) = case inp of
+  [] -> Nothing
+  (x:xs) -> return $ Conf (Map.insert var x map) xs out
+eval (Write expr) (Conf map inp out) = do
+  expr' <- evalExpr map expr
+  return $ Conf map inp (expr':out)
+eval (Seq ls) conf = foldM (flip eval) conf ls
 
 instance Show LAst where
   show =
