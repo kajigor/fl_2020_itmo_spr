@@ -1,5 +1,6 @@
 module Expr where
 
+import qualified Data.Map as Map
 import           AST         (AST (..), Operator (..), Subst(..))
 import           Combinators (Parser (..), Result (..),
                               elem', satisfy, symbol, fail')
@@ -9,7 +10,43 @@ import           Keyword     (keywordWeak)
 import           Control.Applicative (Alternative (..))
 
 evalExpr :: Subst -> AST -> Maybe Int
-evalExpr = error "evalExpr undefined"
+evalExpr sub (Num i) = Just i
+evalExpr sub (Ident var) = Map.lookup var sub
+evalExpr sub (UnaryOp op term) = applyUnOp op <*> evalExpr sub term
+evalExpr sub (BinOp op l r) = applyBinOp op <*> evalExpr sub l <*> evalExpr sub r
+
+
+applyUnOp :: Operator -> Maybe (Int -> Int)
+applyUnOp op = case op of
+  Minus -> return negate
+  Not   -> return (\x -> if x == 0 then 1 else 0)
+  _     -> Nothing
+
+numToBool :: (Num a, Eq a) => a -> Bool
+numToBool = (/=) 0
+
+boolToNum :: Num a => Bool -> a
+boolToNum b = if b then 1 else 0
+
+applyBinOp :: Operator -> Maybe (Int -> Int -> Int)
+applyBinOp op = let
+  asIntOp :: (a -> a -> Bool) -> (Int -> a) -> (Int -> Int -> Int)
+  asIntOp opfunc conv l r = boolToNum $ opfunc (conv l) (conv r)
+  in case op of
+    Plus   -> return (+)
+    Mult   -> return (*)
+    Minus  -> return (-)
+    Div    -> return div
+    Pow    -> return (^)
+    Equal  -> return $ asIntOp (==) id
+    Nequal -> return $ asIntOp (/=) id
+    Gt     -> return $ asIntOp (>) id
+    Ge     -> return $ asIntOp (>=) id
+    Lt     -> return $ asIntOp (<) id
+    Le     -> return $ asIntOp (<=) id
+    And    -> return $ asIntOp (&&) numToBool
+    Or     -> return $ asIntOp (||) numToBool
+    _      -> Nothing
 
 parseExpr :: Parser String String AST
 parseExpr = uberExpr 

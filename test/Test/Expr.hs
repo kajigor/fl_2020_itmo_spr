@@ -5,11 +5,18 @@ import           Combinators         (InputStream (..), Parser (..),
                                       Result (..), parseIdent, runParser,
                                       symbol, toStream, word)
 import           Control.Applicative ((<|>))
-import           Expr                (evaluate, parseExpr,
-                                      parseNum, parseOp)
 import           Test.Helper
 import           Test.Tasty.HUnit    (Assertion, assertBool, (@?=))
 import           UberExpr            (Associativity (..), OpType (..), uberExpr)
+import           AST              (AST (..), Operator (..))
+import           Expr             (evaluate, parseNum, parseOp,
+                                   parseExpr, parseIdent, evalExpr)
+import qualified Data.Map as Map
+
+isFailure (Failure _) = True
+isFailure  _          = False
+
+fromSuccess (Success _ ast) = ast
 
 unit_evaluate :: Assertion
 unit_evaluate = do
@@ -174,3 +181,22 @@ unit_unaryEpxr = do
     runParser parseExpr "-1^-2" @?= Success "^-2" (UnaryOp Minus (Num 1))
     assertBool "" $ isFailure $ runParser parseExpr "--1"
     assertBool "" $ isFailure $ runParser parseExpr "-!1"
+
+unit_evalExpr = do
+    evalExpr Map.empty (fromSuccess $ runParser parseExpr "-5") @?= Just (-5)
+    evalExpr Map.empty (fromSuccess $ runParser parseExpr "3 * 7 + 1 - 2 * 2") @?= Just 18
+    evalExpr Map.empty (fromSuccess $ runParser parseExpr "2 ^ 5 + 5 * 10") @?= Just 82
+    evalExpr Map.empty (fromSuccess $ runParser parseExpr "- 2 ^ 3 + 4 == - 2 * 2") @?= Just 1
+    evalExpr Map.empty (fromSuccess $ runParser parseExpr "2 == 5") @?= Just 0
+    evalExpr Map.empty (fromSuccess $ runParser parseExpr "2 && 11 && 5") @?= Just 1
+    evalExpr Map.empty (fromSuccess $ runParser parseExpr "11 && 0 && 1") @?= Just 0
+    evalExpr Map.empty (fromSuccess $ runParser parseExpr "10 - 2 * 5 || 31 - 30 - 1 || 22 - 11 * 2") @?= Just 0
+    evalExpr Map.empty (fromSuccess $ runParser parseExpr "1 || 2 || 3 || 4") @?= Just 1
+    evalExpr Map.empty (fromSuccess $ runParser parseExpr "! 5") @?= Just 0
+    evalExpr Map.empty (fromSuccess $ runParser parseExpr "! 0") @?= Just 1
+    let sub = Map.fromList [("x", 15), ("y", 0), ("z", 32)]
+    evalExpr sub (fromSuccess $ runParser parseExpr "x") @?= Just 15
+    evalExpr sub (fromSuccess $ runParser parseExpr "-z") @?= Just (-32)
+    evalExpr sub (fromSuccess $ runParser parseExpr "x * y + z - 2") @?= Just 30
+    -- Failure:
+    evalExpr sub (fromSuccess $ runParser parseExpr "x * y + abc") @?= Nothing
