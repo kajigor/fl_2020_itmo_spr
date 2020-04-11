@@ -1,12 +1,15 @@
 module Expr where
 
-import           AST         (AST (..), Operator (..))
+import           AST         (AST (..), Operator (..), Subst(..))
 import           Combinators (Parser (..), Result (..),
                               elem', satisfy, symbol, fail')
 import           Data.Char   (isDigit, digitToInt, isLetter)
 import           UberExpr
 import           Keyword     (keywordWeak)
 import           Control.Applicative (Alternative (..))
+
+evalExpr :: Subst -> AST -> Maybe Int
+evalExpr = error "evalExpr undefined"
 
 parseExpr :: Parser String String AST
 parseExpr = uberExpr 
