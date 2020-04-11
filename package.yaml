@@ -27,6 +27,7 @@ dependencies:
 - tasty-hedgehog
 - tasty-hunit
 - tasty-discover
+- containers
 
 library:
   source-dirs: src
