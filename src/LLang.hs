@@ -96,6 +96,7 @@ parseL = lFromList <$> some parseStatement where
   parseWrite = manySpace *> (Write <$> (parseString "write" *> parseRound parseExpr)) <* semiOpParser
   parseRead = manySpace *> (Read <$> (parseString "read" *> someSpace *> parseIdent)) <* semiOpParser
 
+
 initialConf :: [Int] -> Configuration
 initialConf input = Conf Map.empty input []
 
