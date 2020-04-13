@@ -3,7 +3,8 @@ module Test.UberExpr where
 import           AST                 (AST (..), Operator (..))
 import           Combinators         (symbol, Parser (..), Result (..), runParser, fail')
 import           Control.Applicative ((<|>))
-import           Expr                (parseNum)
+import           Expr
+import           LLang
 import           Test.Tasty.HUnit    (Assertion (..), (@?=))
 import           Text.Printf         (printf)
 import           UberExpr            (Associativity (..), uberExpr, OpType (..))

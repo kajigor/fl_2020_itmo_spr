@@ -2,32 +2,12 @@ module Test.Expr where
 
 import           AST              (AST (..), Operator (..))
 import           Combinators      (Result (..), runParser)
-import           Expr             (evaluate, parseNum, parseOp,
-                                   parseExpr, parseIdent)
+import           LLang
 import           Test.Tasty.HUnit (Assertion, (@?=), assertBool)
 
 
 isFailure (Failure _) = True
 isFailure  _          = False
-
-unit_evaluate :: Assertion
-unit_evaluate = do
-    evaluate "1" @?= Just 1
-    evaluate "1+2" @?= Just (1+2)
-    evaluate "2+4+8" @?= Just (2+4+8)
-    evaluate "11+22" @?= Just (11+22)
-    evaluate "13+42+777" @?= Just (13+42+777)
-    evaluate "31+24+777" @?= Just (31+24+777)
-    evaluate "1+2*3+4" @?= Just (1+2*3+4)
-    evaluate "12+23*34+456" @?= Just (12+23*34+456)
-    evaluate "1-2*3+4" @?= Just ((1-2*3)+4)
-    evaluate "1-2-3" @?= Just (1-2-3)
-    evaluate "4/2-2" @?= Just ((4 `div` 2) - 2)
-    evaluate "(1+2)*(3+4)" @?= Just ((1+2)*(3+4))
-    evaluate "12+(23*(34)+456)" @?= Just (12+(23*(34)+456))
-    evaluate "((1-(2*3))+4)" @?= Just ((1-(2*3))+4)
-    evaluate "1-2+3-4" @?= Just (1-2+3-4)
-    evaluate "6/2*3" @?= Just ((6 `div` 2) * 3)
 
 unit_parseNum :: Assertion
 unit_parseNum = do
@@ -60,14 +40,6 @@ unit_parseIdent = do
     assertBool "" $ isFailure $ runParser parseIdent "123"
     assertBool "" $ isFailure $ runParser parseIdent ""
 
-
-unit_parseOp :: Assertion
-unit_parseOp = do
-    runParser parseOp "+1" @?= Success "1" Plus
-    runParser parseOp "**" @?= Success "*" Mult
-    runParser parseOp "-2" @?= Success "2" Minus
-    runParser parseOp "/1" @?= Success "1" Div
-    isFailure (runParser parseOp "12") @?= True
 
 unit_parseExpr :: Assertion
 unit_parseExpr = do
