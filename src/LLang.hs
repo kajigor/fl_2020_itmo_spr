@@ -7,7 +7,7 @@ import           Control.Applicative (many, some, (<|>))
 import           Control.Monad       (guard)
 import           Data.List           (intercalate)
 import qualified Data.Map            as M
-import           Expr                (evalExpr, parseExpr, parseIdent, toBool)
+import           Expr                (evalExpr, parseExpr', parseIdent, toBool)
 import qualified Keyword             as K
 import           Text.Printf         (printf)
 
@@ -63,6 +63,8 @@ kws = ["let", "if", "while", "read", "else", "write"]
 keyword = K.keyword kws
 
 body' = many separator *> symbol '{' *> many separator *> parseL <* many separator <* symbol '}' <* many separator
+
+parseExpr = parseExpr' identifier'
 
 condition' = some space *> parseExpr <* many space
 

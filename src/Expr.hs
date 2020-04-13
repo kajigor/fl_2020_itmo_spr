@@ -79,7 +79,9 @@ spaces = many space
 spaced p = spaces *> p <* spaces
 
 parseExpr :: Parser String String AST
-parseExpr = uberExpr table ast binary unary
+parseExpr = parseExpr' parseIdent
+
+parseExpr' ident = uberExpr table ast binary unary
   where
     table :: [(Parser String String Operator, OpType)]
     table =
@@ -102,7 +104,7 @@ parseExpr = uberExpr table ast binary unary
       ]
     ast = number <|> identifier <|> (parseLeftBracket *> parseExpr <* parseRightBracket)
     number = Num <$> spaced nat
-    identifier = Ident <$> spaced parseIdent
+    identifier = Ident <$> spaced ident
     parseLeftBracket = symbol '('
     parseRightBracket = symbol ')'
     binary = BinOp
