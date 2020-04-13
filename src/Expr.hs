@@ -1,16 +1,51 @@
 module Expr where
 
-import           AST                 (AST (..), Operator (..))
+import           AST                 (AST (..), Operator (..), Subst)
 import           Combinators         (Parser (..), Result (..), elem', int, nat,
                                       satisfy, sepBy1', space, symbol)
 import           Control.Applicative
 import           Data.Char           (digitToInt, isAlphaNum, isDigit, isLetter)
 import           Data.Foldable       (asum)
+import qualified Data.Map            as M
 import           Debug.Trace
 import           UberExpr            (Associativity (..), OpType (..), uberExpr)
 
 evalExpr :: Subst -> AST -> Maybe Int
-evalExpr = error "evalExpr undefined"
+evalExpr subst (BinOp op lhs rhs) = binaryOp op <*> evalExpr subst lhs <*> evalExpr subst rhs
+evalExpr subst (UnaryOp op v) = unaryOp op <*> evalExpr subst v
+evalExpr subst (Ident ident) = M.lookup ident subst
+evalExpr subst (Num n) = return n
+
+fromBool :: Bool -> Int
+fromBool = fromEnum
+
+toBool :: Int -> Bool
+toBool = (> 0)
+fromBoolBin f x y = fromBool $ f x y
+
+fromToBoolBin f x y = fromBool $ f (toBool x) (toBool y)
+
+unaryOp :: Operator -> Maybe (Int -> Int)
+unaryOp Not   = return (fromBool . not . toBool)
+unaryOp Minus = return negate
+unaryOp _     = Nothing
+
+binaryOp :: Operator -> Maybe (Int -> Int -> Int)
+binaryOp Plus   = return (+)
+binaryOp Mult   = return (*)
+binaryOp Minus  = return (-)
+binaryOp Div    = return div
+binaryOp Pow    = return (^)
+binaryOp Equal  = return $ fromBoolBin (==)
+binaryOp Nequal = return $ fromBoolBin (/=)
+binaryOp Gt     = return $ fromBoolBin (>)
+binaryOp Ge     = return $ fromBoolBin (>=)
+binaryOp Lt     = return $ fromBoolBin (<)
+binaryOp Le     = return $ fromBoolBin (<=)
+binaryOp And    = return $ fromToBoolBin (&&)
+binaryOp Or     = return $ fromToBoolBin (||)
+binaryOp _      = Nothing
+
 -- Парсер чисел
 parseNum :: Parser String String Int
 parseNum = int

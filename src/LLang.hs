@@ -1,20 +1,27 @@
 module LLang where
 
-import           AST                 (AST (..), Operator (..))
+import           AST                 (AST (..), Operator (..), Subst)
 import           Combinators         hiding (space)
 import           Combinators         (space)
 import           Control.Applicative (many, some, (<|>))
 import           Control.Monad       (guard)
-import           Expr                (parseExpr, parseIdent)
+import           Data.List           (intercalate)
+import qualified Data.Map            as M
+import           Expr                (evalExpr, parseExpr, parseIdent, toBool)
 import qualified Keyword             as K
+import           Text.Printf         (printf)
 
 type Expr = AST
 
 type Var = String
 
-data Configuration = Conf { subst :: Subst, input :: [Int], output :: [Int] }
-                   deriving (Show, Eq)
-
+data Configuration =
+  Conf
+    { subst  :: Subst
+    , input  :: [Int]
+    , output :: [Int]
+    }
+  deriving (Show, Eq)
 
 data LAst
   = If
@@ -39,7 +46,7 @@ data LAst
   | Seq
       { statements :: [LAst]
       }
-  deriving (Show, Eq)
+  deriving (Eq)
 
 stmt :: LAst
 stmt =
@@ -91,26 +98,58 @@ parseL :: Parser String String LAst
 parseL = sequence' <|> (Seq [] <$ many separator)
 
 initialConf :: [Int] -> Configuration
-initialConf input = Conf Map.empty input []
+initialConf input = Conf M.empty input []
 
 eval :: LAst -> Configuration -> Maybe Configuration
-eval = error "eval not defined"
+eval (If cond thn els) conf@(Conf subst _ _) = do
+  cond <- toBool <$> evalExpr subst cond
+  if cond
+    then eval thn conf
+    else eval els conf
+eval whl@(While cond body) conf@(Conf subst _ _) = do
+  cond <- toBool <$> evalExpr subst cond
+  if cond
+    then eval body conf >>= eval whl
+    else return conf
+eval (Assign ident expr) (Conf subst input output) = do
+  expr <- evalExpr subst expr
+  return $ Conf (M.insert ident expr subst) input output
+eval (Read ident) (Conf subst (x:xs) output) = return $ Conf (M.insert ident x subst) xs output
+eval (Read ident) (Conf subst [] output) = Nothing
+eval (Write expr) (Conf subst input output) = do
+  expr <- evalExpr subst expr
+  return $ Conf subst input (expr : output)
+eval (Seq (x:xs)) conf = do
+  conf'@(Conf subst' input' output') <- eval x conf
+  (Conf subst'' input'' output'') <- eval (Seq xs) conf'
+  return $ Conf (M.union subst'' subst') input'' output''
+eval (Seq []) conf = return conf
 
 instance Show LAst where
-  show =
-      go 0
+  show = go 0
     where
       go n t =
-        let makeIdent = if n > 0 then printf "%s|_%s" (concat $ replicate (n - 1) "| ") else id in
-
-        case t of
-          If cond thn els -> makeIdent $ printf "if %s\n%sthen\n%s\n%selse\n%s" (flatShowExpr cond) (makeIdent "") (go (ident n) thn) (makeIdent "") (go (ident n) els)
-          While cond body -> makeIdent $ printf "while %s\n%sdo\n%s" (flatShowExpr cond) (makeIdent "") (go (ident n) body)
-          Assign var expr -> makeIdent $ printf "%s := %s" var (flatShowExpr expr)
-          Read var        -> makeIdent $ printf "read %s" var
-          Write expr      -> makeIdent $ printf "write %s" (flatShowExpr expr)
-          Seq stmts       -> intercalate "\n" $ map (go n) stmts
-      ident = (+1)
+        let makeIdent =
+              if n > 0
+                then printf "%s|_%s" (concat $ replicate (n - 1) "| ")
+                else id
+         in case t of
+              If cond thn els ->
+                makeIdent $
+                printf
+                  "if %s\n%sthen\n%s\n%selse\n%s"
+                  (flatShowExpr cond)
+                  (makeIdent "")
+                  (go (ident n) thn)
+                  (makeIdent "")
+                  (go (ident n) els)
+              While cond body ->
+                makeIdent $ printf "while %s\n%sdo\n%s" (flatShowExpr cond) (makeIdent "") (go (ident n) body)
+              Assign var expr -> makeIdent $ printf "%s := %s" var (flatShowExpr expr)
+              Read var -> makeIdent $ printf "read %s" var
+              Write expr -> makeIdent $ printf "write %s" (flatShowExpr expr)
+              Seq stmts -> intercalate "\n" $ map (go n) stmts
+      ident = (+ 1)
       flatShowExpr (BinOp op l r) = printf "(%s %s %s)" (flatShowExpr l) (show op) (flatShowExpr r)
       flatShowExpr (UnaryOp op x) = printf "(%s %s)" (show op) (flatShowExpr x)
       flatShowExpr (Ident x) = x
