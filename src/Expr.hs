@@ -7,6 +7,11 @@ import UberExpr
 import Control.Applicative (Alternative (..))  
 import Keyword
 import Ops
+import Data.Either
+import Data.Bifunctor
+import Data.Maybe
+import qualified Data.Map    as Map
+
 operators = ["+", "-", "*", "/", "^", "==", "/=", ">", "<", ">=", "<=", "&&", "||", "!"]
 
 sum'  = symbols "+" >>= toOperator
@@ -118,3 +123,79 @@ evaluate input = do
   case runParser parseExpr input of
     Success rest ast | null rest -> return $ compute ast
     _ -> Nothing
+
+        
+
+
+
+evalExpr conf (BinOp Equal x' y') = (do
+  x <- evalBool conf x'
+  y <- evalBool conf y'
+  return $ Left (x == y)) <|> (do
+        x <- evalNum conf x'
+        y <- evalNum conf y'
+        return $ Left (x == y)
+        )
+evalExpr conf (BinOp Nequal x' y') = fmap (bimap not id) (evalExpr conf (BinOp Equal x' y'))
+evalExpr conf expr = (do
+  res <- evalBool conf expr
+  return $ Left res) <|> (do
+    res <- evalNum conf expr
+    return $ Right res)
+
+evalBool conf (BinOp Gt x' y') = do
+  x <- evalNum conf x'
+  y <- evalNum conf y'
+  return $ x > y
+evalBool conf (BinOp Ge x' y') = do
+  x <- evalNum conf x'
+  y <- evalNum conf y'
+  return $ x >= y
+evalBool conf (BinOp Lt x' y') = do
+  x <- evalNum conf x'
+  y <- evalNum conf y'
+  return $ x < y
+evalBool conf (BinOp Le x' y') = do
+  x <- evalNum conf x'
+  y <- evalNum conf y'
+  return $ x <= y
+
+evalBool conf (BinOp And x' y') = do
+  x <- evalBool conf x'
+  y <- evalBool conf y'
+  return $ x && y
+evalBool conf (BinOp Or x' y') = do
+  x <- evalBool conf x'
+  y <- evalBool conf y'
+  return $ x || y
+evalBool conf (UnaryOp Not x' ) = do
+  x <- evalBool conf x'
+  return $ (not x)
+evalBool _ _ = Nothing
+
+evalNum conf (Num x) = Just x
+evalNum conf (Ident x) = Map.lookup x conf
+evalNum conf (BinOp Plus x' y') = do
+  x <- evalNum conf x'
+  y <- evalNum conf y'
+  return $ x + y
+evalNum conf (BinOp Mult x' y') = do
+  x <- evalNum conf x'
+  y <- evalNum conf y'
+  return $ x * y
+evalNum conf (BinOp Minus x' y') = do
+  x <- evalNum conf x'
+  y <- evalNum conf y'
+  return $ x - y
+evalNum conf (BinOp Div x' y') = do
+  x <- evalNum conf x'
+  y <- evalNum conf y'
+  return $ x `div` y
+evalNum conf (BinOp Pow x' y') = do
+  x <- evalNum conf x'
+  y <- evalNum conf y'
+  return $ x ^ y
+evalNum conf (UnaryOp Minus x') = do
+  x <- evalNum conf x'
+  return (-x)
+evalNum _ _ = Nothing
