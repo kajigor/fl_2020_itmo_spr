@@ -124,10 +124,6 @@ evaluate input = do
     Success rest ast | null rest -> return $ compute ast
     _ -> Nothing
 
-        
-
-
-
 evalExpr conf (BinOp Equal x' y') = (do
   x <- evalBool conf x'
   y <- evalBool conf y'

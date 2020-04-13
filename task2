@@ -1,0 +1,31 @@
+[Репозиторий](https://github.com/dima74/ifmo-2020-formal-languages/blob/HW06-dev/hw/HW05-solution.md)
+```
+read n;
+let i = 2;
+let acc = 1;
+while i <= n {
+	let acc = acc * i;
+	let i = i + 1;
+}
+```
+
+Показлось не удобным. что это является корректным:
+```read n; let i = 2; let acc = 1;```
+но не это:
+```read n;let i = 2;let acc = 1;```
+
+[Репозиторий](https://github.com/DimaOrekhov/fl_2020_ifmo_spr/tree/HW06)
+```
+read n;
+f = 0;
+s = 1;
+i = 2;
+while(i <= n){
+    t = f + s;
+    f = s;
+    s = t;
+}
+write(s);
+```
+Показалось не удобным, что ```read x```, но ```write(x)```. Кажется лучше придерживаться единого способа, чтобы потом расширить язык до функций.
+
