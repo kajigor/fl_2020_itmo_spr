@@ -1,47 +1,51 @@
 module AST where
 
-import qualified Data.Map    as Map
-import           Text.Printf (printf)
+import Text.Printf (printf)
+import qualified Data.Map as Map
 
 data Operator = Plus
               | Mult
               | Minus
               | Div
               | Pow
-              | Equal
-              | Nequal
-              | Gt
-              | Ge
-              | Lt
-              | Le
               | And
               | Or
+              | Equal
+              | Nequal
+              | Lt
+              | Gt
+              | Ge
+              | Le
               | Not
               deriving (Eq)
 
-type Subst = Map.Map String Int
+
 
 data AST = BinOp Operator AST AST
          | UnaryOp Operator AST
-         | Ident String
          | Num Int
+         | Ident String
+         | F
+         | T
          deriving (Eq)
 
+type Subst = Map.Map String Int
+
 instance Show Operator where
-  show Plus   = "+"
-  show Mult   = "*"
-  show Minus  = "-"
-  show Div    = "/"
-  show Equal  = "="
-  show Pow    = "^"
+  show Plus = "+"
+  show Mult = "*"
+  show Minus = "-"
+  show Div = "/"
+  show Pow = "^"
+  show And = "&&"
+  show Or = "||"
+  show Equal = "=="
   show Nequal = "/="
-  show Gt     = ">"
-  show Ge     = ">="
-  show Lt     = "<"
-  show Le     = "<="
-  show And    = "&&"
-  show Or     = "||"
-  show Not    = "!"
+  show Lt = "<"
+  show Gt = ">"
+  show Ge = ">="
+  show Le = "<="
+  show Not = "!"
 
 
 instance Show AST where
@@ -51,7 +55,9 @@ instance Show AST where
         (if n > 0 then printf "%s|_%s" (concat $ replicate (n - 1) "| ") else id) $
         case t of
           BinOp op l r -> printf "%s\n%s\n%s" (show op) (go (ident n) l) (go (ident n) r)
-          UnaryOp op x -> printf "%s\n%s" (show op) (go (ident n) x)
-          Ident x -> x
           Num i -> show i
+          Ident i -> show i
+          UnaryOp op e -> printf "%s\n%s" (show op) (go (ident n) e) 
+          T -> show "true"
+          F -> show "false"
       ident = (+1)
