@@ -132,7 +132,36 @@ evaluate input = do
 
 
 evalExpr :: Subst -> AST -> Maybe Int
-evalExpr = undefined
+evalExpr dict (Num x) = return $ x
+evalExpr dict (BinOp Plus x y) = do
+                    expr1 <- evalExpr dict x
+                    expr2 <- evalExpr dict y
+                    return $ (expr1 + expr2)
+evalExpr dict (BinOp Mult x y) = do
+                    expr1 <- evalExpr dict x
+                    expr2 <- evalExpr dict y
+                    return $ (expr1 * expr2)
+evalExpr dict (BinOp Minus x y) = do
+                    expr1 <- evalExpr dict x
+                    expr2 <- evalExpr dict y
+                    return $ (expr1 - expr2)
+evalExpr dict (BinOp Div x y) =  do
+                    expr1 <- evalExpr dict x
+                    expr2 <- evalExpr dict y
+                    return $ (expr1 `div` expr2)
+evalExpr dict (BinOp Pow x y) = do
+                    expr1 <- evalExpr dict x
+                    expr2 <- evalExpr dict y
+                    return $ ((^) expr1 expr2)
+evalExpr dict (BinOp Equals x y) = do
+                    expr1 <- evalExpr dict x
+                    expr2 <- evalExpr dict y
+                    return $ ((^) expr1 expr2)
+evalExpr dict (BinOp Pow x y) = do
+                    expr1 <- evalExpr dict x
+                    expr2 <- evalExpr dict y
+                    return $ ((^) expr1 expr2)
+
  
 
 

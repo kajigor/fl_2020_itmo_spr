@@ -229,6 +229,9 @@ parseSeq = Seq <$> (parseSeparators *> parseStatments <* parseSeparators)
 parseL :: Parser String String LAst
 parseL = parseSeq
 
+intToBool :: Int -> Bool
+intToBool x = if (x == 0) then True
+              else False
 
 initialConf :: [Int] -> Configuration
 initialConf input = Conf Map.empty input []
@@ -249,14 +252,14 @@ eval (Write expr) (Conf dict input output) = do
            return $ Conf dict input (result:output)
 eval (While cond body) (Conf dict input output) = do
            result <- evalExpr dict cond
-           if result then do
+           if (intToBool result) then do
               new_conf <- eval body (Conf dict input output)
               result' <- eval (While cond body) new_conf
               return $ result'
            else return $ (Conf dict input output)
 eval (If cond thn els) (Conf dict input output) = do
       result <- evalExpr dict cond
-      if result then do
+      if (intToBool result) then do
          result' <-  eval thn (Conf dict input output)
          return $ result'
       else do
