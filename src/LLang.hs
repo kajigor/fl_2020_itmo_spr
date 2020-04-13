@@ -229,9 +229,6 @@ parseSeq = Seq <$> (parseSeparators *> parseStatments <* parseSeparators)
 parseL :: Parser String String LAst
 parseL = parseSeq
 
-intToBool :: Int -> Bool
-intToBool x = if (x == 0) then True
-              else False
 
 initialConf :: [Int] -> Configuration
 initialConf input = Conf Map.empty input []

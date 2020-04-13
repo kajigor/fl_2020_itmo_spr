@@ -131,36 +131,36 @@ evaluate input = do
           _ -> Nothing
 
 
+boolToInt :: Bool -> Int
+boolToInt x = if x then 1
+              else 0
+
+intToBool :: Int -> Bool
+intToBool x = if (x == 0) then True
+              else False
+
 evalExpr :: Subst -> AST -> Maybe Int
 evalExpr dict (Num x) = return $ x
-evalExpr dict (BinOp Plus x y) = do
-                    expr1 <- evalExpr dict x
-                    expr2 <- evalExpr dict y
-                    return $ (expr1 + expr2)
-evalExpr dict (BinOp Mult x y) = do
-                    expr1 <- evalExpr dict x
-                    expr2 <- evalExpr dict y
-                    return $ (expr1 * expr2)
-evalExpr dict (BinOp Minus x y) = do
-                    expr1 <- evalExpr dict x
-                    expr2 <- evalExpr dict y
-                    return $ (expr1 - expr2)
-evalExpr dict (BinOp Div x y) =  do
-                    expr1 <- evalExpr dict x
-                    expr2 <- evalExpr dict y
-                    return $ (expr1 `div` expr2)
-evalExpr dict (BinOp Pow x y) = do
-                    expr1 <- evalExpr dict x
-                    expr2 <- evalExpr dict y
-                    return $ ((^) expr1 expr2)
-evalExpr dict (BinOp Equals x y) = do
-                    expr1 <- evalExpr dict x
-                    expr2 <- evalExpr dict y
-                    return $ ((^) expr1 expr2)
-evalExpr dict (BinOp Pow x y) = do
-                    expr1 <- evalExpr dict x
-                    expr2 <- evalExpr dict y
-                    return $ ((^) expr1 expr2)
+evalExpr dict (BinOp op x y) = do
+         expr1 <- evalExpr dict x
+         expr2 <- evalExpr dict y
+         case op of 
+             Plus -> return $ expr1 + expr2
+             Mult -> return $ expr1 * expr2
+             Div -> return $ expr1 `div` expr2
+             Minus -> return $ expr1 - expr2
+             Pow -> return $ (^) expr1 expr2
+             Equal -> return $ boolToInt $ (expr1 == expr2)
+             Nequal -> return $ boolToInt $ (expr1 /= expr2)
+             Gt -> return $ boolToInt $ (expr1 > expr2)
+             Ge -> return $ boolToInt $ (expr1 >= expr2)
+             Lt -> return $ boolToInt $ (expr1 < expr2)
+             Le -> return $ boolToInt $ (expr1 <= expr2)
+             And -> return $ boolToInt $ ((intToBool expr1) && (intToBool expr2))
+             Or -> return $ boolToInt $ ((intToBool expr1) || (intToBool expr2))
+evalExpr dict (UnaryOp Not x) = do
+                    expr <- evalExpr dict x
+                    return $ boolToInt $ (not $ intToBool $ expr)
 
  
 
