@@ -40,8 +40,7 @@ parseIdent = (:) <$> parseLetter <*> many ( parseLetter <|> satisfy isDigit )
 
 -- Парсер чисел
 parseNum :: Parser String String Int
-parseNum =
-     (toNum <$> go) <|> (negate <$> (toNum <$> (symbol '-' >> go)))
+parseNum = toNum <$> go
    where
      digit = satisfy isDigit
      empty' = return []

@@ -38,7 +38,7 @@ unit_parseNum = do
 unit_parseNegNum :: Assertion
 unit_parseNegNum = do
     runParser parseNum "123" @?= Success "" 123
-    runParser parseNum "-123" @?= Success "" (-123)
+    assertBool "" $ isFailure $ runParser parseNum "-123"
     assertBool "" $ isFailure $ runParser parseNum "--123"
     assertBool "" $ isFailure $ runParser parseNum "-  123"
     assertBool "" $ isFailure $ runParser parseNum "- 123"
@@ -104,5 +104,17 @@ unit_parseExpr = do
     runParser parseExpr "-x" @?= Success "" (UnaryOp Minus  (Ident "x"))
     runParser parseExpr "!(y&&x<=1)" @?= Success "" (UnaryOp Not (BinOp And (Ident "y") (BinOp Le (Ident "x") (Num 1))))
 
-    
 
+unit_parseUnaryEpxr = do
+    runParser parseExpr "-1+5" @?= Success "" (BinOp Plus (UnaryOp Minus (Num 1)) (Num 5))
+    runParser parseExpr "-7*8" @?= Success "" (BinOp Mult (UnaryOp Minus (Num 7)) (Num 8))
+    runParser parseExpr "-3-2" @?= Success "" (BinOp Minus (UnaryOp Minus (Num 3)) (Num 2))
+    runParser parseExpr "-3--2" @?= Success "" (BinOp Minus (UnaryOp Minus (Num 3)) (UnaryOp Minus (Num 2)))
+    runParser parseExpr "-3+-2" @?= Success "" (BinOp Plus (UnaryOp Minus (Num 3)) (UnaryOp Minus (Num 2)))
+    runParser parseExpr "3---123" @?= Success "---123" (Num 3)
+    runParser parseExpr "-5^-2" @?= Success "^-2" (UnaryOp Minus (Num 5)) 
+    runParser parseExpr "-5^2" @?= Success "" (UnaryOp Minus (BinOp Pow (Num 5) (Num 2)))
+    runParser parseExpr "!x&&!y" @?= Success "" (BinOp And (UnaryOp Not (Ident "x")) (UnaryOp Not (Ident "y")))
+    runParser parseExpr "!-1" @?= Success "" (UnaryOp Not (UnaryOp Minus (Num 1)))
+
+    
