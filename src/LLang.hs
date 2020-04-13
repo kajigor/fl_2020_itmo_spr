@@ -5,7 +5,7 @@ import           Combinators         hiding (space)
 import           Combinators         (space)
 import           Control.Applicative (many, some, (<|>))
 import           Control.Monad       (guard)
-import           Expr                (parseExpr, parseIdent)
+import           Expr                (parseExpr', parseIdent)
 import qualified Keyword             as K
 
 type Expr = AST
@@ -52,6 +52,8 @@ kws = ["let", "if", "while", "read", "else", "write"]
 keyword = K.keyword kws
 
 body' = many separator *> symbol '{' *> many separator *> parseL <* many separator <* symbol '}' <* many separator
+
+parseExpr = parseExpr' identifier'
 
 condition' = some space *> parseExpr <* many space
 

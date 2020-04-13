@@ -31,6 +31,7 @@ unit_TestAssign = do
          })
   runParser parseL [r|leta = 4;|] @?= Success "leta = 4;" (Seq [])
   runParser parseL [r|let write = 4;|] @?= Success "let write = 4;" (Seq [])
+  runParser parseL [r|let write = let;|] @?= Success "let write = let;" (Seq [])
 
 unit_TestIf :: Assertion
 unit_TestIf = do
