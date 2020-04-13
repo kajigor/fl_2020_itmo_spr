@@ -130,5 +130,7 @@ unit_unaryEpxr = do
     runParser parseExpr "-(!1)" @?= Success "" (UnaryOp Minus (UnaryOp Not (Num 1)))
     runParser parseExpr "-1---2" @?= Success "---2" (UnaryOp Minus (Num 1))
     runParser parseExpr "-1^-2" @?= Success "^-2" (UnaryOp Minus (Num 1))
+    assertBool "" $ isFailure $ runParser parseExpr "--1"
+    assertBool "" $ isFailure $ runParser parseExpr "-!1"
 
     
