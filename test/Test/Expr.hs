@@ -126,5 +126,9 @@ unit_unaryEpxr = do
     runParser parseExpr "-5^2" @?= Success "" (UnaryOp Minus (BinOp Pow (Num 5) (Num 2)))
     runParser parseExpr "!x&&!y" @?= Success "" (BinOp And (UnaryOp Not (Ident "x")) (UnaryOp Not (Ident "y")))
     runParser parseExpr "!-1" @?= Success "" (UnaryOp Not (UnaryOp Minus (Num 1)))
+    runParser parseExpr "!(-1)" @?= Success "" (UnaryOp Not (UnaryOp Minus (Num 1)))
+    runParser parseExpr "-(!1)" @?= Success "" (UnaryOp Minus (UnaryOp Not (Num 1)))
+    runParser parseExpr "-1---2" @?= Success "---2" (UnaryOp Minus (Num 1))
+    runParser parseExpr "-1^-2" @?= Success "^-2" (UnaryOp Minus (Num 1))
 
     
