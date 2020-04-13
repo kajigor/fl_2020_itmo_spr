@@ -7,6 +7,7 @@ import           Data.Char   (isDigit, digitToInt)
 import           Control.Applicative (Alternative (..))
 import           UberExpr            (Associativity (..), OpType (..), uberExpr)
 import           Data.Char
+import qualified Data.Map as Map
 
 
 
@@ -136,11 +137,12 @@ boolToInt x = if x then 1
               else 0
 
 intToBool :: Int -> Bool
-intToBool x = if (x == 0) then True
-              else False
+intToBool x = if (x == 0) then False
+              else True
 
 evalExpr :: Subst -> AST -> Maybe Int
 evalExpr dict (Num x) = return $ x
+evalExpr dict (Ident x) = Map.lookup x dict
 evalExpr dict (BinOp op x y) = do
          expr1 <- evalExpr dict x
          expr2 <- evalExpr dict y
@@ -161,7 +163,5 @@ evalExpr dict (BinOp op x y) = do
 evalExpr dict (UnaryOp Not x) = do
                     expr <- evalExpr dict x
                     return $ boolToInt $ (not $ intToBool $ expr)
-
- 
 
 

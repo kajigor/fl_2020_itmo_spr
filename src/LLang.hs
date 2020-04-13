@@ -17,7 +17,6 @@ type Var = String
 data Configuration = Conf { subst :: Subst, input :: [Int], output :: [Int] }
                    deriving (Show, Eq)
 
-
 data LAst
   = If { cond :: Expr, thn :: LAst, els :: LAst }
   | While { cond :: Expr, body :: LAst }
@@ -233,6 +232,12 @@ parseL = parseSeq
 initialConf :: [Int] -> Configuration
 initialConf input = Conf Map.empty input []
 
+getLAst :: String -> LAst
+getLAst input = case runParser parseL input of 
+         Success rest ast -> ast
+         _ -> Seq []
+      
+        
 
 eval :: LAst -> Configuration -> Maybe Configuration
 eval (Assign var expr) (Conf dict input output) = do 
@@ -243,7 +248,7 @@ eval (Read var) (Conf dict input output) = do
           case input of
              [] -> Nothing
              (x:xs) -> let new_dict = Map.insert var (head input) dict in 
-                       return $ Conf new_dict input output
+                       return $ Conf new_dict (tail input) output
 eval (Write expr) (Conf dict input output) = do
            result <- evalExpr dict expr
            return $ Conf dict input (result:output)
@@ -262,10 +267,11 @@ eval (If cond thn els) (Conf dict input output) = do
       else do
          result' <-  eval els (Conf dict input output)
          return $ result'
-eval (Seq []) (Conf dict input output) = return $ (Conf dict input output)
+eval (Seq []) conf = return $ conf
 eval (Seq xs) (Conf dict input output) = do
         (Conf dict' input' output') <- eval (head xs) (Conf dict input output)
         eval (Seq (tail xs)) (Conf dict' input' output')
+
 
 
 instance Show LAst where
