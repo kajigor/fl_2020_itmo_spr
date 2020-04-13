@@ -105,7 +105,17 @@ unit_parseExpr = do
     runParser parseExpr "!(y&&x<=1)" @?= Success "" (UnaryOp Not (BinOp And (Ident "y") (BinOp Le (Ident "x") (Num 1))))
 
 
-unit_parseUnaryEpxr = do
+unit_unaryEpxr = do
+    runParser parseExpr "-1+2" @?= Success "" (BinOp Plus (UnaryOp Minus (Num 1)) (Num 2))
+    runParser parseExpr "-1*2" @?= Success "" (BinOp Mult (UnaryOp Minus (Num 1)) (Num 2))
+    runParser parseExpr "-1==2" @?= Success "" (BinOp Equal (UnaryOp Minus (Num 1)) (Num 2))
+    runParser parseExpr "-1==-2" @?= Success "" (BinOp Equal (UnaryOp Minus (Num 1)) (UnaryOp Minus (Num 2)))
+    runParser parseExpr "-1&&-2" @?= Success "" (BinOp And (UnaryOp Minus (Num 1)) (UnaryOp Minus (Num 2)))
+    runParser parseExpr "!1&&!2" @?= Success "" (BinOp And (UnaryOp Not (Num 1)) (UnaryOp Not (Num 2)))
+    runParser parseExpr "-1^2" @?= Success "" (UnaryOp Minus (BinOp Pow (Num 1) (Num 2)))
+    runParser parseExpr "-1^(-2)" @?= Success "" (UnaryOp Minus (BinOp Pow (Num 1) (UnaryOp Minus (Num 2))))
+    runParser parseExpr "(-1)^2" @?= Success "" (BinOp Pow (UnaryOp Minus (Num 1)) (Num 2))
+    runParser parseExpr "-1+-2" @?= Success "" (BinOp Plus (UnaryOp Minus (Num 1)) (UnaryOp Minus (Num 2)))
     runParser parseExpr "-1+5" @?= Success "" (BinOp Plus (UnaryOp Minus (Num 1)) (Num 5))
     runParser parseExpr "-7*8" @?= Success "" (BinOp Mult (UnaryOp Minus (Num 7)) (Num 8))
     runParser parseExpr "-3-2" @?= Success "" (BinOp Minus (UnaryOp Minus (Num 3)) (Num 2))
