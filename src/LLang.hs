@@ -127,6 +127,14 @@ eval (Seq (x:xs)) conf = do
   return $ Conf (M.union subst'' subst') input'' output''
 eval (Seq []) conf = return conf
 
+execute :: String -> [Int] -> Maybe Configuration
+execute str inp = do
+  let result = runParser parseL str
+  let config = initialConf inp
+  case result of
+    Success inp res -> eval res config
+    Failure e -> Nothing
+
 instance Show LAst where
   show = go 0
     where
