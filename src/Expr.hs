@@ -10,6 +10,8 @@ import Ops
 import Data.Either
 import Data.Bifunctor
 import Data.Maybe
+import Data.Bits
+
 import qualified Data.Map    as Map
 
 operators = ["+", "-", "*", "/", "^", "==", "/=", ">", "<", ">=", "<=", "&&", "||", "!"]
@@ -145,7 +147,12 @@ evalNum conf (BinOp op x' y') = do
     Le -> boolToInt $ x <= y
     Equal -> boolToInt $ x == y
     Nequal -> boolToInt $ x /= y
+    And -> (.&.) x y
+    Or -> (.|.) x y
 evalNum conf (UnaryOp Minus x') = do
   x <- evalNum conf x'
   return (-x)
+evalNum conf (UnaryOp Not x') = do
+  x <- evalNum conf x'
+  if x == 0 then return 1 else return 0
 evalNum _ _ = Nothing
