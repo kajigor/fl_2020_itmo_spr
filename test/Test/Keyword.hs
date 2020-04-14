@@ -1,8 +1,9 @@
 module Test.Keyword where
 
-import           Combinators      (Result (..), runParser)
+import           Combinators      (Result (..), runParser, toStream)
 import           Control.Monad    (forM)
 import           Keyword          (keyword)
+import           Test.Helper
 import           Test.Tasty.HUnit (Assertion, (@?=))
 
 kotlinKeywords = ["as", "as?", "break", "class", "continue", "do", "else", "false", "for", "fun", "if", "in", "!in", "interface", "is", "!is", "null", "object", "package", "return", "super", "this", "throw", "true", "try", "typealias", "typeof", "val", "var", "when", "while"]
@@ -11,9 +12,6 @@ cKeywords = ["auto", "break", "case", "char", "const", "continue", "default", "d
 
 haskellKeywords = ["as", "case", "of", "class", "data", "data family", "data instance", "default", "deriving", "deriving instance", "do", "forall", "foreign", "hiding", "if", "then", "else", "import", "infix", "infixl", "infixr", "instance", "let", "in", "mdo", "module", "newtype", "proc", "qualified", "rec", "type", "type family", "type instance", "where" ]
 
-isFailure (Failure _) = True
-isFailure  _          = False
-
 unit_Keywords :: Assertion
 unit_Keywords = do
   let suffix = "suffix"
@@ -21,17 +19,17 @@ unit_Keywords = do
 
   mapM_
     (\kw -> do
-      mapM_ (\str -> runParser (keyword kw)  str @?= Success "" str) kw
-      mapM_ (\str -> runParser (keyword kw)  (str ++ " " ++ suffix) @?= Success suffix str) kw
-      mapM_ (\str -> runParser (keyword kw)  (str ++ "\n" ++ suffix) @?= Success suffix str) kw
-      mapM_ (\str -> isFailure (runParser (keyword kw) "") @?= True) kw
-      mapM_ (\str -> isFailure (runParser (keyword kw) (str ++ suffix)) @?= True) (filter (' ' `notElem`) kw)
-      mapM_ (\str -> isFailure (runParser (keyword kw) (prefix ++ str)) @?= True) kw
+      mapM_ (\str -> testSuccess (runParser (keyword kw)  str) (toStream "" (length str))  str) kw
+      mapM_ (\str -> testSuccess (runParser (keyword kw)  (str ++ " " ++ suffix)) (toStream suffix (length str + 1)) str) kw
+      mapM_ (\str -> testSuccess (runParser (keyword kw)  (str ++ "\n" ++ suffix)) (toStream suffix (length str + 1)) str) kw
+      mapM_ (\str -> testFailure (runParser (keyword kw) "")) kw
+      mapM_ (\str -> testFailure (runParser (keyword kw) (str ++ suffix))) (filter (' ' `notElem`) kw)
+      mapM_ (\str -> testFailure (runParser (keyword kw) (prefix ++ str))) kw
     )
     [kotlinKeywords, cKeywords, haskellKeywords]
 
 unit_keywordsWithSpaces :: Assertion
 unit_keywordsWithSpaces = do
-  runParser (keyword ["a", "a b", "b"]) "a bc" @?= Success "bc" "a"
-  runParser (keyword ["a", "a b", "b"]) "a b" @?= Success "" "a b"
-  runParser (keyword ["a", "a b", "b"]) "a " @?= Success "" "a"
+  testSuccess (runParser (keyword ["a", "a b", "b"]) "a bc") (toStream "bc" 2) "a"
+  testSuccess (runParser (keyword ["a", "a b", "b"]) "a b" ) (toStream ""   3) "a b"
+  testSuccess (runParser (keyword ["a", "a b", "b"]) "a "  ) (toStream ""   2) "a"

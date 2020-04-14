@@ -1,5 +1,6 @@
 module AST where
 
+import           Data.List   (intercalate)
 import qualified Data.Map    as Map
 import           Text.Printf (printf)
 
@@ -24,7 +25,8 @@ type Subst = Map.Map String Int
 data AST = BinOp Operator AST AST
          | UnaryOp Operator AST
          | Ident String
-         | Num Int
+         | Num  Int
+         | FunctionCall String [AST]
          deriving (Eq)
 
 instance Show Operator where
@@ -54,4 +56,5 @@ instance Show AST where
           UnaryOp op x -> printf "%s\n%s" (show op) (go (ident n) x)
           Ident x -> x
           Num i -> show i
+          FunctionCall name args -> printf "%s(%s)" name (intercalate ", " $ map show args)
       ident = (+1)

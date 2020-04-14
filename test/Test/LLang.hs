@@ -1,10 +1,31 @@
 module Test.LLang where
 
-import           AST              (AST (..), Operator (..))
+import           AST
+import           Combinators      (Result (..), runParser, toStream)
 import qualified Data.Map         as Map
+import           Debug.Trace      (trace)
 import           LLang            (Configuration (..), LAst (..), eval,
-                                   initialConf)
+                                   initialConf, parseL, Function (..), Program (..))
 import           Test.Tasty.HUnit (Assertion, assertBool, (@?=))
+import           Text.Printf      (printf)
+
+-- f x y = read z ; return (x + z * y)
+-- g x = if (x) then return x else return x*13
+-- {read x; read y; write (f x y); write (g x)}"
+
+prog =
+  Program
+    [ Function "f" ["x", "y"] (Seq [Read "z", Return (BinOp Plus (Ident "x") (Ident "y"))])
+    , Function "g" ["x"] (If (Ident "x") (Return (Ident "x")) (Return (BinOp Mult (Ident "x") (Num 13))))
+    ]
+    (
+      Seq
+        [ Read "x"
+        , Read "y"
+        , Write (FunctionCall "f" [Ident "x", Ident "y"])
+        , Write (FunctionCall "g" [Ident "x"])
+        ]
+    )
 
 -- read x;
 -- if (x > 13)
@@ -18,21 +39,21 @@ import           Test.Tasty.HUnit (Assertion, assertBool, (@?=))
 stmt1 :: LAst
 stmt1 =
   Seq
-    [ Read "X"
-    , If (BinOp Gt (Ident "X") (Num 13))
-         (Write (Ident "X"))
-         (While (BinOp Lt (Ident "X") (Num 42))
-                (Seq [ Assign "X"
-                        (BinOp Mult (Ident "X") (Num 7))
-                     , Write (Ident "X")
+    [ Read "x"
+    , If (BinOp Gt (Ident "x") (Num 13))
+         (Seq [(Write (Ident "x"))])
+         (Seq [(While (BinOp Lt (Ident "x") (Num 42))
+                (Seq [ Assign "x"
+                        (BinOp Mult (Ident "x") (Num 7))
+                     , Write (Ident "x")
                      ]
                 )
-         )
+         )])
     ]
 
 unit_stmt1 :: Assertion
 unit_stmt1 = do
-  let xIs n = Map.fromList [("X", n)]
+  let xIs n = Map.fromList [("x", n)]
   eval stmt1 (initialConf [1]) @?= Just (Conf (xIs 49) [] [49, 7])
   eval stmt1 (initialConf [10]) @?= Just (Conf (xIs 70) [] [70])
   eval stmt1 (initialConf [42]) @?= Just (Conf (xIs 42) [] [42])
@@ -51,13 +72,13 @@ stmt2 =
   Seq
     [ Read "x"
     , If (Ident "x")
-         (While (Ident "x")
+         (Seq [(While (Ident "x")
                 (Seq
                    [ (Assign "x" (BinOp Minus (Ident "x") (Num 2)))
                    , (Write (Ident "x"))
                    ]
                 )
-         )
+         )])
          (Seq [])
     ]
 
@@ -108,7 +129,7 @@ stmt4 =
   Seq
     [ Read "n"
     , If (BinOp Or (BinOp Equal (Ident "n") (Num 1)) (BinOp Equal (Ident "n") (Num 2)))
-         (Write (Num 1))
+         (Seq [(Write (Num 1))])
          (Seq
             [ Assign "i" (Num 2)
             , Assign "cur" (Num 1)

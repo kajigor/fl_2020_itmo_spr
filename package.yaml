@@ -32,13 +32,6 @@ dependencies:
 library:
   source-dirs: src
 
-executables:
-  expr:
-    main:                Main.hs
-    source-dirs:         app/expr
-    dependencies:
-    - fl2020-itmo-spr
-
 tests:
   test:
     main:                Test.hs
