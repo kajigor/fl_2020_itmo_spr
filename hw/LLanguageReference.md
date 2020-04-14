@@ -5,8 +5,8 @@
 
 ```bash
 Language ::= Sequence
-Sequence ::= Statement ';' | Statement ';' Sequence
-Statement ::= If | While | Assign | Read | Write
+Sequence ::= Statement | Statement Sequence
+Statement ::= If | While | Assign ';' | Read ';' | Write ';'
 If ::= 'if' Condition '{' Sequence '}' 'else' '{' Sequence '}'
 While ::= 'while' Condition '{' Sequence '}'
 Assign ::= 'let' Identifier '=' Expression
