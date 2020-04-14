@@ -139,31 +139,22 @@ evalExpr conf expr = (do
     res <- evalNum conf expr
     return $ Right res)
 
-evalBool conf (BinOp Gt x' y') = do
-  x <- evalNum conf x'
-  y <- evalNum conf y'
-  return $ x > y
-evalBool conf (BinOp Ge x' y') = do
-  x <- evalNum conf x'
-  y <- evalNum conf y'
-  return $ x >= y
-evalBool conf (BinOp Lt x' y') = do
-  x <- evalNum conf x'
-  y <- evalNum conf y'
-  return $ x < y
-evalBool conf (BinOp Le x' y') = do
-  x <- evalNum conf x'
-  y <- evalNum conf y'
-  return $ x <= y
+evalBool conf (BinOp op x' y') 
+  | Just x <- evalNum conf x', 
+    Just y <- evalNum conf y' = case op of
+      Gt -> return $ x > y
+      Ge -> return $ x >= y
+      Lt -> return $ x < y
+      Le -> return $ x <= y
+      _  -> Nothing
 
-evalBool conf (BinOp And x' y') = do
-  x <- evalBool conf x'
-  y <- evalBool conf y'
-  return $ x && y
-evalBool conf (BinOp Or x' y') = do
-  x <- evalBool conf x'
-  y <- evalBool conf y'
-  return $ x || y
+evalBool conf (BinOp op x' y')
+  | Just x <- evalBool conf x',
+    Just y <- evalBool conf y' = case op of
+      And -> return $ x && y
+      Or -> return $ x || y
+      _ -> Nothing
+      
 evalBool conf (UnaryOp Not x' ) = do
   x <- evalBool conf x'
   return $ (not x)
@@ -171,26 +162,15 @@ evalBool _ _ = Nothing
 
 evalNum conf (Num x) = Just x
 evalNum conf (Ident x) = Map.lookup x conf
-evalNum conf (BinOp Plus x' y') = do
+evalNum conf (BinOp op x' y') = do
   x <- evalNum conf x'
   y <- evalNum conf y'
-  return $ x + y
-evalNum conf (BinOp Mult x' y') = do
-  x <- evalNum conf x'
-  y <- evalNum conf y'
-  return $ x * y
-evalNum conf (BinOp Minus x' y') = do
-  x <- evalNum conf x'
-  y <- evalNum conf y'
-  return $ x - y
-evalNum conf (BinOp Div x' y') = do
-  x <- evalNum conf x'
-  y <- evalNum conf y'
-  return $ x `div` y
-evalNum conf (BinOp Pow x' y') = do
-  x <- evalNum conf x'
-  y <- evalNum conf y'
-  return $ x ^ y
+  return $ case op of
+    Plus -> x + y
+    Mult -> x * y
+    Minus -> x - y
+    Div -> x `div` y
+    Pow -> x ^ y
 evalNum conf (UnaryOp Minus x') = do
   x <- evalNum conf x'
   return (-x)
