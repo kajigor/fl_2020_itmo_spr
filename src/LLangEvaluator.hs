@@ -12,9 +12,10 @@ import Expr
 import LLangParser
 
 eval :: LAst -> Configuration -> Maybe Configuration
-eval (If cond thn els) c@(Conf conf input out) = do
-  (Left condRes) <- evalExpr conf cond
+eval (If cond thn els) c@(Conf conf input out) | Just (Left condRes) <- evalExpr conf cond = do
   if condRes then eval thn c else eval els c
+eval (If cond thn els) c@(Conf conf input out) | Just (Right condRes) <- evalExpr conf cond = do
+  if condRes /= 0 then eval thn c else eval els c
 eval w@(While cond body) c@(Conf conf input out) = do
   (Left condRes) <- evalExpr conf cond
   if not condRes then return c else (eval body c) >>= (\c -> eval w c)
@@ -30,7 +31,6 @@ eval (Seq (x:xs)) conf = eval x conf >>= eval (Seq xs)
 
 evaluate' s input = helper $ runParser parseLLang s where
   helper (Failure _) = return []
- -- helper (Success _ ast) = error (show ast)
   helper (Success _ ast) = do
     (Conf _ _ out) <- eval ast (Conf Map.empty input [])
     return out
