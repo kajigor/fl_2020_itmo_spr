@@ -293,3 +293,5 @@ instance Show LAst where
       flatShowExpr (UnaryOp op x) = printf "(%s %s)" (show op) (flatShowExpr x)
       flatShowExpr (Ident x) = x
       flatShowExpr (Num n) = show n
+      flatShowExpr T = show "true"
+      flatShowExpr F = show "false"
