@@ -12,19 +12,18 @@ import Expr
 import LLangParser
 
 eval :: LAst -> Configuration -> Maybe Configuration
-eval (If cond thn els) c@(Conf conf input out) | Just (Left condRes) <- evalExpr conf cond = do
-  if condRes then eval thn c else eval els c
-eval (If cond thn els) c@(Conf conf input out) | Just (Right condRes) <- evalExpr conf cond = do
+eval (If cond thn els) c@(Conf conf input out) = do
+  condRes <- evalExpr conf cond
   if condRes /= 0 then eval thn c else eval els c
 eval w@(While cond body) c@(Conf conf input out) = do
-  (Left condRes) <- evalExpr conf cond
-  if not condRes then return c else (eval body c) >>= (\c -> eval w c)
+  condRes <- evalExpr conf cond
+  if condRes == 0 then return c else (eval body c) >>= (\c -> eval w c)
 eval (Assign v expr) (Conf conf input out) = do
-  (Right n) <- evalExpr conf expr
+  n <- evalExpr conf expr
   return $ (Conf (Map.insert v n conf) input out)
 eval (Read v) c@(Conf conf (x:input) out) = return $ (Conf (Map.insert v x conf) input out)
 eval (Write expr) c@(Conf conf input out) = do
-  (Right n) <- evalExpr conf expr
+  n <- evalExpr conf expr
   return (Conf conf input (n:out))
 eval (Seq []) conf = return conf
 eval (Seq (x:xs)) conf = eval x conf >>= eval (Seq xs) 

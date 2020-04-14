@@ -124,42 +124,10 @@ evaluate input = do
     Success rest ast | null rest -> return $ compute ast
     _ -> Nothing
 
-evalExpr conf (BinOp Equal x' y') = (do
-  x <- evalBool conf x'
-  y <- evalBool conf y'
-  return $ Left (x == y)) <|> (do
-        x <- evalNum conf x'
-        y <- evalNum conf y'
-        return $ Left (x == y)
-        )
-evalExpr conf (BinOp Nequal x' y') = fmap (bimap not id) (evalExpr conf (BinOp Equal x' y'))
-evalExpr conf expr = (do
-  res <- evalBool conf expr
-  return $ Left res) <|> (do
-    res <- evalNum conf expr
-    return $ Right res)
 
-evalBool conf (BinOp op x' y') 
-  | Just x <- evalNum conf x', 
-    Just y <- evalNum conf y' = case op of
-      Gt -> return $ x > y
-      Ge -> return $ x >= y
-      Lt -> return $ x < y
-      Le -> return $ x <= y
-      _  -> Nothing
-
-evalBool conf (BinOp op x' y')
-  | Just x <- evalBool conf x',
-    Just y <- evalBool conf y' = case op of
-      And -> return $ x && y
-      Or -> return $ x || y
-      _ -> Nothing
-      
-evalBool conf (UnaryOp Not x' ) = do
-  x <- evalBool conf x'
-  return $ (not x)
-evalBool _ _ = Nothing
-
+boolToInt False = 0
+boolToInt True = 1
+evalExpr = evalNum
 evalNum conf (Num x) = Just x
 evalNum conf (Ident x) = Map.lookup x conf
 evalNum conf (BinOp op x' y') = do
@@ -171,6 +139,12 @@ evalNum conf (BinOp op x' y') = do
     Minus -> x - y
     Div -> x `div` y
     Pow -> x ^ y
+    Gt -> boolToInt $ x > y
+    Ge -> boolToInt $ x >= y
+    Lt -> boolToInt $ x < y
+    Le -> boolToInt $ x <= y
+    Equal -> boolToInt $ x == y
+    Nequal -> boolToInt $ x /= y
 evalNum conf (UnaryOp Minus x') = do
   x <- evalNum conf x'
   return (-x)
