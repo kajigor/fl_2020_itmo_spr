@@ -1,6 +1,6 @@
 module Test.Keyword where
 
-import           Combinators      (Result (..), runParser, toStream)
+import           Combinators      (Result (..), Position (..), runParser, toStream)
 import           Control.Monad    (forM)
 import           Keyword          (keyword)
 import           Test.Helper
@@ -19,9 +19,9 @@ unit_Keywords = do
 
   mapM_
     (\kw -> do
-      mapM_ (\str -> testSuccess (runParser (keyword kw)  str) (toStream "" (length str))  str) kw
-      mapM_ (\str -> testSuccess (runParser (keyword kw)  (str ++ " " ++ suffix)) (toStream suffix (length str + 1)) str) kw
-      mapM_ (\str -> testSuccess (runParser (keyword kw)  (str ++ "\n" ++ suffix)) (toStream suffix (length str + 1)) str) kw
+      mapM_ (\str -> testSuccess (runParser (keyword kw)  str) (toStream "" $ Position 1 (length str))  str) kw
+      mapM_ (\str -> testSuccess (runParser (keyword kw)  (str ++ " " ++ suffix)) (toStream suffix $ Position 1 (length str + 1)) str) kw
+      mapM_ (\str -> testSuccess (runParser (keyword kw)  (str ++ "\n" ++ suffix)) (toStream suffix $ Position 2 0) str) kw
       mapM_ (\str -> testFailure (runParser (keyword kw) "")) kw
       mapM_ (\str -> testFailure (runParser (keyword kw) (str ++ suffix))) (filter (' ' `notElem`) kw)
       mapM_ (\str -> testFailure (runParser (keyword kw) (prefix ++ str))) kw
@@ -30,6 +30,6 @@ unit_Keywords = do
 
 unit_keywordsWithSpaces :: Assertion
 unit_keywordsWithSpaces = do
-  testSuccess (runParser (keyword ["a", "a b", "b"]) "a bc") (toStream "bc" 2) "a"
-  testSuccess (runParser (keyword ["a", "a b", "b"]) "a b" ) (toStream ""   3) "a b"
-  testSuccess (runParser (keyword ["a", "a b", "b"]) "a "  ) (toStream ""   2) "a"
+  testSuccess (runParser (keyword ["a", "a b", "b"]) "a bc") (toStream "bc" (Position 1 2)) "a"
+  testSuccess (runParser (keyword ["a", "a b", "b"]) "a b" ) (toStream ""   (Position 1 3)) "a b"
+  testSuccess (runParser (keyword ["a", "a b", "b"]) "a "  ) (toStream ""   (Position 1 2)) "a"

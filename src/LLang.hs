@@ -1,9 +1,9 @@
 module LLang where
 
 import AST (AST (..), Operator (..), Subst (..))
-import Combinators (Parser (..), Result(..), symbol, fail')
+import Combinators (Parser (..), runParser, Result(..), InputStream(..), getPos, makeError, symbol, fail', (<?>), sepBy1)
 import qualified Data.Map as Map
-import Data.List (intercalate)
+import Data.List (intercalate, partition)
 import Text.Printf (printf)
 import Expr
 import Control.Applicative(Alternative (..))
@@ -32,10 +32,21 @@ data LAst
   deriving (Eq)
 
 parseDef :: Parser String String Function
-parseDef = error "parseDef undefined"
+parseDef = Function <$> parseFuncName <*> parseArgs <*> parseCurly parseL where
+  parseFuncName = manySpace *> (parseString "def" *> someSpace *> parseVarName)
+  parseArgs = parseRound $ sepBy1 commaOpParser parseVarName <|> pure []
+  parseBody = parseCurly $ parseL <|> pure (Seq [])
 
 parseProg :: Parser String String Program
-parseProg = error "parseProg undefined"
+parseProg = do
+  funcs <- some parseDef
+  let isMain (Function name _ _) = name == "main"
+      (body, defs) = partition isMain funcs
+  if length body == 0
+  then "Main function is absent" <?> empty
+  else if length body > 1
+       then "Multiple definitions of main function" <?> empty
+       else return $ Program defs (funBody $ head body)
 
 stmt :: LAst
 stmt =
@@ -94,13 +105,17 @@ lLangKW = keyword ["if",
                    "else",
                    "while",
                    "read",
-                   "write"]
+                   "write",
+                   "return",
+                   "def"]
 
+--parseVarName :: 
 parseVarName = do
+  pos <- getPos
   varName <- parseIdent
-  case runParser lLangKW varName of
+  "Keyword can't be an identificator" <?> case runParser lLangKW varName of
     Failure _ -> return varName
-    _ -> fail' "Variable name can't be a language keyword"
+    _ -> empty
     
 
 spaceChars = (symbol ' ' <|> symbol '\t' <|> symbol '\n')
@@ -109,6 +124,7 @@ someSpace = some spaceChars
 
 assignOpParser = manySpace *> symbol '=' <* manySpace
 semiOpParser = manySpace *> symbol ';' <* manySpace
+commaOpParser = manySpace *> symbol ',' <* manySpace
 
 -- Показалось, что так будет удобнее, чем через keywords.
 -- Все равно нам нужно не просто считать ключевое слово,
@@ -131,7 +147,7 @@ parseL = lFromList <$> some parseStatement where
   -- To allow for empty blocks in while and if
   parseL' = parseL <|> (const (Seq []) <$> manySpace)
   parseStatement :: Parser String String LAst
-  parseStatement = parseAssign <|> parseCond <|> parseWhile <|> parseWrite <|> parseRead
+  parseStatement = parseAssign <|> parseCond <|> parseWhile <|> parseWrite <|> parseRead <|> parseReturn
   parseAssign = manySpace *> (Assign <$> parseVarName <* assignOpParser <*> parseExpr) <* semiOpParser
   parseCond = manySpace *> (If <$> (parseString "if" *> parseRound parseExpr) <*> 
                                    (parseString "then" *> parseCurly parseL')  <*>
@@ -139,10 +155,8 @@ parseL = lFromList <$> some parseStatement where
   parseWhile = manySpace *> (While <$> (parseString "while" *> parseRound parseExpr) <*>
                                        parseCurly parseL')
   parseWrite = manySpace *> (Write <$> (parseString "write" *> parseRound parseExpr)) <* semiOpParser
-  parseRead = manySpace *> (Read <$> (parseString "read" *> someSpace *> parseIdent)) <* semiOpParser
-
-initialConf :: [Int] -> Configuration
-initialConf input = Conf Map.empty input []
+  parseRead = manySpace *> (Read <$> (parseString "read" *> manySpace *> parseRound parseIdent)) <* semiOpParser
+  parseReturn = manySpace *> (Return <$> (parseString "return" *> manySpace *> parseRound parseExpr)) <* semiOpParser
 
 eval :: LAst -> Configuration -> Maybe Configuration
 eval (If cond thn els) conf@(Conf map _ _) = do
@@ -168,22 +182,3 @@ eval (Write expr) (Conf map inp out) = do
   return $ Conf map inp (expr':out)
 eval (Seq ls) conf = foldM (flip eval) conf ls
 
-instance Show LAst where
-  show =
-      go 0
-    where
-      go n t =
-        let makeIdent = if n > 0 then printf "%s|_%s" (concat $ replicate (n - 1) "| ") else id in
-
-        case t of
-          If cond thn els -> makeIdent $ printf "if %s\n%sthen\n%s\n%selse\n%s" (flatShowExpr cond) (makeIdent "") (go (ident n) thn) (makeIdent "") (go (ident n) els)
-          While cond body -> makeIdent $ printf "while %s\n%sdo\n%s" (flatShowExpr cond) (makeIdent "") (go (ident n) body)
-          Assign var expr -> makeIdent $ printf "%s := %s" var (flatShowExpr expr)
-          Read var        -> makeIdent $ printf "read %s" var
-          Write expr      -> makeIdent $ printf "write %s" (flatShowExpr expr)
-          Seq stmts       -> intercalate "\n" $ map (go n) stmts
-      ident = (+1)
-      flatShowExpr (BinOp op l r) = printf "(%s %s %s)" (flatShowExpr l) (show op) (flatShowExpr r)
-      flatShowExpr (UnaryOp op x) = printf "(%s %s)" (show op) (flatShowExpr x)
-      flatShowExpr (Ident x) = x
-      flatShowExpr (Num n) = show n

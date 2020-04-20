@@ -1,6 +1,6 @@
 module Keyword where
 
-import Combinators (Parser (..), Result (..), fail', symbol)
+import Combinators (Parser (..), Result (..), ErrorMsg (..), InputStream (..), fail', symbol)
 import Control.Applicative
 import Data.List (sort)
 
@@ -51,8 +51,8 @@ uniqueOfSorted (x:xs) = go xs x where
 
 isEmpty :: Parser String String String
 isEmpty = Parser $ \input -> case input of
-  [] -> Success input input
-  (x:xs) -> Failure predErrMsg
+  (InputStream [] pos) -> Success input Nothing []
+  (InputStream (x:xs) pos) -> Failure $ Just $ ErrorMsg ["Expecting end of keyword"] pos
 
 isTerminal :: Parser String String String
 isTerminal = isEmpty <|> foldr1 (<|>) (terminateWith <$> spaceChars) where

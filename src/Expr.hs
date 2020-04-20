@@ -2,8 +2,8 @@ module Expr where
 
 import qualified Data.Map as Map
 import           AST         (AST (..), Operator (..), Subst(..))
-import           Combinators (Parser (..), Result (..),
-                              elem', satisfy, symbol, fail')
+import           Combinators (Parser (..), Result (..), InputStream(..), runParser,
+                              elem', satisfy, symbol, fail', sepBy1)
 import           Data.Char   (isDigit, digitToInt, isLetter)
 import           UberExpr
 import           Keyword     (keywordWeak)
@@ -58,7 +58,7 @@ parseExpr = uberExpr
                (makeOpParser ["*", "/"], Binary LeftAssoc),
                (makeOpParser ["-"], Unary),
                (makeOpParser ["^"], Binary RightAssoc)]
-              (parseTerm <|> Ident <$> parseIdent)
+              (parseTerm <|> parseFuncCall <|> (Ident <$> parseIdent))
               BinOp
               UnaryOp
 
@@ -85,6 +85,18 @@ makeOpParser ops = keywordWeak ops >>= asOperator where
       "||" -> return Or
       _    -> fail' "Failed to parse an operator"
       
+
+parseFuncCall :: Parser String String AST
+parseFuncCall = FunctionCall <$> parseFuncName <*> parseArgs where
+  parseFuncName = parseIdent
+  parseArgs = parseRound $ sepBy1 commaOpParser parseExpr <|> pure []
+  commaOpParser = manySpace *> symbol ',' <* manySpace
+  manySpace = many (symbol ' ' <|> symbol '\t' <|> symbol '\n')
+  parseBrackets (op,cl) p = (manySpace *> symbol op <* manySpace)
+                            *> p <*
+                            (manySpace *> symbol cl <* manySpace)
+  parseRound = parseBrackets ('(', ')')
+  parseCurly = parseBrackets ('{', '}')
 
 parseIdent :: Parser String String String
 parseIdent = (:) <$> letter <*> many (letter <|> digit) where

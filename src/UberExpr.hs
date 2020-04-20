@@ -1,6 +1,6 @@
 module UberExpr where
 
-import           Combinators (Parser (..))
+import           Combinators (Parser (..), runParser)
 import           Control.Applicative(Alternative (..))
 
 data Associativity = LeftAssoc | RightAssoc | NoAssoc
@@ -8,7 +8,7 @@ data Associativity = LeftAssoc | RightAssoc | NoAssoc
 data OpType = Binary Associativity
             | Unary
 
-uberExpr :: Monoid e
+uberExpr :: (Monoid e, Eq e)
          => [(Parser e i op, OpType)] -- список операций с их арностью и, в случае бинарных, ассоциативностью
          -> Parser e i ast            -- парсер элементарного выражения
          -> (op -> ast -> ast -> ast) -- конструктор узла дерева для бинарной операции
