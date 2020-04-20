@@ -3,13 +3,14 @@
 module Test.LLang where
 
 import           AST
-import           Combinators       (InputStream (..), Result (..), runParser,
-                                    toStream)
+import           Combinators       (InputStream (..), Position (..),
+                                    Result (..), runParser, toStream, initPosition)
 import qualified Data.Map          as Map
-import           Debug.Trace       (trace)
+import           Debug.Trace       (trace, traceShowId)
 import           LLang             (Configuration (..), Function (..),
                                     LAst (..), Program (..), eval, initialConf,
                                     parseL, parseProg)
+import           Test.Helper
 import           Test.Tasty.HUnit  (Assertion, assertBool, (@?=))
 import           Text.Printf       (printf)
 import           Text.RawString.QQ (r)
@@ -215,7 +216,10 @@ unit_TestSeq = do
 prog =
   Program
     [ Function "f" ["x", "y"] (Seq [Read "z", Return (BinOp Plus (Ident "x") (Ident "y"))])
-    , Function "g" ["x"] (Seq [If (Ident "x") (Seq [Return (Ident "x")]) (Seq[Return (BinOp Mult (Ident "x") (Num 13))])])
+    , Function
+        "g"
+        ["x"]
+        (Seq [If (Ident "x") (Seq [Return (Ident "x")]) (Seq [Return (BinOp Mult (Ident "x") (Num 13))])])
     ]
     (Seq [Read "x", Read "y", Write (FunctionCall "f" [Ident "x", Ident "y"]), Write (FunctionCall "g" [Ident "x"])])
 
@@ -358,3 +362,18 @@ unit_stmt4 = do
   eval stmt4 (initialConf [2]) @?= Just (Conf (subst' 2) [] [1])
   eval stmt4 (initialConf [10]) @?= Just (Conf (subst 10 10 55 34 55) [] [55])
   eval stmt4 (initialConf []) @?= Nothing
+
+unit_position :: Assertion
+unit_position = do
+  let prog = [r|a = 2 + 4 * 5;|]
+  getPosition (runParser parseProg prog) @?= Just (Position 0 14)
+
+  let prog = [r|while if + 4 {}|] -- `if` keyword in condition
+  getPosition (runParser parseProg prog) @?= Just initPosition
+
+  let prog = [r|
+    while (a == 3) {
+    }
+    a = 3 + + 1;
+  |]
+  getPosition (runParser parseProg prog) @?= Just (Position 3 4) -- column 4 because of tab (4 spaces)

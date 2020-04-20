@@ -7,7 +7,7 @@ import           Control.Monad       (guard)
 import           Data.Foldable       (asum)
 import           Data.List           (intercalate)
 import qualified Data.Map            as M
-import           Expr                (evalExpr, parseExpr, toBool)
+import           Expr                (evalExpr, parseExpr', toBool)
 import qualified Keyword             as K
 import           Text.Printf         (printf)
 
@@ -64,7 +64,7 @@ data LAst
   | Return
       { expr :: Expr
       }
-  deriving (Eq, Show)
+  deriving (Eq)
 
 parseDef :: Parser String String Function
 parseDef = Function <$> (string "func" *> separator *> identifier') <*> args <*> body'
@@ -93,9 +93,9 @@ keyword = K.keyword kws
 
 body' = many separator *> symbol '{' *> many separator *> parseL <* many separator <* symbol '}' <* many separator
 
-condition' = some space *> parseExpr <* many space
+condition' = some space *> parseExpr' identifier' <* many space
 
-expression' = many separator *> parseExpr <* many separator
+expression' = many separator *> parseExpr' identifier' <* many separator
 
 identifier' = many separator *> ident <* many separator
   where
@@ -169,33 +169,33 @@ instance Show Function where
 instance Show Program where
   show (Program defs main) = printf "%s\n\n%s" (intercalate "\n\n" $ map show defs) (show main)
 
---instance Show LAst where
---  show = go 0
---    where
---      go n t =
---        let makeIdent = identation n
---         in case t of
---              If cond thn els ->
---                makeIdent $
---                printf
---                  "if %s\n%sthen\n%s\n%selse\n%s"
---                  (flatShowExpr cond)
---                  (makeIdent "")
---                  (go (ident n) thn)
---                  (makeIdent "")
---                  (go (ident n) els)
---              While cond body ->
---                makeIdent $ printf "while %s\n%sdo\n%s" (flatShowExpr cond) (makeIdent "") (go (ident n) body)
---              Assign var expr -> makeIdent $ printf "%s := %s" var (flatShowExpr expr)
---              Read var -> makeIdent $ printf "read %s" var
---              Write expr -> makeIdent $ printf "write %s" (flatShowExpr expr)
---              Seq stmts -> intercalate "\n" $ map (go n) stmts
---              Return expr -> makeIdent $ printf "return %s" (flatShowExpr expr)
---      flatShowExpr (BinOp op l r) = printf "(%s %s %s)" (flatShowExpr l) (show op) (flatShowExpr r)
---      flatShowExpr (UnaryOp op x) = printf "(%s %s)" (show op) (flatShowExpr x)
---      flatShowExpr (Ident x) = x
---      flatShowExpr (Num n) = show n
---      flatShowExpr (FunctionCall name args) = printf "%s(%s)" name (intercalate ", " $ map flatShowExpr args)
+instance Show LAst where
+  show = go 0
+    where
+      go n t =
+        let makeIdent = identation n
+         in case t of
+              If cond thn els ->
+                makeIdent $
+                printf
+                  "if %s\n%sthen\n%s\n%selse\n%s"
+                  (flatShowExpr cond)
+                  (makeIdent "")
+                  (go (ident n) thn)
+                  (makeIdent "")
+                  (go (ident n) els)
+              While cond body ->
+                makeIdent $ printf "while %s\n%sdo\n%s" (flatShowExpr cond) (makeIdent "") (go (ident n) body)
+              Assign var expr -> makeIdent $ printf "%s := %s" var (flatShowExpr expr)
+              Read var -> makeIdent $ printf "read %s" var
+              Write expr -> makeIdent $ printf "write %s" (flatShowExpr expr)
+              Seq stmts -> intercalate "\n" $ map (go n) stmts
+              Return expr -> makeIdent $ printf "return %s" (flatShowExpr expr)
+      flatShowExpr (BinOp op l r) = printf "(%s %s %s)" (flatShowExpr l) (show op) (flatShowExpr r)
+      flatShowExpr (UnaryOp op x) = printf "(%s %s)" (show op) (flatShowExpr x)
+      flatShowExpr (Ident x) = x
+      flatShowExpr (Num n) = show n
+      flatShowExpr (FunctionCall name args) = printf "%s(%s)" name (intercalate ", " $ map flatShowExpr args)
 
 ident = (+ 1)
 

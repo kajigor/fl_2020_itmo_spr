@@ -50,7 +50,9 @@ binaryOp _      = Nothing
 
 -- Парсер арифметических выражений над целыми числами
 parseExpr :: Parser String String AST
-parseExpr = uberExpr table ast binary unary
+parseExpr = parseExpr' parseIdent
+
+parseExpr' ident = uberExpr table ast binary unary
   where
     table :: [(Parser String String Operator, OpType)]
     table =
@@ -73,8 +75,8 @@ parseExpr = uberExpr table ast binary unary
       ]
     ast = number <|> funcCall <|> identifier <|> funcCall <|> (parseLeftBracket *> parseExpr <* parseRightBracket)
     number = Num <$> spaced nat
-    identifier = Ident <$> spaced parseIdent
-    funcCall = FunctionCall <$> spaced parseIdent <*> args
+    identifier = Ident <$> spaced ident
+    funcCall = FunctionCall <$> spaced ident <*> args
     args = parseLeftBracket *> spaced (sepBy comma parseExpr) <* parseRightBracket
     comma = many separator *> string "," <* many separator
     parseLeftBracket = symbol '('

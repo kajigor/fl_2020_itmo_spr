@@ -1,6 +1,7 @@
 module Test.Helper where
 
-import           Combinators      (Parser, Result (..), InputStream (..))
+import           Combinators      (ErrorMsg (..), InputStream (..), Parser,
+                                   Position (..), Result (..), initPosition)
 import           Test.Tasty.HUnit (Assertion, assertBool, (@?=))
 
 testFailure = assertBool "" . isFailure
@@ -11,5 +12,13 @@ isFailure (Failure _) = True
 isFailure _           = False
 
 erasePosition :: Result e i a -> Result e i a
-erasePosition (Success str _ x) = Success (InputStream (stream str) 0) Nothing x
-erasePosition x                 = x
+erasePosition (Success str _ x) = Success (InputStream (stream str) initPosition) Nothing x
+erasePosition x = x
+
+fromColumn = Position 0
+
+fromLine line = Position line 0
+
+getPosition (Success (InputStream _ pos) _ _) = return pos
+getPosition (Failure (Just (ErrorMsg _ pos))) = return pos
+getPosition (Failure Nothing)                 = Nothing

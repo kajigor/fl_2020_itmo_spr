@@ -15,14 +15,19 @@ data Result error input result
 
 newtype Parser error input result =
   Parser
-    { runParser' :: (InputStream input) -> Result error input result
+    { runParser' :: InputStream input -> Result error input result
     }
 
 type Error = String
 
 type Input = String
 
-type Position = Int
+data Position =
+  Position
+    { line   :: Int
+    , column :: Int
+    }
+  deriving (Show, Eq, Ord)
 
 data InputStream a =
   InputStream
@@ -40,7 +45,7 @@ data ErrorMsg e =
 
 makeError e p = Just $ ErrorMsg [e] p
 
-initPosition = 0
+initPosition = Position 0 0
 
 runParser :: Parser error input result -> input -> Result error input result
 runParser parser input = runParser' parser (InputStream input initPosition)
@@ -48,8 +53,17 @@ runParser parser input = runParser' parser (InputStream input initPosition)
 toStream :: a -> Position -> InputStream a
 toStream = InputStream
 
-incrPos :: InputStream a -> InputStream a
-incrPos (InputStream str pos) = InputStream str (pos + 1)
+incrPos :: (Enum c) => c -> Position -> Position
+incrPos c pos
+  | equals c ' ' = pos {column = column pos + 1}
+  | equals c '\n' = Position (line pos + 1) 0
+  | equals c '\t' = pos {column = column pos + 4}
+  | otherwise = pos {column = column pos + 1}
+  where
+    equals l r = fromEnum l == fromEnum r -- отвратительно
+
+incrPosByStr :: Enum c => [c] -> Position -> Position
+incrPosByStr xs pos = foldl (flip incrPos) pos xs
 
 instance Functor (Parser error input) where
   fmap f (Parser p) =
@@ -108,7 +122,7 @@ infixl 1 <?>
 terminal :: Char -> Parser Error String Char
 terminal = symbol
 
-pref :: (Show a, Eq a) => [a] -> Parser Error [a] [a]
+pref :: (Show a, Eq a, Enum a) => [a] -> Parser Error [a] [a]
 pref (w:ws) = symbol w >>= \c -> (c :) <$> pref ws
 
 anyOf :: (Monoid error, Eq error) => [Parser error input a] -> Parser error input a
@@ -143,18 +157,18 @@ sepBy1 sep elem = do
 sepBy :: (Monoid error, Eq error) => Parser error input sep -> Parser error input elem -> Parser error input [elem]
 sepBy sep elem = sepBy1 sep elem <|> return []
 
-satisfy :: (a -> Bool) -> Parser String [a] a
+satisfy :: Enum a => (a -> Bool) -> Parser String [a] a
 satisfy p =
   Parser $ \(InputStream input pos) ->
     case input of
       (x:xs)
-        | p x -> Success (incrPos $ InputStream xs pos) Nothing x
+        | p x -> Success (InputStream xs (incrPos x pos)) Nothing x
       input -> Failure (makeError "Predicate failed" pos)
 
-elem' :: Parser String [a] a
+elem' :: Enum a => Parser String [a] a
 elem' = satisfy (const True)
 
-symbol :: (Eq a, Show a) => a -> Parser String [a] a
+symbol :: (Eq a, Show a, Enum a) => a -> Parser String [a] a
 symbol c = ("Expected symbol: " ++ show c) <?> satisfy (== c)
 
 fail' :: e -> Parser e i a
@@ -194,10 +208,10 @@ word w =
   Parser $ \(InputStream input pos) ->
     let (pref, suff) = splitAt (length w) input
      in if pref == w
-          then Success (InputStream suff (pos + length w)) Nothing w
+          then Success (InputStream suff (incrPosByStr w pos)) Nothing w
           else Failure (makeError ("Expected " ++ show w) pos)
 
-string :: (Eq a, Show a) => [a] -> Parser String [a] [a]
+string :: (Eq a, Show a, Enum a) => [a] -> Parser String [a] [a]
 string = mapM symbol
 
 separator = "Separator expected" <?> satisfy isSeparator
