@@ -3,7 +3,7 @@ module LLang where
 import AST (AST (..), Operator (..), Subst (..))
 import Combinators (Parser (..), runParser, Result(..), InputStream(..), getPos, makeError, symbol, fail', (<?>), sepBy1)
 import qualified Data.Map as Map
-import Data.List (intercalate, partition)
+import Data.List (intercalate, partition, maximumBy)
 import Text.Printf (printf)
 import Expr
 import Control.Applicative(Alternative (..))
@@ -17,9 +17,9 @@ type Var = String
 data Configuration = Conf { subst :: Subst, input :: [Int], output :: [Int] }
                    deriving (Show, Eq)
 
-data Program = Program { functions :: [Function], main :: LAst }
+data Program = Program { functions :: [Function], main :: LAst } deriving Eq
 
-data Function = Function { name :: String, args :: [Var], funBody :: LAst }
+data Function = Function { name :: String, args :: [Var], funBody :: LAst } deriving Eq
 
 data LAst
   = If { cond :: Expr, thn :: LAst, els :: LAst }
@@ -32,21 +32,38 @@ data LAst
   deriving (Eq)
 
 parseDef :: Parser String String Function
-parseDef = Function <$> parseFuncName <*> parseArgs <*> parseCurly parseL where
+parseDef = Function <$> parseFuncName <*> parseArgs <*> parseBody where
   parseFuncName = manySpace *> (parseString "def" *> someSpace *> parseVarName)
   parseArgs = parseRound $ sepBy1 commaOpParser parseVarName <|> pure []
-  parseBody = parseCurly $ parseL <|> pure (Seq [])
+  parseBody = parseCurly $ parseL <|> ((const $ Seq []) <$> manySpace)
 
+
+-- Обертка, проверяет, осталось ли что-то после парсинга
 parseProg :: Parser String String Program
-parseProg = do
+parseProg = Parser $ \input ->
+  case runParser' parseProg' input of
+    f@(Failure _) -> f
+    s@(Success (InputStream str pos) _ _) -> if null str
+                                             then s
+                                             else Failure $ makeError "Couldn't parse further" pos
+
+-- Парсер программ
+parseProg' :: Parser String String Program
+parseProg' = do
   funcs <- some parseDef
   let isMain (Function name _ _) = name == "main"
       (body, defs) = partition isMain funcs
+      freqNames = Map.toList (Map.fromListWith (+) [ (funcName, 1) | funcName <- name <$> defs])
+      (funcName, maxCount) = if null freqNames then ("", 0) else maximumBy (\(_, c1) (_, c2) -> compare c1 c2) freqNames
   if length body == 0
   then "Main function is absent" <?> empty
   else if length body > 1
        then "Multiple definitions of main function" <?> empty
-       else return $ Program defs (funBody $ head body)
+       else if (maxCount /= 1) 
+            then ("Multiple definitions of " ++ funcName) <?> empty
+            else if not $ null (args $ head body)
+                 then "Main function can't have any arguments" <?> empty
+                 else return $ Program defs (funBody $ head body)
 
 stmt :: LAst
 stmt =

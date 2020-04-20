@@ -68,22 +68,44 @@ program1 = Program
   [Function "foo" ["x"] (Return $ Ident "x") ]
   (Return $ FunctionCall "foo" [Ident "x"])
 
+
+codeToFunc name args code = intercalate "\n"
+                                   ["def " ++ name ++ "(" ++ (intercalate "," args) ++ ") {",
+                                    code,
+                                    "}"]
+
+unit_parseDef :: Assertion
+unit_parseDef = do
+  testSuccess (runParser parseDef $ codeToFunc "function" ["alpha", "beta"] codePiece1) (toStream "" $ Position 13 1)
+    (Function "function"
+              ["alpha", "beta"]
+              statement1)
+  testSuccess (runParser parseDef $ codeToFunc "transform" [] codePiece2) (toStream "" $ Position 9 1)
+    (Function "transform" [] statement2)
+  -- Empty body
+  testSuccessErase (runParser parseDef "def bar(x, y, z) {}") ""
+    (Function "bar" ["x", "y", "z"] $ Seq [])
+
 unit_parseProg :: Assertion
 unit_parseProg = do
-  testSuccessErase (runParser parseProg programCode1) "" program1
+  testSuccess (runParser parseProg programCode1) (toStream "" $ Position 8 1) program1
+  -- No main
+  testFailure $ runParser parseProg (codeToFunc "function" ["alpha", "beta"] codePiece1)
+  -- Multiple main
+  testFailure $ runParser parseProg (intercalate "\n" ["def main() {return (x);}", "def main() {return (2+2);"])
+  -- Function name collision
+  testFailure $ runParser parseProg (intercalate "\n" ["def foo() {}", "def foo() {}"])
 
 unit_parseL :: Assertion
 unit_parseL = do
-  testSuccess (runParser parseL " x = -15; ") (toStream "" $ Position 1 10) (Assign "x" (UnaryOp Minus $ Num 15))
-{-  
-  runParser parseL "read hello;" @?= Success "" (Read "hello")
-  runParser parseL "write (hello * 12 - 5);" @?= Success ""
+  testSuccess (runParser parseL " x = -15; ") (toStream "" $ Position 1 10) (Assign "x" (UnaryOp Minus $ Num 15)) 
+  testSuccessErase (runParser parseL "read (hello);") "" (Read "hello")
+  testSuccessErase (runParser parseL "write (hello * 12 - 5);") ""
     (Write (BinOp Minus (BinOp Mult (Ident "hello") (Num 12)) (Num 5)))
-  runParser parseL " if(x > - 5 ) then { y = 12 ^ 40;} else {read x;}" @?= Success "" 
+  testSuccessErase (runParser parseL " if(x > - 5 ) then { y = 12 ^ 40;} else {read ( x );}") "" 
     (If (BinOp Gt (Ident "x") (UnaryOp Minus (Num 5)))
         (Assign "y" (BinOp Pow (Num 12) (Num 40)))
         (Read "x"))
--}
   testSuccessErase (runParser parseL " while (varName /= 12) {  read (varName); }") ""
     (While (BinOp Nequal (Ident "varName") (Num 12))
            (Read "varName"))
@@ -96,17 +118,16 @@ unit_parseLEmptyBlocks = do
     (If (Ident "x")
         (Seq [])
         (Seq []))
-{-
-  runParser parseL "if (x) then {x = 5;} else {  }" @?= Success ""
+  testSuccessErase (runParser parseL "if (x) then {x = 5;} else {  }") ""
     (If (Ident "x")
         (Assign "x" (Num 5))
         (Seq []))
-  runParser parseL "while (y) {}" @?= Success ""
+  testSuccessErase (runParser parseL "while (y) {}") ""
     (While (Ident "y") (Seq []))
-  runParser parseL "while (x) {while(y) {}}" @?= Success ""
+  testSuccessErase (runParser parseL "while (x) {while(y) {}}") ""
     (While (Ident "x")
            (While (Ident "y") (Seq [])))
--}
+
 
 unit_parseLFailures :: Assertion
 unit_parseLFailures = do
@@ -129,31 +150,27 @@ unit_parseLFailures = do
 unit_parseLAssignToKeyword :: Assertion
 unit_parseLAssignToKeyword = do
   testFailure $ runParser parseL "write = 15;"
-{-
-  runParser parseL "writeToLog = 20;" @?= Success "" (Assign "writeToLog" (Num 20))
-  assertBool "" $ isFailure $ runParser parseL "if (x > 5) then {x = 5;} else {read=15;}"
-  runParser parseL "readCount = 15 + 5;" @?= Success "" (Assign "readCount" (BinOp Plus (Num 15) (Num 5)))
-  assertBool "" $ isFailure $ runParser parseL "if = 12;"
-  assertBool "" $ isFailure $ runParser parseL "then = 10;"
-  assertBool "" $ isFailure $ runParser parseL "else = 15 * 2;"
-  runParser parseL "ifcase = 10; thendo = 15; elseStay = 13;" @?= Success ""
+  testSuccessErase (runParser parseL "writeToLog = 20;") "" (Assign "writeToLog" (Num 20))
+  testFailure $ runParser parseL "if (x > 5) then {x = 5;} else {read=15;}"
+  testSuccessErase (runParser parseL "readCount = 15 + 5;") "" (Assign "readCount" (BinOp Plus (Num 15) (Num 5)))
+  testFailure $ runParser parseL "if = 12;"
+  testFailure $ runParser parseL "then = 10;"
+  testFailure $ runParser parseL "else = 15 * 2;"
+  testSuccessErase (runParser parseL "ifcase = 10; thendo = 15; elseStay = 13;") ""
     (Seq [(Assign "ifcase" $ Num 10),
           (Assign "thendo" $ Num 15),
           (Assign "elseStay" $ Num 13)])
-  assertBool "" $ isFailure $ runParser parseL "while (x > 5) {while = 13;}"
-  runParser parseL "whileCase = 13;" @?= Success "" (Assign "whileCase" $ Num 13)
--}
+  testFailure $ runParser parseL "while (x > 5) {while = 13;}"
+  testSuccessErase (runParser parseL "whileCase = 13;") "" (Assign "whileCase" $ Num 13)
 
 unit_parseLPartialParse :: Assertion
 unit_parseLPartialParse = do
-  testSuccessErase (runParser parseL " x = 20; y = 5 ") "y = 5 " (Assign "x" (Num 20))
-{-
-  runParser parseL " if (x) then {read x;} else {write (x);} read x" @?= Success "read x"
+  testSuccess (runParser parseL " x = 20; y = 5 ") (toStream "y = 5 " $ Position 1 9) (Assign "x" (Num 20))
+  testSuccessErase (runParser parseL " if (x) then {read (x);} else {write (x);} read x") "read x"
     (If (Ident "x")
         (Read "x")
         (Write (Ident "x")))
-  runParser parseL " read x; while x {}" @?= Success "while x {}" (Read "x")
--}
+  testSuccessErase (runParser parseL " read (x); while x {}") "while x {}" (Read "x")
 
 -- read x;
 -- if (x > 13)

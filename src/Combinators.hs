@@ -34,14 +34,15 @@ class StreamSymbol b where
   incrPos :: b -> InputStream a -> InputStream a
   incrPos char (InputStream str (Position l o)) = InputStream str $ Position l (o + 1)
 
-instance StreamSymbol Char where
+instance {-# OVERLAPPING #-} StreamSymbol Char where
   incrPos char (InputStream str (Position l o)) =
     case char of
       '\n' -> InputStream str (Position (l + 1) 0)
       '\t' -> InputStream str (Position l (o + 8))
       _   -> InputStream str (Position l (o + 1))
 
-instance StreamSymbol Integer
+instance StreamSymbol a where
+  incrPos char (InputStream str (Position l o)) = InputStream str $ Position l (o + 1)
 
 data ErrorMsg e = ErrorMsg { errors :: [e], pos :: Position }
                 deriving (Eq)
