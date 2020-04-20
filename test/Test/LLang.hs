@@ -215,7 +215,7 @@ unit_TestSeq = do
 prog =
   Program
     [ Function "f" ["x", "y"] (Seq [Read "z", Return (BinOp Plus (Ident "x") (Ident "y"))])
-    , Function "g" ["x"] (If (Ident "x") (Return (Ident "x")) (Return (BinOp Mult (Ident "x") (Num 13))))
+    , Function "g" ["x"] (Seq [If (Ident "x") (Seq [Return (Ident "x")]) (Seq[Return (BinOp Mult (Ident "x") (Num 13))])])
     ]
     (Seq [Read "x", Read "y", Write (FunctionCall "f" [Ident "x", Ident "y"]), Write (FunctionCall "g" [Ident "x"])])
 
@@ -257,7 +257,7 @@ stmt1 =
     [ Read "x"
     , If
         (BinOp Gt (Ident "x") (Num 13))
-        (Seq [(Write (Ident "x"))])
+        (Seq [Write (Ident "x")])
         (Seq
            [ While
                (BinOp Lt (Ident "x") (Num 42))

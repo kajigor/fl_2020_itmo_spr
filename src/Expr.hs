@@ -71,7 +71,7 @@ parseExpr = uberExpr table ast binary unary
       , (Minus <$ spaced (mapM symbol "-"), Unary)
       , (Pow <$ spaced (mapM symbol "^"), Binary RightAssoc)
       ]
-    ast = number <|> identifier <|> funcCall <|> (parseLeftBracket *> parseExpr <* parseRightBracket)
+    ast = number <|> funcCall <|> identifier <|> funcCall <|> (parseLeftBracket *> parseExpr <* parseRightBracket)
     number = Num <$> spaced nat
     identifier = Ident <$> spaced parseIdent
     funcCall = FunctionCall <$> spaced parseIdent <*> args
