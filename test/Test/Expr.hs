@@ -36,18 +36,16 @@ unit_evaluate = do
 
 unit_parseNum :: Assertion
 unit_parseNum = do
-{-
-    runParser parseNum "7" @?= Success "" 7
-    runParser parseNum "12+3" @?= Success "+3" 12
-    runParser parseNum "007" @?= Success "" 7
--}
+    testSuccess (runParser parseNum "7") (toStream "" $ Position 1 1) 7
+    testSuccessErase (runParser parseNum "12+3") "+3" 12
+    testSuccess (runParser parseNum "007") (toStream "" $ Position 1 3) 7
     testFailure $ runParser parseNum "+3"
     testFailure $ runParser parseNum "a"
 
 unit_parseNegNum :: Assertion
 unit_parseNegNum = do
---    runParser parseNum "123" @?= Success (toStream "" 3) 123
---    runParser parseNum "-123" @?= Success (toStream "" 4) (-123)
+    testSuccess (runParser parseNum "123") (toStream "" $ Position 1 3) 123
+    testSuccess (runParser parseNum "-123") (toStream "" $ Position 1 4) (-123)
     testFailure $ runParser parseNum "--123"
     testFailure $ runParser parseNum "+-3"
     testFailure $ runParser parseNum "-+3"
@@ -94,50 +92,48 @@ unit_parseOp = do
 unit_parseExpr :: Assertion
 unit_parseExpr = do
     testSuccess (runParser parseExpr "1*2*3"  ) (toStream "" $ Position 1 5) (BinOp Mult (BinOp Mult (Num 1) (Num 2)) (Num 3))
-{-
-    testSuccess (runParser parseExpr "123"    ) (toStream "" 3) (Num 123)
-    testSuccess (runParser parseExpr "abc"    ) (toStream "" 3) (Ident "abc")
-    testSuccess (runParser parseExpr "1*2+3*4") (toStream "" 7) (BinOp Plus (BinOp Mult (Num 1) (Num 2)) (BinOp Mult (Num 3) (Num 4)))
-    testSuccess (runParser parseExpr "1+2*3+4") (toStream "" 7) (BinOp Plus (BinOp Plus (Num 1) (BinOp Mult (Num 2) (Num 3))) (Num 4))
-    testSuccess (runParser parseExpr "1*x*3"  ) (toStream "" 5) (BinOp Mult (BinOp Mult (Num 1) (Ident "x")) (Num 3))
-    testSuccess (runParser parseExpr "xyz"    ) (toStream "" 3) (Ident "xyz")
-    testSuccess (runParser parseExpr "1*x+z*4") (toStream "" 7) (BinOp Plus (BinOp Mult (Num 1) (Ident "x")) (BinOp Mult (Ident "z") (Num 4)))
-    testSuccess (runParser parseExpr "1+y*3+z") (toStream "" 7) (BinOp Plus (BinOp Plus (Num 1) (BinOp Mult (Ident "y") (Num 3))) (Ident "z"))
-    testSuccess (runParser parseExpr "1+x") (toStream "" 3) (BinOp Plus (Num 1) (Ident "x"))
-    testSuccess (runParser parseExpr "1-x") (toStream "" 3) (BinOp Minus (Num 1) (Ident "x"))
-    testSuccess (runParser parseExpr "1*x") (toStream "" 3) (BinOp Mult (Num 1) (Ident "x"))
-    testSuccess (runParser parseExpr "1/x") (toStream "" 3) (BinOp Div (Num 1) (Ident "x"))
-    testSuccess (runParser parseExpr "1^x") (toStream "" 3) (BinOp Pow (Num 1) (Ident "x"))
-    testSuccess (runParser parseExpr "1==x") (toStream "" 4)  (BinOp Equal (Num 1) (Ident "x"))
-    testSuccess (runParser parseExpr "1/=x") (toStream "" 4)  (BinOp Nequal (Num 1) (Ident "x"))
-    testSuccess (runParser parseExpr "1>x") (toStream "" 3) (BinOp Gt (Num 1) (Ident "x"))
-    testSuccess (runParser parseExpr "1>=x") (toStream "" 4)  (BinOp Ge (Num 1) (Ident "x"))
-    testSuccess (runParser parseExpr "1<x") (toStream "" 3) (BinOp Lt (Num 1) (Ident "x"))
-    testSuccess (runParser parseExpr "1<=x") (toStream "" 4)  (BinOp Le (Num 1) (Ident "x"))
-    testSuccess (runParser parseExpr "1&&x") (toStream "" 4)  (BinOp And (Num 1) (Ident "x"))
-    testSuccess (runParser parseExpr "1||x") (toStream "" 4)  (BinOp Or (Num 1) (Ident "x"))
+    testSuccess (runParser parseExpr "123"    ) (toStream "" $ Position 1 3) (Num 123)
+    testSuccess (runParser parseExpr "abc"    ) (toStream "" $ Position 1 3) (Ident "abc")
+    testSuccess (runParser parseExpr "1*2+3*4") (toStream "" $ Position 1 7) (BinOp Plus (BinOp Mult (Num 1) (Num 2)) (BinOp Mult (Num 3) (Num 4)))
+    testSuccess (runParser parseExpr "1+2*3+4") (toStream "" $ Position 1 7) (BinOp Plus (BinOp Plus (Num 1) (BinOp Mult (Num 2) (Num 3))) (Num 4))
+    testSuccess (runParser parseExpr "1*x*3"  ) (toStream "" $ Position 1 5) (BinOp Mult (BinOp Mult (Num 1) (Ident "x")) (Num 3))
+    testSuccess (runParser parseExpr "xyz"    ) (toStream "" $ Position 1 3) (Ident "xyz")
+    testSuccess (runParser parseExpr "1*x+z*4") (toStream "" $ Position 1 7) (BinOp Plus (BinOp Mult (Num 1) (Ident "x")) (BinOp Mult (Ident "z") (Num 4)))
+    testSuccess (runParser parseExpr "1+y*3+z") (toStream "" $ Position 1 7) (BinOp Plus (BinOp Plus (Num 1) (BinOp Mult (Ident "y") (Num 3))) (Ident "z"))
+    testSuccess (runParser parseExpr "1+x") (toStream "" $ Position 1 3) (BinOp Plus (Num 1) (Ident "x"))
+    testSuccess (runParser parseExpr "1-x") (toStream "" $ Position 1 3) (BinOp Minus (Num 1) (Ident "x"))
+    testSuccess (runParser parseExpr "1*x") (toStream "" $ Position 1 3) (BinOp Mult (Num 1) (Ident "x"))
+    testSuccess (runParser parseExpr "1/x") (toStream "" $ Position 1 3) (BinOp Div (Num 1) (Ident "x"))
+    testSuccess (runParser parseExpr "1^x") (toStream "" $ Position 1 3) (BinOp Pow (Num 1) (Ident "x"))
+    testSuccess (runParser parseExpr "1==x") (toStream "" $ Position 1 4)  (BinOp Equal (Num 1) (Ident "x"))
+    testSuccess (runParser parseExpr "1/=x") (toStream "" $ Position 1 4)  (BinOp Nequal (Num 1) (Ident "x"))
+    testSuccess (runParser parseExpr "1>x") (toStream "" $ Position 1 3) (BinOp Gt (Num 1) (Ident "x"))
+    testSuccess (runParser parseExpr "1>=x") (toStream "" $ Position 1 4)  (BinOp Ge (Num 1) (Ident "x"))
+    testSuccess (runParser parseExpr "1<x") (toStream "" $ Position 1 3) (BinOp Lt (Num 1) (Ident "x"))
+    testSuccess (runParser parseExpr "1<=x") (toStream "" $ Position 1 4)  (BinOp Le (Num 1) (Ident "x"))
+    testSuccess (runParser parseExpr "1&&x") (toStream "" $ Position 1 4)  (BinOp And (Num 1) (Ident "x"))
+    testSuccess (runParser parseExpr "1||x") (toStream "" $ Position 1 4)  (BinOp Or (Num 1) (Ident "x"))
     -- (erasePosition $ runParser parseExpr "(1==x+2)||3*4<y-5/6&&(7/=z^8)||(id>12)&&abc<=13||xyz>=42") @?=
       -- (erasePosition $ runParser parseExpr "(1==(x+2))||(((3*4)<(y-(5/6))&&(7/=(z^8)))||(((id>12)&&(abc<=13))||(xyz>=42)))")
-
-    testSuccess (runParser parseExpr "-1+2") (toStream "" 4) (BinOp Plus (UnaryOp Minus (Num 1)) (Num 2))
-    testSuccess (runParser parseExpr "-1*2") (toStream "" 4) (BinOp Mult (UnaryOp Minus (Num 1)) (Num 2))
-    testSuccess (runParser parseExpr "-1==2") (toStream "" 5) (BinOp Equal (UnaryOp Minus (Num 1)) (Num 2))
-    testSuccess (runParser parseExpr "-1==-2") (toStream "" 6) (BinOp Equal (UnaryOp Minus (Num 1)) (UnaryOp Minus (Num 2)))
-    testSuccess (runParser parseExpr "-1&&-2") (toStream "" 6) (BinOp And (UnaryOp Minus (Num 1)) (UnaryOp Minus (Num 2)))
-    testSuccess (runParser parseExpr "!1&&!2") (toStream "" 6) (BinOp And (UnaryOp Not (Num 1)) (UnaryOp Not (Num 2)))
-    testSuccess (runParser parseExpr "-1^2") (toStream "" 4) (UnaryOp Minus (BinOp Pow (Num 1) (Num 2)))
-    testSuccess (runParser parseExpr "-1^(-2)") (toStream "" 7) (UnaryOp Minus (BinOp Pow (Num 1) (UnaryOp Minus (Num 2))))
-    testSuccess (runParser parseExpr "(-1)^2") (toStream "" 6) (BinOp Pow (UnaryOp Minus (Num 1)) (Num 2))
-    testSuccess (runParser parseExpr "-1+-2") (toStream "" 5) (BinOp Plus (UnaryOp Minus (Num 1)) (UnaryOp Minus (Num 2)))
-    testSuccess (runParser parseExpr "!-1") (toStream "" 3) (UnaryOp Not (UnaryOp Minus (Num 1)))
-    testSuccess (runParser parseExpr "!(-1)") (toStream "" 5) (UnaryOp Not (UnaryOp Minus (Num 1)))
-    testSuccess (runParser parseExpr "-(!1)") (toStream "" 5) (UnaryOp Minus (UnaryOp Not (Num 1)))
-    testSuccess (runParser parseExpr "-1---2") (toStream "---2" 2) (UnaryOp Minus (Num 1))
-    testSuccess (runParser parseExpr "-1^-2") (toStream "^-2" 2) (UnaryOp Minus (Num 1))
+    testSuccess (runParser parseExpr "-1+2") (toStream "" $ Position 1 4) (BinOp Plus (UnaryOp Minus (Num 1)) (Num 2))
+    testSuccess (runParser parseExpr "-1*2") (toStream "" $ Position 1 4) (BinOp Mult (UnaryOp Minus (Num 1)) (Num 2))
+    testSuccess (runParser parseExpr "-1==2") (toStream "" $ Position 1 5) (BinOp Equal (UnaryOp Minus (Num 1)) (Num 2))
+    testSuccess (runParser parseExpr "-1==-2") (toStream "" $ Position 1 6) (BinOp Equal (UnaryOp Minus (Num 1)) (UnaryOp Minus (Num 2)))
+    testSuccess (runParser parseExpr "-1&&-2") (toStream "" $ Position 1 6) (BinOp And (UnaryOp Minus (Num 1)) (UnaryOp Minus (Num 2)))
+    testSuccess (runParser parseExpr "!1&&!2") (toStream "" $ Position 1 6) (BinOp And (UnaryOp Not (Num 1)) (UnaryOp Not (Num 2)))
+    testSuccess (runParser parseExpr "-1^2") (toStream "" $ Position 1 4) (UnaryOp Minus (BinOp Pow (Num 1) (Num 2)))
+    testSuccess (runParser parseExpr "-1^(-2)") (toStream "" $ Position 1 7) (UnaryOp Minus (BinOp Pow (Num 1) (UnaryOp Minus (Num 2))))
+    testSuccess (runParser parseExpr "(-1)^2") (toStream "" $ Position 1 6) (BinOp Pow (UnaryOp Minus (Num 1)) (Num 2))
+    testSuccess (runParser parseExpr "-1+-2") (toStream "" $ Position 1 5) (BinOp Plus (UnaryOp Minus (Num 1)) (UnaryOp Minus (Num 2)))
+    testSuccess (runParser parseExpr "!-1") (toStream "" $ Position 1 3) (UnaryOp Not (UnaryOp Minus (Num 1)))
+    testSuccess (runParser parseExpr "!(-1)") (toStream "" $ Position 1 5) (UnaryOp Not (UnaryOp Minus (Num 1)))
+    testSuccess (runParser parseExpr "-(!1)") (toStream "" $ Position 1 5) (UnaryOp Minus (UnaryOp Not (Num 1)))
+    testSuccess (runParser parseExpr "-1---2") (toStream "---2" $ Position 1 2) (UnaryOp Minus (Num 1))
+    testSuccess (runParser parseExpr "-1^-2") (toStream "^-2" $ Position 1 2) (UnaryOp Minus (Num 1))
 
     testFailure $ runParser parseExpr "--1"
     testFailure $ runParser parseExpr "-!1"
--}
+
 unit_ParseExprWithSpaces :: Assertion
 unit_ParseExprWithSpaces = do
     testSuccessErase (runParser parseExpr "1 * 2  *  3") "" (BinOp Mult (BinOp Mult (Num 1) (Num 2)) (Num 3))
@@ -169,10 +165,10 @@ unit_ParseExprWithSpaces = do
 
 unit_unaryEpxr = do
     testSuccessErase (runParser parseExpr "-1+2") "" (BinOp Plus (UnaryOp Minus (Num 1)) (Num 2))
+    testSuccessErase (runParser parseExpr "-1*2") "" (BinOp Mult (UnaryOp Minus (Num 1)) (Num 2))
+    testSuccessErase (runParser parseExpr "-1==2") "" (BinOp Equal (UnaryOp Minus (Num 1)) (Num 2))
+    testSuccessErase (runParser parseExpr "-1==-2") "" (BinOp Equal (UnaryOp Minus (Num 1)) (UnaryOp Minus (Num 2)))
 {-
-    runParser parseExpr "-1*2" @?= Success "" (BinOp Mult (UnaryOp Minus (Num 1)) (Num 2))
-    runParser parseExpr "-1==2" @?= Success "" (BinOp Equal (UnaryOp Minus (Num 1)) (Num 2))
-    runParser parseExpr "-1==-2" @?= Success "" (BinOp Equal (UnaryOp Minus (Num 1)) (UnaryOp Minus (Num 2)))
     runParser parseExpr "-1&&-2" @?= Success "" (BinOp And (UnaryOp Minus (Num 1)) (UnaryOp Minus (Num 2)))
     runParser parseExpr "!1&&!2" @?= Success "" (BinOp And (UnaryOp Not (Num 1)) (UnaryOp Not (Num 2)))
     runParser parseExpr "-1^2" @?= Success "" (UnaryOp Minus (BinOp Pow (Num 1) (Num 2)))
@@ -185,9 +181,9 @@ unit_unaryEpxr = do
     runParser parseExpr "-1---2" @?= Success "---2" (UnaryOp Minus (Num 1))
 
     runParser parseExpr "-1^-2" @?= Success "^-2" (UnaryOp Minus (Num 1))
-    assertBool "" $ isFailure $ runParser parseExpr "--1"
-    assertBool "" $ isFailure $ runParser parseExpr "-!1"
 -}
+    testFailure $ runParser parseExpr "--1"
+    testFailure $ runParser parseExpr "-!1"
 
 unit_funcCalls = do
     testSuccess (runParser parseExpr "foo(x)") (toStream "" $ Position 1 6) (FunctionCall "foo" [Ident "x"])
