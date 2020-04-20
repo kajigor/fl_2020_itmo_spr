@@ -6,6 +6,7 @@ module Combinators where
 import Control.Applicative
 import Data.Char (digitToInt, isDigit, isSpace, isAlpha, isAlphaNum)
 import Data.List (sortBy, nub)
+import Data.Monoid 
 
 data Result error input result
   = Success (InputStream input) (Maybe (ErrorMsg error)) result
@@ -132,6 +133,9 @@ sepBy1 sep elem = do
 sepBy :: (Monoid error, Eq error) => Parser error input sep -> Parser error input elem -> Parser error input [elem]
 sepBy sep elem = sepBy1 sep elem <|> return []
 
+sepBy1' :: (Monoid e, Eq e) => Parser e i sep -> Parser e i a -> Parser e i (a, [(sep, a)])
+sepBy1' sep elem = (,) <$> elem <*> (many ((,) <$> sep <*> elem))
+
 satisfy :: (a -> Bool) -> Parser String [a] a
 satisfy p = Parser $ \(InputStream input pos) ->
   case input of
@@ -175,3 +179,7 @@ instance Show (ErrorMsg String) where
 instance (Show input, Show result) => Show (Result String input result) where
   show (Failure e) = "Parsing failed\n" ++ show e
   show (Success i _ r) = "Parsing succeeded!\nResult:\n" ++ show r ++ "\nSuffix:\t" ++ show i
+
+
+
+

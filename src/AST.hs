@@ -26,6 +26,8 @@ data AST = BinOp Operator AST AST
          | UnaryOp Operator AST
          | Ident String
          | Num  Int
+         | F
+         | T
          | FunctionCall String [AST]
          deriving (Eq)
 
@@ -56,5 +58,7 @@ instance Show AST where
           UnaryOp op x -> printf "%s\n%s" (show op) (go (ident n) x)
           Ident x -> x
           Num i -> show i
+          T -> show "true"
+          F -> show "false"
           FunctionCall name args -> printf "%s(%s)" name (intercalate ", " $ map show args)
       ident = (+1)
