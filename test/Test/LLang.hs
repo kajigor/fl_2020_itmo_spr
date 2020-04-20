@@ -4,7 +4,7 @@ import Data.List (intercalate)
 import AST              (AST (..), Operator (..))
 import qualified Data.Map as Map
 import Combinators      (Result (..), Position (..), toStream, runParser)
-import LLang            (Configuration (..), LAst (..), parseL,
+import LLang            (Configuration (..), LAst (..), parseL, Program(..), Function(..), parseDef, parseProg,
                          eval, initialConf)
 import Test.Tasty.HUnit (Assertion, (@?=), assertBool)
 import Test.Helper
@@ -53,6 +53,24 @@ statement2 =
   If (BinOp Equal (Ident "x") (BinOp Plus (BinOp Mult (Num 25) (Num 3)) (Num 4)))
      (Read "x")
      (Seq [])
+
+programCode1 = intercalate "\n"
+ ["def foo(x) {",
+  "    return (x);",
+  "}",
+  "",
+  "",
+  "def main() {",
+  "    return (foo(x));",
+  "}"]
+
+program1 = Program
+  [Function "foo" ["x"] (Return $ Ident "x") ]
+  (Return $ FunctionCall "foo" [Ident "x"])
+
+unit_parseProg :: Assertion
+unit_parseProg = do
+  testSuccessErase (runParser parseProg programCode1) "" program1
 
 unit_parseL :: Assertion
 unit_parseL = do
