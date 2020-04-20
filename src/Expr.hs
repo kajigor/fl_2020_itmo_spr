@@ -143,6 +143,8 @@ intToBool x = if (x == 0) then False
 evalExpr :: Subst -> AST -> Maybe Int
 evalExpr dict (Num x) = return $ x
 evalExpr dict (Ident x) = Map.lookup x dict
+evalExpr dict T = return $ 1
+evalExpr dict F = return $ 0
 evalExpr dict (BinOp op x y) = do
          expr1 <- evalExpr dict x
          expr2 <- evalExpr dict y

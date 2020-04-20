@@ -262,11 +262,9 @@ eval (While cond body) (Conf dict input output) = do
 eval (If cond thn els) (Conf dict input output) = do
       result <- evalExpr dict cond
       if (intToBool result) then do
-         result' <-  eval thn (Conf dict input output)
-         return $ result'
+         eval thn (Conf dict input output)
       else do
-         result' <-  eval els (Conf dict input output)
-         return $ result'
+         eval els (Conf dict input output)
 eval (Seq []) conf = return $ conf
 eval (Seq xs) (Conf dict input output) = do
         (Conf dict' input' output') <- eval (head xs) (Conf dict input output)
