@@ -10,7 +10,7 @@ import Test.Tasty.HUnit (Assertion, (@?=), assertBool)
 import Test.Helper
 
 codePiece1 = intercalate "\n"
-  ["read x;",
+  ["read (x);",
    "if (x >= 5)",
    "then {",
    "     x = x * 5;",
@@ -45,7 +45,7 @@ codePiece2 = intercalate "\n"
    "25 * 3 +",
    "4)",
    "then {",
-   "    read x;}",
+   "    read (x);}",
    "else {",
    "}"]
 
@@ -65,12 +65,12 @@ unit_parseL = do
     (If (BinOp Gt (Ident "x") (UnaryOp Minus (Num 5)))
         (Assign "y" (BinOp Pow (Num 12) (Num 40)))
         (Read "x"))
-  runParser parseL " while (varName /= 12) {  read varName; }" @?= Success ""
+-}
+  testSuccessErase (runParser parseL " while (varName /= 12) {  read (varName); }") ""
     (While (BinOp Nequal (Ident "varName") (Num 12))
            (Read "varName"))
-  runParser parseL codePiece1 @?= Success "" statement1
-  runParser parseL codePiece2 @?= Success "" statement2
--}
+  testSuccess (runParser parseL codePiece1) (toStream "" $ Position 11 9) statement1
+  testSuccess (runParser parseL codePiece2) (toStream "" $ Position 7 1) statement2
 
 unit_parseLEmptyBlocks :: Assertion
 unit_parseLEmptyBlocks = do
@@ -94,7 +94,7 @@ unit_parseLFailures :: Assertion
 unit_parseLFailures = do
   -- Missing semicolon
   testFailure $ runParser parseL " x = -15"
-  testFailure $ runParser parseL "read x x = 5;"
+  testFailure $ runParser parseL "read (x) x = 5;"
   testFailure $ runParser parseL "if(x > 5) then {y=15} else {x=20}"
   -- Missing curly bracket
   testFailure $ runParser parseL "if(x > 5) then {y=15;} else {read x;"
@@ -103,6 +103,7 @@ unit_parseLFailures = do
   testFailure $ runParser parseL "write x"
   testFailure $ runParser parseL "if x > 5 then {read x;} else {write x;}"
   testFailure $ runParser parseL "while x {x = 15}"
+  testFailure $ runParser parseL "read x;"
   -- Recursive fail
   testFailure $ runParser parseL "while (x < 5) {while (y > 5) {x = 12}}"
   testFailure $ runParser parseL "if (x == 5) then { while (y < 12) { y = y + 1;}} else { x = 5}"
