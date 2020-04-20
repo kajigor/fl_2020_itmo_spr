@@ -38,3 +38,4 @@ tests:
     source-dirs:         test
     dependencies:
     - fl2020-itmo-spr
+    - raw-strings-qq
