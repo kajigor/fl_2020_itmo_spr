@@ -7,9 +7,13 @@ Cимволы переноса строки '\n' допустимы там же,
 
 Структура программы:
 
-Programm :: Function; | Function; Programm
+Programm :: Main; | FunctionsSeq Main;
+
+FunctionsSeq :: Function; | Function; FunctionsSeq
 
 Function :: def Ident '(' Args ')' { Seq }
+
+Main :: def 'main' '(' Args ')' { Seq }
 
 Args :: Ident | Ident, Args
 
