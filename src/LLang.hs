@@ -284,9 +284,16 @@ parseIf = If <$> (simpleParseKeyword "if" *> parseC) <*> parseS <*> (simpleParse
                           sep4 <- parseSeparators
                           return $ result
 
+parseReturn = Return <$> (simpleParseKeyword "return" *> parseE) where
+                parseE = do 
+                      sep2 <- parseSeparators
+                      result <- parseExpr
+                      sep3 <- parseSeparators
+                      return $ result
+
 parseEnd = simpleParseKeyword ";"
 
-parseStatment = (parseSt parseIf) <|> (parseSt parseWhile) <|> (parseSt parseWrite) <|> (parseSt parseRead) <|> (parseSt parseAssign)
+parseStatment = (parseSt parseIf) <|> (parseSt parseWhile) <|> (parseSt parseWrite) <|> (parseSt parseRead) <|> (parseSt parseAssign) <|>(parseSt parseReturn)
                where
                   parseSt parser = do 
                      sep1 <- parseSeparators
