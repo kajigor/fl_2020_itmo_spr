@@ -6,8 +6,7 @@ import           Combinators         (Parser (..), Result (..), Position (..), r
 import qualified Data.Map         as Map
 import           Debug.Trace      (trace)
 import           Test.Helper
-import           LLang            (Configuration (..), LAst (..), eval,
-                                   initialConf, parseL, Function (..), Program (..))
+import           LLang            
 import           Test.Tasty.HUnit (Assertion, assertBool, (@?=))
 import           Text.Printf      (printf)
 
@@ -166,4 +165,25 @@ unit_parseLPosition = do
   testSuccess (runParser parseL "if (true) {read(x);} else {read(y);};") (toStream "" $ Position 0 37) (Seq [If (T) (Seq [Read "x"]) (Seq [Read "y"])])
   testSuccess (runParser parseL "if (true) {read(x);} \n  else   {read(y);};") (toStream "" $ Position 1 20) (Seq [If (T) (Seq [Read "x"]) (Seq [Read "y"])])
   testSuccess (runParser parseL "x=3; \n y=5; \n z=123;") (toStream "" $ Position 2 7) (Seq [Assign "x" (Num 3), Assign "y" (Num 5), Assign "z" (Num 123) ])
-  
+
+
+unit_parseDef :: Assertion
+unit_parseDef = do
+          testSuccessFunc (runParser parseDef " def fun(x) {x=3;};") (Function "fun" ["x"] (Seq [Assign "x" (Num 3)]))
+          testSuccessFunc (runParser parseDef " def foo  (x, y) {read(x);};") (Function "foo" ["x", "y"] (Seq [Read "x"]))
+          testSuccessFunc (runParser parseDef " def foo(x, y) {read(x); x=1;};") (Function "foo" ["x", "y"] (Seq [Read "x",Assign "x" (Num 1)]))
+          testFailure $ runParser parseExpr " def fun() {x=3;};" --без аргументов быть не может
+
+
+unit_parseProg :: Assertion
+unit_parseProg = do
+         testSuccessFunc (runParser parseProg " def main(arg) {x=3;}; ") (Program [] (Seq [Assign "x" (Num 3)]))
+         testSuccessFunc (runParser parseProg " def main(arg) {x=3;};  def fun(x, y) { read(x);};") (Program [Function "fun" ["x", "y"] (Seq [Read "x"])] (Seq [Assign "x" (Num 3)]))
+         testSuccessFunc (runParser parseProg " def main(arg) {x=3;};  def fun(x, y) { read(x);};  def foo(z) {read(z);};") (Program [(Function "fun" ["x", "y"] (Seq [Read "x"])), (Function "foo" ["z"] (Seq [Read "z"]))] (Seq [Assign "x" (Num 3)]))
+         testFailure $ runParser parseProg " def mainnnnn(arg) {x=3;};  def fun(x, y) { read(x);};  def foo(z) {read(z);};"
+         testFailure $ runParser parseProg "def fun(x, y) { read(x);};  def foo(z) {read(z);};"
+         testFailure $ runParser parseProg "def foo(z) {read(z);};"
+
+
+
+

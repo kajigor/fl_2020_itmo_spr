@@ -23,6 +23,12 @@ data Program = Program { functions :: [Function], main :: LAst }
 
 data Function = Function { name :: String, args :: [Var], funBody :: LAst }
 
+instance Eq Function where
+   (==) (Function n1 a1 b1) (Function n2 a2 b2) = (n1 == n2) && (a1 == a2) && (b1 == b2)
+
+instance Eq Program where
+   (==) (Program f1 m1) (Program f2 m2) = (f1 == f2) && (m1 == m2)
+
 data LAst
   = If { cond :: Expr, thn :: LAst, els :: LAst }
   | While { cond :: AST, body :: LAst }
@@ -107,7 +113,7 @@ parseProg = parseFuncs where
              end <- symbol ';'
              return $ result
           parseFuncs = do 
-             main <- parseFunc
+             main <- parseM
              funcs <- many parseFunc
              return $ Program funcs (funBody main)
           

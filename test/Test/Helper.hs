@@ -8,6 +8,8 @@ testFailure = assertBool "" . isFailure
 
 testSuccess (Success s _ r) str ast = (s, r) @?= (str, ast)
 
+testSuccessFunc (Success s _ r) func = r @?= func
+
 isFailure (Failure _) = True
 isFailure _           = False
 
