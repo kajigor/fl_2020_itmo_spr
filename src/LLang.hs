@@ -59,7 +59,7 @@ parseProg' = do
   then "Main function is absent" <?> empty
   else if length body > 1
        then "Multiple definitions of main function" <?> empty
-       else if (maxCount /= 1) 
+       else if (maxCount > 1) 
             then ("Multiple definitions of " ++ funcName) <?> empty
             else if not $ null (args $ head body)
                  then "Main function can't have any arguments" <?> empty

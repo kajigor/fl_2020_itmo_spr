@@ -68,7 +68,6 @@ program1 = Program
   [Function "foo" ["x"] (Return $ Ident "x") ]
   (Return $ FunctionCall "foo" [Ident "x"])
 
-
 codeToFunc name args code = intercalate "\n"
                                    ["def " ++ name ++ "(" ++ (intercalate "," args) ++ ") {",
                                     code,
@@ -89,6 +88,11 @@ unit_parseDef = do
 unit_parseProg :: Assertion
 unit_parseProg = do
   testSuccess (runParser parseProg programCode1) (toStream "" $ Position 8 1) program1
+  -- Just main
+  testSuccessErase (runParser parseProg $ codeToFunc "main" [] codePiece1) ""
+    (Program [] statement1)
+  testSuccessErase (runParser parseProg $ codeToFunc "main" [] codePiece2) ""
+    (Program [] statement2)
   -- No main
   testFailure $ runParser parseProg (codeToFunc "function" ["alpha", "beta"] codePiece1)
   -- Multiple main
