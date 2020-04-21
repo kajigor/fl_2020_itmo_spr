@@ -7,7 +7,7 @@ Cимволы переноса строки '\n' допустимы там же,
 
 Структура программы:
 
-Programm :: Main; | FunctionsSeq Main;
+Programm :: Main; | Main; FunctionsSeq
 
 FunctionsSeq :: Function; | Function; FunctionsSeq
 

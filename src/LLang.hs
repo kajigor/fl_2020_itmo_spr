@@ -33,12 +33,87 @@ data LAst
   | Return { expr :: Expr }
   deriving (Eq)
 
+parseArgs = ((++) <$> (many parseSeqArg) <*> (parseOneArg)) <|> (parseOneArg) where
+    parseSeqArg = do
+        sep1 <- parseSeparators
+        result <- parseIdent
+        sep2 <- parseSeparators
+        sep <- symbol ','
+        sep3 <- parseSeparators
+        sep4 <- parseSeparators
+        return $ result
+    parseOneArg = do
+        sep1 <- parseSeparators
+        result <- parseIdent
+        sep4 <- parseSeparators
+        return $ [result]
+
 parseDef :: Parser String String Function
-parseDef = error "parseDef undefined"
+parseDef = Function <$> (simpleParseKeyword "def" *> parseIdent) <*> parseArgs' <*> parseBody where
+                       parseArgs' = do
+                          sep1 <- parseSeparators
+                          left <- symbol '('
+                          sep2 <- parseSeparators
+                          result <- parseArgs
+                          sep3 <- parseSeparators
+                          right <- symbol ')'
+                          sep4 <- parseSeparators
+                          return $ result
+                       parseBody = do 
+                          sep1 <- parseSeparators
+                          left <- symbol '{'
+                          sep2 <- parseSeparators
+                          result <- parseL
+                          sep3 <- parseSeparators
+                          right <- symbol '}'
+                          sep4 <- parseSeparators
+                          return $ result
+
+
+parseMain :: Parser String String Function
+parseMain = Function <$> (simpleParseKeyword "def" *> simpleParseKeyword "main") <*> parseArgs' <*> parseBody where
+                       parseArgs' = do
+                          sep1 <- parseSeparators
+                          left <- symbol '('
+                          sep2 <- parseSeparators
+                          result <- parseArgs
+                          sep3 <- parseSeparators
+                          right <- symbol ')'
+                          sep4 <- parseSeparators
+                          return $ result
+                       parseBody = do 
+                          sep1 <- parseSeparators
+                          left <- symbol '{'
+                          sep2 <- parseSeparators
+                          result <- parseL
+                          sep3 <- parseSeparators
+                          right <- symbol '}'
+                          sep4 <- parseSeparators
+                          return $ result
+
 
 parseProg :: Parser String String Program
-parseProg = error "parseProg undefined"
-
+parseProg = parseFuncs where
+          parseFunc = do
+             sep1 <- parseSeparators
+             result <- parseDef
+             sep2 <- parseSeparators
+             end <- symbol ';'
+             return $ result
+          parseM = do
+             sep1 <- parseSeparators
+             result <- parseMain
+             sep2 <- parseSeparators
+             end <- symbol ';'
+             return $ result
+          parseFuncs = do 
+             main <- parseFunc
+             funcs <- many parseFunc
+             return $ Program funcs (funBody main)
+          
+          
+            
+          
 stmt :: LAst
 stmt =
   Seq
