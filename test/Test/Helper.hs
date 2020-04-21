@@ -1,6 +1,7 @@
 module Test.Helper where
 
-import           Combinators      (Parser, Result (..), InputStream (..), initPosition)
+import           Combinators      
+import           LLang
 import           Test.Tasty.HUnit (Assertion, assertBool, (@?=))
 
 testFailure = assertBool "" . isFailure

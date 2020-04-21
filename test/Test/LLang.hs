@@ -1,9 +1,11 @@
 module Test.LLang where
 
 import           AST
-import           Combinators      (Result (..), runParser, toStream)
+import           Combinators         (Parser (..), Result (..), Position (..), runParser,
+                                      symbol, toStream, word)
 import qualified Data.Map         as Map
 import           Debug.Trace      (trace)
+import           Test.Helper
 import           LLang            (Configuration (..), LAst (..), eval,
                                    initialConf, parseL, Function (..), Program (..))
 import           Test.Tasty.HUnit (Assertion, assertBool, (@?=))
@@ -155,3 +157,13 @@ unit_stmt4 = do
   eval stmt4 (initialConf [2]) @?= Just (Conf (subst' 2) [] [1])
   eval stmt4 (initialConf [10]) @?= Just (Conf (subst 10 10 55 34 55) [] [55] )
   eval stmt4 (initialConf []) @?= Nothing
+
+
+
+unit_parseLPosition :: Assertion
+unit_parseLPosition = do
+  testSuccess (runParser parseL "x=1;") (toStream "" $ Position 0 4) (Seq [Assign "x" (Num 1)])
+  testSuccess (runParser parseL "if (true) {read(x);} else {read(y);};") (toStream "" $ Position 0 37) (Seq [If (T) (Seq [Read "x"]) (Seq [Read "y"])])
+  testSuccess (runParser parseL "if (true) {read(x);} \n  else   {read(y);};") (toStream "" $ Position 1 20) (Seq [If (T) (Seq [Read "x"]) (Seq [Read "y"])])
+  testSuccess (runParser parseL "x=3; \n y=5; \n z=123;") (toStream "" $ Position 2 7) (Seq [Assign "x" (Num 3), Assign "y" (Num 5), Assign "z" (Num 123) ])
+  
