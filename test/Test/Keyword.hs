@@ -12,24 +12,24 @@ cKeywords = ["auto", "break", "case", "char", "const", "continue", "default", "d
 
 haskellKeywords = ["as", "case", "of", "class", "data", "data family", "data instance", "default", "deriving", "deriving instance", "do", "forall", "foreign", "hiding", "if", "then", "else", "import", "infix", "infixl", "infixr", "instance", "let", "in", "mdo", "module", "newtype", "proc", "qualified", "rec", "type", "type family", "type instance", "where" ]
 
-unit_Keywords :: Assertion
-unit_Keywords = do
-  let suffix = "suffix"
-  let prefix = "prefix"
+--unit_Keywords :: Assertion
+--unit_Keywords = do
+--  let suffix = "suffix"
+--  let prefix = "prefix"
 
-  mapM_
-    (\kw -> do
-      mapM_ (\str -> testSuccess (runParser (keyword kw)  str) (toStream "" (length str))  str) kw
-      mapM_ (\str -> testSuccess (runParser (keyword kw)  (str ++ " " ++ suffix)) (toStream suffix (length str + 1)) str) kw
-      mapM_ (\str -> testSuccess (runParser (keyword kw)  (str ++ "\n" ++ suffix)) (toStream suffix (length str + 1)) str) kw
-      mapM_ (\str -> testFailure (runParser (keyword kw) "")) kw
-      mapM_ (\str -> testFailure (runParser (keyword kw) (str ++ suffix))) (filter (' ' `notElem`) kw)
-      mapM_ (\str -> testFailure (runParser (keyword kw) (prefix ++ str))) kw
-    )
-    [kotlinKeywords, cKeywords, haskellKeywords]
+--  mapM_
+--    (\kw -> do
+--      mapM_ (\str -> testSuccess (runParser (keyword kw)  str) (toStream "" (length str))  str) kw
+--      mapM_ (\str -> testSuccess (runParser (keyword kw)  (str ++ " " ++ suffix)) (toStream suffix (length str + 1)) str) kw
+--      mapM_ (\str -> testSuccess (runParser (keyword kw)  (str ++ "\n" ++ suffix)) (toStream suffix (length str + 1)) str) kw
+--      mapM_ (\str -> testFailure (runParser (keyword kw) "")) kw
+--      mapM_ (\str -> testFailure (runParser (keyword kw) (str ++ suffix))) (filter (' ' `notElem`) kw)
+--      mapM_ (\str -> testFailure (runParser (keyword kw) (prefix ++ str))) kw
+--    )
+--    [kotlinKeywords, cKeywords, haskellKeywords]
 
-unit_keywordsWithSpaces :: Assertion
-unit_keywordsWithSpaces = do
-  testSuccess (runParser (keyword ["a", "a b", "b"]) "a bc") (toStream "bc" 2) "a"
-  testSuccess (runParser (keyword ["a", "a b", "b"]) "a b" ) (toStream ""   3) "a b"
-  testSuccess (runParser (keyword ["a", "a b", "b"]) "a "  ) (toStream ""   2) "a"
+--unit_keywordsWithSpaces :: Assertion
+--unit_keywordsWithSpaces = do
+--  testSuccess (runParser (keyword ["a", "a b", "b"]) "a bc") (toStream "bc" 2) "a"
+--  testSuccess (runParser (keyword ["a", "a b", "b"]) "a b" ) (toStream ""   3) "a b"
+--  testSuccess (runParser (keyword ["a", "a b", "b"]) "a "  ) (toStream ""   2) "a"

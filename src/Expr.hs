@@ -127,7 +127,7 @@ compute (BinOp Div x y) = compute x `div` compute y
 evaluate :: String -> Maybe Int
 evaluate input = do 
      case runParser parseExpr input of
-          Success rest ast -> if null rest then return $ compute ast else Nothing
+          Success rest msg ast -> if null (stream rest) then return $ compute ast else Nothing
           _ -> Nothing
 
 

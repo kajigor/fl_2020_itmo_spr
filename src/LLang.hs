@@ -1,10 +1,15 @@
 module LLang where
 
+import Control.Applicative (Alternative (..))
 import AST (AST (..), Operator (..), Subst (..))
-import Combinators (Parser (..))
+import Combinators 
+import Expr hiding (parseExpr)
+import UberExpr
+import Data.Char
 import qualified Data.Map as Map
 import Data.List (intercalate)
 import Text.Printf (printf)
+
 
 type Expr = AST
 
@@ -49,21 +54,14 @@ stmt =
          )
     ]
 
--- я не писала парсер для keywords в HW04, поэтому сделала что-то простое
--------------------------------------------------------------------------
-
-compareStr :: String -> String -> (Bool, String)
-compareStr (x:xs) (y:ys) = if (x == y) then (compareStr xs ys)
-                        else (False, "") 
-compareStr xs [] = (True, xs)
-compareStr _ _  = (False, "") 
 
 
 satisfyStr :: String  -> Parser String String String
-satisfyStr p =  Parser $ \input -> 
-  if ((length p) > (length input)) then Failure $ "Error key word" 
-  else if (fst $ compareStr input p) then Success (snd $ compareStr input p) p 
-       else Failure $ "Error key* word"
+satisfyStr w = Parser $ \(InputStream input (Position l c)) ->
+  let (pref, suff) = splitAt (length w) input in
+  if pref == w
+  then Success (InputStream suff (Position l (c + length w))) Nothing w
+  else Failure (makeError ("Expected " ++ show w) (Position l c))
      
 simpleParseKeyword s = parseSeparators *> (satisfyStr s) <* parseSeparators
 
@@ -223,12 +221,12 @@ parseStatment = (parseSt parseIf) <|> (parseSt parseWhile) <|> (parseSt parseWri
                      sep3 <- parseSeparators
                      return $ result
 
-parseStatments =  many' parseStatment
+parseStatments =  many parseStatment
 
 parseSeparator :: Parser String String Char
 parseSeparator = (satisfy isSeparator) <|> (symbol '\n')
 
-parseSeparators = many' parseSeparator
+parseSeparators = many parseSeparator
 
 parseSeq :: Parser String String LAst
 parseSeq = Seq <$> (parseSeparators *> parseStatments <* parseSeparators)
@@ -242,7 +240,7 @@ initialConf input = Conf Map.empty input []
 
 getLAst :: String -> LAst
 getLAst input = case runParser parseL input of 
-         Success rest ast -> ast
+         Success rest msg ast -> ast
          _ -> Seq []
       
         

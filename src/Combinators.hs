@@ -7,6 +7,7 @@ import Control.Applicative
 import Data.Char (digitToInt, isDigit, isSpace, isAlpha, isAlphaNum)
 import Data.List (sortBy, nub)
 import Data.Monoid 
+import Text.Printf (printf)
 
 data Result error input result
   = Success (InputStream input) (Maybe (ErrorMsg error)) result
@@ -20,7 +21,8 @@ type Error = String
 
 type Input = String
 
-type Position = Int
+data Position = Position { line :: Int, offset :: Int }
+                   deriving (Show, Eq)
 
 data InputStream a = InputStream { stream :: a, curPos :: Position }
                    deriving (Show, Eq)
@@ -30,7 +32,7 @@ data ErrorMsg e = ErrorMsg { errors :: [e], pos :: Position }
 
 makeError e p = Just $ ErrorMsg [e] p
 
-initPosition = 0
+initPosition = Position 0 0
 
 runParser :: Parser error input result -> input -> Result error input result
 runParser parser input = runParser' parser (InputStream input initPosition)
@@ -38,8 +40,30 @@ runParser parser input = runParser' parser (InputStream input initPosition)
 toStream :: a -> Position -> InputStream a
 toStream = InputStream
 
+
+class SatisfyInput a where
+    incrPosSatisfy :: a -> InputStream is -> InputStream is
+    incrPosSatisfy ch (InputStream str (Position l c)) = InputStream str (Position l (c + 1) )
+
+instance SatisfyInput Char where
+    incrPosSatisfy '\n' (InputStream str (Position l c)) = InputStream str (Position (l + 1) 0 )
+    incrPosSatisfy '\t' (InputStream str (Position l c)) = InputStream str (Position l (c + 4) )
+    incrPosSatisfy ch (InputStream str (Position l c)) = InputStream str (Position l (c + 1) )
+
+instance SatisfyInput String where
+    incrPosSatisfy s (InputStream str (Position l c)) = InputStream str (Position l (c + length s) )
+
+instance SatisfyInput Integer where
+    incrPosSatisfy n (InputStream str (Position l c)) = InputStream str (Position l (c + 1))
+
+instance SatisfyInput Int where
+    incrPosSatisfy n (InputStream str (Position l c)) = InputStream str (Position l (c + 1))
+
+
+
+
 incrPos :: InputStream a -> InputStream a
-incrPos (InputStream str pos) = InputStream str (pos + 1)
+incrPos (InputStream str (Position l c)) = InputStream str (Position l (c + 1))
 
 instance Functor (Parser error input) where
   fmap f (Parser p) = Parser $ \input ->
@@ -74,6 +98,13 @@ instance (Monoid error, Eq error) => Alternative (Parser error input) where
           Failure e' -> Failure $ mergeErrors e e'
           (Success i' es' r') -> Success i' (mergeErrors e es') r'
 
+
+
+instance Ord Position where
+  (Position l1 c1) <= (Position l2 c2) = (l1 < l2) || ((l1 == l2) && (c1 <= c2))
+
+
+
 mergeErrors :: (Monoid e, Eq e) => Maybe (ErrorMsg e) -> Maybe (ErrorMsg e) -> Maybe (ErrorMsg e)
 mergeErrors Nothing x = x
 mergeErrors x Nothing = x
@@ -94,7 +125,7 @@ infixl 1 <?>
 terminal :: Char -> Parser Error String Char
 terminal = symbol
 
-pref :: (Show a, Eq a) => [a] -> Parser Error [a] [a]
+pref :: (Show a, Eq a, SatisfyInput a) => [a] -> Parser Error [a] [a]
 pref (w:ws) =
   symbol w >>= \c -> (c:) <$> pref ws
 
@@ -136,16 +167,17 @@ sepBy sep elem = sepBy1 sep elem <|> return []
 sepBy1' :: (Monoid e, Eq e) => Parser e i sep -> Parser e i a -> Parser e i (a, [(sep, a)])
 sepBy1' sep elem = (,) <$> elem <*> (many ((,) <$> sep <*> elem))
 
-satisfy :: (a -> Bool) -> Parser String [a] a
+satisfy :: SatisfyInput a => (a -> Bool) -> Parser String [a] a
 satisfy p = Parser $ \(InputStream input pos) ->
   case input of
-    (x:xs) | p x -> Success (incrPos $ InputStream xs pos) Nothing x
+    (x:xs) | p x -> Success (incrPosSatisfy x (InputStream xs pos)) Nothing x
     input        -> Failure (makeError "Predicate failed" pos)
 
-elem' :: Parser String [a] a
+
+elem' :: SatisfyInput a => Parser String [a] a
 elem' = satisfy (const True)
 
-symbol :: (Eq a, Show a) => a -> Parser String [a] a
+symbol :: (Eq a, Show a,  SatisfyInput a) => a -> Parser String [a] a
 symbol c = ("Expected symbol: " ++ show c) <?> satisfy (==c)
 
 fail' :: e -> Parser e i a
@@ -167,11 +199,11 @@ parseIdent :: Parser Error Input String
 parseIdent = "Failed to parse ident" <?> (:) <$> (satisfy isAlpha <|> symbol '_') <*> (many $ satisfy isAlphaNum <|> symbol '_')
 
 word :: String -> Parser Error Input String
-word w = Parser $ \(InputStream input pos) ->
+word w = Parser $ \(InputStream input (Position l c)) ->
   let (pref, suff) = splitAt (length w) input in
   if pref == w
-  then Success (InputStream suff (pos + length w)) Nothing w
-  else Failure (makeError ("Expected " ++ show w) pos)
+  then Success (InputStream suff (Position l (c + length w))) Nothing w
+  else Failure (makeError ("Expected " ++ show w) (Position l c))
 
 instance Show (ErrorMsg String) where
   show (ErrorMsg e pos) = "at position " ++ show pos ++ ":\n" ++ (unlines $ map ('\t':) (nub e))
@@ -179,7 +211,4 @@ instance Show (ErrorMsg String) where
 instance (Show input, Show result) => Show (Result String input result) where
   show (Failure e) = "Parsing failed\n" ++ show e
   show (Success i _ r) = "Parsing succeeded!\nResult:\n" ++ show r ++ "\nSuffix:\t" ++ show i
-
-
-
 
