@@ -19,7 +19,9 @@ Args :: Ident | Ident, Args
 
 Seq :: Statement ';' | Statement ';' Seq
 
-Statement :: If | While | Initialize | Read | Write
+Statement :: If | While | Initialize | Read | Write | Return
+
+Return :: 'return' Expression
 
 FuncCall :: Ident '(' CallArgs ')'
 
