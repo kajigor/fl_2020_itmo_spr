@@ -162,7 +162,7 @@ parseExpr =  uberExpr [(parseOrOp, Binary RightAssoc),
                      (parseAddOp <|> parseSubOp, Binary LeftAssoc),
                      (parseMultOp <|> parseDivOp, Binary LeftAssoc),
                      (parsePowOp, Binary RightAssoc)]
-           (Num <$> parseNum <|> symbol '(' *> parseExpr <* symbol ')' <|> Ident <$> parseIdent)
+           (Num <$> parseNum <|> symbol '(' *> (parseFuncCall <|> parseExpr) <* symbol ')' <|> Ident <$> parseIdent)
            BinOp
            UnaryOp
            where
@@ -188,7 +188,7 @@ parseLogikExpr =  uberExpr [(parseOrOp, Binary RightAssoc),
                      (parseAndOp, Binary RightAssoc),
                      (parseGeqOp <|> parseLeqOp <|> parseLtOp <|> parseGtOp <|> parseEqOp <|> parseNeqOp, Binary NoAssoc)
                      ]
-           (Num <$> parseNum <|> symbol '(' *> parseExpr <* symbol ')' <|> Ident <$> parseIdent)
+           (Num <$> parseNum <|> symbol '(' *> (parseFuncCall <|> parseExpr) <* symbol ')' <|> Ident <$> parseIdent)
            BinOp
            UnaryOp
            where
@@ -226,7 +226,7 @@ parseCondition = parseSeparators *> parseInside <* parseSeparators
 parseAssign = Assign <$> parseId <*> (symbol '=' *> parseExp)
             where 
                parseId = parseSeparators *> parseIdent <* parseSeparators
-               parseExp = parseSeparators *> parseExpr <* parseSeparators
+               parseExp = parseSeparators *> (parseFuncCall <|> parseExpr) <* parseSeparators
 
 parseRead = Read <$> (simpleParseKeyword "read" *> parseR) where
                     parseR = do 
@@ -244,7 +244,7 @@ parseWrite = Write <$> (simpleParseKeyword "write" *> parseW) where
                       sep1 <- parseSeparators
                       left <- symbol '('
                       sep2 <- parseSeparators
-                      result <- parseExpr
+                      result <- parseFuncCall <|> parseExpr
                       sep3 <- parseSeparators
                       right <- symbol ')'
                       sep4 <- parseSeparators
@@ -290,10 +290,36 @@ parseIf = If <$> (simpleParseKeyword "if" *> parseC) <*> parseS <*> (simpleParse
                           sep4 <- parseSeparators
                           return $ result
 
+parseFuncCall = parseF where 
+            parseF = do 
+                sep <- parseSeparators
+                name <- parseIdent
+                sep <- parseSeparators
+                left <- symbol '('
+                sep <- parseSeparators
+                args <- ((++) <$> (many parseSeqArg) <*> (parseOneArg)) <|> (parseOneArg)
+                sep <- parseSeparators
+                right <- symbol ')'
+                sep <- parseSeparators
+                return $ FunctionCall name args
+            parseSeqArg = do
+                sep1 <- parseSeparators
+                result <- parseFuncCall <|> parseExpr
+                sep2 <- parseSeparators
+                sep <- symbol ','
+                sep3 <- parseSeparators
+                sep4 <- parseSeparators
+                return $ result
+            parseOneArg = do
+                sep1 <- parseSeparators
+                result <- parseFuncCall <|> parseExpr
+                sep4 <- parseSeparators
+                return $ [result]
+
 parseReturn = Return <$> (simpleParseKeyword "return" *> parseE) where
                 parseE = do 
                       sep2 <- parseSeparators
-                      result <- parseExpr
+                      result <- parseFuncCall <|> parseExpr
                       sep3 <- parseSeparators
                       return $ result
 
