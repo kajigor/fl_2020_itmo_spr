@@ -1,0 +1,57 @@
+def factorial(n) {
+    fac = 1;
+    i = 1;
+    while (i <= n) {
+        fac = fac * i;
+        i = i+1;
+    }
+    return (fac);
+}
+
+def factorial_rec(n) {
+    if (n == 0) then {
+        return (1);
+    } else {
+        return (n*factorial_rec(n-1)); 
+    }
+}
+
+def fibonacci(n) {
+    read(n);
+    a = 0;
+    b = 1;
+    c = 1;
+    if (n == 0) then {
+        return (a);
+    } else {
+        if ( n == 1) then {
+            return (b);
+        } else {
+            i = 2;
+            while (i <= n) {
+                c = a + b;
+                a = b;
+                b = c;
+                i = i + 1;
+            }
+            return (c);
+        }
+    }
+}
+
+
+def foo() {
+    return (42);
+}
+
+def const(x,y) {
+    return (foo());
+}
+
+def main() {
+    read(number);
+    write(factorial(n));
+    write(factorial_rec(n));
+    write(fibonacci(n));
+    write(const(1,2));
+}
