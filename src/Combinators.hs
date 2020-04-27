@@ -144,6 +144,13 @@ elem' = satisfy (const True)
 symbol :: (Eq a, Show a) => a -> Parser String [a] a
 symbol c = ("Expected symbol: " ++ show c) <?> satisfy (==c)
 
+symbols :: String -> Parser String String String
+symbols [] = return []
+symbols (x:xs) = do
+    c <- symbol x
+    rest <- symbols xs
+    return $ x:xs
+
 fail' :: e -> Parser e i a
 fail' msg = Parser $ \input -> Failure (makeError msg (curPos input))
 
