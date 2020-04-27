@@ -2,12 +2,13 @@
 
 module Keyword where
 
-import Combinators (Parser (..), Result (..), fail')
+import Combinators
 import Control.Applicative
 import Data.Map as M
 import Data.List as L
 import Data.Char
 import Data.Maybe
+import Data.Monoid
 
 -- Парсер ключевых слов: принимает список ключевых слов,
 -- проверяет, что вход начинается с ключевого слова.
@@ -15,7 +16,7 @@ import Data.Maybe
 -- Должен строить по входным ключевым словам либо минимальный автомат, либо бор.
 -- Если префикс входа длиной n не является префиксом ни одного входного ключевого слова, чтение n+1-ого символа проводиться не должен.
 keyword :: [String] -> Parser String String String
-keyword ks = Parser $ \i -> fromMaybe (Failure "") $ find' i [] trie  where
+keyword ks = Parser $ \(InputStream i pos) -> fromMaybe (Failure $ makeError mempty pos) $ find' i [] pos trie  where
     trie = buildTrie ks
 
 data Trie = Trie Bool (Map Char Trie)
@@ -33,8 +34,8 @@ buildTrie ks = Trie (elem "" ks) childs where
     childs = M.map (\l -> buildTrie $ fmap tail l) grouped 
 
 
-find' [] acc (Trie realNode _) | realNode = Just $ Success [] (reverse acc)
-find' (y:xs) acc (Trie realNode m) | realNode && isSpace y =
-    ((m !? y) >>= find' xs (y:acc)) <|>  (Just $ Success xs (reverse acc))
-find' (y:xs) acc (Trie _ m) = (m !? y) >>= find' xs (y:acc)
-find' _ _ _ = Nothing
+find' [] acc err (Trie realNode _) | realNode = Just $ Success (InputStream [] err) Nothing (reverse acc)
+find' (y:xs) acc err (Trie realNode m) | realNode && isSpace y =
+    ((m !? y) >>= find' xs (y:acc) err) <|>  (Just $ Success (InputStream xs err) Nothing (reverse acc))
+find' (y:xs) acc err (Trie _ m) = (m !? y) >>= find' xs (y:acc) err
+find' _ _ _ _ = Nothing

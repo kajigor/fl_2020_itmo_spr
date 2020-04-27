@@ -59,11 +59,6 @@ parseSum = uberExpr [ (sum' <|> minus,Binary LeftAssoc), (mult <|> div',Binary L
                     BinOp
                     UnaryOp
 
-parseIdent :: Parser String String String
-parseIdent = do
-  c <- satisfy isLetter <|> symbol '_'
-  l <- many (satisfy isLetter <|> satisfy isDigit <|> symbol '_')
-  return $ c:l
 
 -- Парсер для операторов
 parseOp :: Parser String String Operator
@@ -89,16 +84,32 @@ toOperator "!" = return Not
 
 toOperator _   = fail' "Failed toOperator"
 
+parseFuncCallArgs = parseFuncCallArgs' <|> return []
+
+parseFuncCallArgs' = (do
+    a <- spaced parseExpr
+    tail <- (spaced (symbols ",") *> spaced parseFuncCallArgs')
+    return (a:tail)
+    ) <|> (do a <- spaced parseExpr; return [a])
+
+parseFuncCall = do
+    name <- spaced parseIdent
+    spaced (symbols "(")
+    args <- parseFuncCallArgs
+    spaced (symbols ")")
+    return $ FunctionCall name args
+
+
 -- Парсер для терма: либо число, либо выражение в скобках.
 -- Скобки не хранятся в AST за ненадобностью.
 parseTerm :: Parser String String AST
 parseTerm =
     fmap Num parseNum <|>
-    (lbr *> spaceis *> parseExpr <* spaceis <* rbr
-    ) <|> (spaceis *> fmap Ident parseIdent <* spaceis) 
+    (lbr *> spaced (parseExpr) <* rbr
+    ) <|> (spaced parseFuncCall) <|> (spaced (fmap Ident parseIdent) ) 
   where
-    lbr = spaceis *> symbol '('
-    rbr = symbol ')'
+    lbr = spaced $ symbol '('
+    rbr = spaced $ symbol ')'
 
 -- Парсер арифметических выражений над целыми числами с операциями +,-,*,/.
 
@@ -123,7 +134,7 @@ compute _ = error "compute undefined"
 evaluate :: String -> Maybe Int
 evaluate input = do
   case runParser parseExpr input of
-    Success rest ast | null rest -> return $ compute ast
+    (Success (InputStream _ _) _ ast) -> return $ compute ast
     _ -> Nothing
 
 

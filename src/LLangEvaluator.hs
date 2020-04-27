@@ -30,7 +30,7 @@ eval (Seq (x:xs)) conf = eval x conf >>= eval (Seq xs)
 
 evaluate' s input = helper $ runParser parseLLang s where
   helper (Failure _) = return []
-  helper (Success _ ast) = do
+  helper (Success _ _ ast) = do
     (Conf _ _ out) <- eval ast (Conf Map.empty input [])
     return out
-  helper (Success e _) = error e
+  --helper (Success (InputStream e _) _ _) = error e

@@ -26,7 +26,3 @@ unit_expr1' = do
           "write(b);"]) [] @?= Just [5]
   evaluate' "read(x);write(x*2);" [2] @?= Just [4]
   evaluate' "read(n);i=0;while(i<n){write(i);i=i+1;};" [2] @?= Just [1, 0]
-
-
-
-

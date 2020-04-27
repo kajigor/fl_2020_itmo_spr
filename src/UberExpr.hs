@@ -13,7 +13,7 @@ parse p = do
     -- xs <- parse p <|> return []
     -- return (x:xs)
 
-uberExpr :: Monoid e
+uberExpr :: (Monoid e, Eq e)
          => [(Parser e i op, OpType)]
          -> Parser e i ast
          -> (op -> ast -> ast -> ast)

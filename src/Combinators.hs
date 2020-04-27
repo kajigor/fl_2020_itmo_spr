@@ -1,97 +1,201 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 module Combinators where
 
 import Control.Monad.Fail
-import           AST                 (AST (..), Operator (..))
-import           Control.Applicative (Alternative (..))
-import           Text.Printf         (printf)
-import Data.Char
+import Control.Applicative
+import Data.Char (digitToInt, isDigit, isSpace, isAlpha, isAlphaNum)
+import Data.List (sortBy, nub)
+import Data.Ord
+
 data Result error input result
-  = Success input result
-  | Failure error
-  deriving (Show, Eq)
+  = Success (InputStream input) (Maybe (ErrorMsg error)) result
+  | Failure (Maybe (ErrorMsg error))
+  deriving (Eq)
 
 newtype Parser error input result
-  = Parser { runParser :: input -> Result error input result}
+  = Parser { runParser' :: (InputStream input) -> Result error input result }
+
+type Error = String
+
+type Input = String
+
+data Position = Position { line :: Int, col :: Int } deriving (Eq, Show)
+
+instance Ord (Position) where
+  a <= b = a == b || (line a < line b) || (line a == line b && col a <= col b)
+
+data InputStream a = InputStream { stream :: a, curPos :: Position }
+                   deriving (Show, Eq)
+
+data ErrorMsg e = ErrorMsg { errors :: [e], pos :: Position }
+                deriving (Eq)
+
+makeError e p = Just $ ErrorMsg [e] p
+
+initPosition = (Position 0 0)
+
+runParser :: Parser error input result -> input -> Result error input result
+runParser parser input = runParser' parser (InputStream input initPosition)
+
+--toStream :: a -> Position -> InputStream a
+toStream s n = InputStream s (Position 0 n)
+
+incrPos :: InputStream a -> InputStream a
+incrPos (InputStream str pos) = InputStream str (incrPos' pos 1)
+
+incrPos' (Position l c) w = Position l (c+w)
 
 instance Functor (Parser error input) where
-  fmap f (Parser parser) = Parser (helper . parser) where
-    helper (Success i r) = Success i (f r)
-    helper (Failure err) = Failure err 
+  fmap f (Parser p) = Parser $ \input ->
+    case p input of
+      Success input' es r -> Success input' es (f r)
+      Failure e -> Failure e
 
-instance Applicative (Parser error input) where
-  pure x = Parser (\i -> Success i x)
-  (Parser p1) <*> (Parser p2) = Parser $ helper . p1 where
-    helper (Success i f) = helper' f (p2 i)
-    helper (Failure err) = Failure err
-    helper' f (Success i a) = Success i (f a)
-    helper' _ (Failure err) = Failure err
-    
+instance (Monoid error, Eq error) => Applicative (Parser error input) where
+  pure result = Parser $ \input -> Success input Nothing result
 
-instance Monad (Parser error input) where
-  return = pure
+  f <*> a = f >>= (<$> a)
 
-  (Parser p) >>= f = Parser $ \i -> helper $ p i  where
-    helper (Success i a) = runParser (f a) i 
-    helper (Failure err) = Failure err
+instance (Monoid error, Eq error) => Monad (Parser error input) where
+  return a = Parser $ \input -> Success input Nothing a
 
-instance Monoid error => MonadFail (Parser error input) where
-  fail s = Parser $ \_ -> Failure mempty
+  Parser a >>= f = Parser $ \input ->
+    case a input of
+      Success input' es r ->
+        case runParser' (f r) input' of
+          Success input'' es' r' -> Success input'' (mergeErrors es es') r'
+          Failure e -> Failure (mergeErrors es e)
+      Failure e -> Failure e
 
-instance Monoid error => Alternative (Parser error input) where
-  empty = Parser $ \_ -> Failure mempty
-  (Parser p1) <|> (Parser p2) = Parser $ \input -> case p1 input of
-    Failure e1  -> case p2 input of
-                    Failure e2 -> Failure e2
-                    x          -> x
-    x           -> x
+instance (Monoid error, Eq error) => MonadFail (Parser error input) where
+  fail s = Parser $ \input -> Failure (makeError mempty (curPos input))
 
--- Принимает последовательность элементов, разделенных разделителем
--- Первый аргумент -- парсер для разделителя
--- Второй аргумент -- парсер для элемента
--- В последовательности должен быть хотя бы один элемент
-sepBy1 sep elem = do
-  a <- elem
-  xs <- (sep >>= \_-> sepBy1 sep elem) <|> return []
-  return $ a:xs
+instance (Monoid error, Eq error) => Alternative (Parser error input) where
+  empty = Parser $ \input -> Failure (makeError mempty (curPos input))
 
+  Parser a <|> Parser b = Parser $ \input ->
+    case a input of
+      Success input' es r -> Success input' es r
+      Failure e ->
+        case b input of
+          Failure e' -> Failure $ mergeErrors e e'
+          (Success i' es' r') -> Success i' (mergeErrors e es') r'
+
+mergeErrors :: (Monoid e, Eq e) => Maybe (ErrorMsg e) -> Maybe (ErrorMsg e) -> Maybe (ErrorMsg e)
+mergeErrors Nothing x = x
+mergeErrors x Nothing = x
+mergeErrors (Just (ErrorMsg e p)) (Just (ErrorMsg e' p')) | p == p' = Just $ ErrorMsg (nub (e <> e')) p
+mergeErrors (Just (ErrorMsg e p)) (Just (ErrorMsg e' p')) | p < p'  = Just $ ErrorMsg e' p'
+mergeErrors (Just (ErrorMsg e p)) (Just (ErrorMsg e' p')) | p > p'  = Just $ ErrorMsg e p
+
+infixl 1 <?>
+(<?>) :: (Monoid error, Eq error) => error -> Parser error input a -> Parser error input a
+(<?>) msg (Parser p) = Parser $ \input ->
+    case p input of
+      Failure (Just err) -> Failure (makeError msg (pos err))
+      -- Failure (Just err) -> Failure $ (mergeErrors (Just err) (makeError msg (pos err)))
+      -- Failure $ mergeErrors [makeError msg (maximum $ map pos err)] err
+      x -> x
+
+
+terminal :: Char -> Parser Error String Char
+terminal = symbol
+
+--  pref :: (Show a, Eq a) => [a] -> Parser Error [a] [a]
+pref (w:ws) =
+  symbol w >>= \c -> (c:) <$> pref ws
+
+anyOf :: (Monoid error, Eq error) => [Parser error input a] -> Parser error input a
+anyOf [] = empty
+anyOf (p:ps) = p <|> anyOf ps
+
+digit :: Parser Error String Int
+digit = digitToInt <$> satisfy isDigit
+
+number :: Parser Error String Int
+number =
+    parseNum <$> some (satisfy isDigit)
+  where
+    parseNum = foldl (\acc d -> 10 * acc + digitToInt d) 0
+
+sepBy1L :: (Monoid e, Eq e) => Parser e i sep -> Parser e i elem -> Parser e i (elem, [(sep, elem)])
 sepBy1L sep elem = do
-  a <- elem
-  xs <- many (sep >>= (\s -> fmap (\l -> (s, l)) elem)) <|> return []
-  return $ (a, xs)
+    fst <- elem
+    rest <- many ((,) <$> sep <*> elem)
+    return (fst, rest)
 
-sepBy1R sep elem = do
-  xs <- many (elem >>= (\el -> fmap (\s -> (el, s)) sep)) <|> return []
-  a <- elem
-  return (xs, a)
+sepBy1R :: (Monoid e, Eq e) => Parser e i sep -> Parser e i elem -> Parser e i ([(elem, sep)], elem)
+sepBy1R sep elem = (do
+    fst <- many ((,) <$> elem <*> sep)
+    lst <- elem
+    return (fst, lst))
+  <|>
+    ((\x -> ([],x)) <$> elem)
 
--- Проверяет, что первый элемент входной последовательности удовлетворяет предикату
-satisfy :: (a -> Bool) -> Parser String [a] a
-satisfy p = Parser $ \input ->
+sepBy1 :: (Monoid error, Eq error) => Parser error input sep -> Parser error input elem -> Parser error input [elem]
+sepBy1 sep elem = do
+    (fst, separated) <- sepBy1L sep elem
+    return $ fst : (map snd separated)
+
+sepBy :: (Monoid error, Eq error) => Parser error input sep -> Parser error input elem -> Parser error input [elem]
+sepBy sep elem = sepBy1 sep elem <|> return []
+
+--satisfy :: (a -> Bool) -> Parser String [a] a
+satisfy p = Parser $ \(InputStream input pos) ->
   case input of
-    (x:xs) | p x -> Success xs x
-    input        -> Failure $ "Predicate failed"
+    (x:xs) | p x -> Success (InputStream xs (movePos' x pos)) Nothing x
+    input        -> Failure (makeError "Predicate failed" pos)
 
--- Успешно завершается, если последовательность содержит как минимум один элемент
-elem' :: Parser String [a] a
-elem' = satisfy (const True)
+const' :: Char -> Bool
+const' _ = True
 
--- Проверяет, что первый элемент входной последовательности -- данный символ
-symbol :: (Eq a) => a -> Parser String [a] a
-symbol c = satisfy (==c)
+--elem' :: Parser String [a] a
+elem' = satisfy const'
 
-symbols s = Parser $ \i ->  helper s i where
-  helper (x:xs) (y:ys) | x == y  = helper xs ys
-  helper [] ys = Success ys s
-  helper _ _ = Failure ""
+--symbol :: (Eq a, Show a) => a -> Parser String [a] a
+symbol c = ("Expected symbol: " ++ show c) <?> satisfy (==c)
 
--- Всегда завершается ошибкой
 fail' :: e -> Parser e i a
-fail' e = Parser $ \input -> Failure e
+fail' msg = Parser $ \input -> Failure (makeError msg (curPos input))
 
-whiteSpace = Parser $ \i -> helper i where
-  helper (x:xs) | isSpace x = Success xs ()
-  helper _ = Failure ""
+eow :: Parser String String a -> Parser String String a
+eow p = p <* (eof <|> space)
 
-spaceis = Parser helper where
-  helper (x:xs) | isSpace x = Success (dropWhile isSpace xs) ()
-  helper xs = Success xs ()
+eof :: Parser String String ()
+eof = Parser $ \input -> if null $ stream input then Success input Nothing () else Failure (makeError "Not eof" (curPos input))
+
+space :: Parser String String ()
+space = const () <$> satisfy isSpace
+
+spaced :: Parser String String a -> Parser String String a
+spaced p = many space *> p <* many space
+
+parseIdent :: Parser Error Input String
+parseIdent = "Failed to parse ident" <?> (:) <$> (satisfy isAlpha <|> symbol '_') <*> (many $ satisfy isAlphaNum <|> symbol '_')
+
+symbols :: String -> Parser Error Input String
+symbols w = Parser $ \(InputStream input pos) ->
+  let (pref, suff) = splitAt (length w) input in
+  if pref == w
+  then Success (InputStream suff (movePos w pos)) Nothing w
+  else Failure (makeError ("Expected " ++ show w) pos)
+
+word = symbols
+
+movePos' x (Position l c)| x == '\n' = (Position (l+1) 0)
+movePos' x (Position l c)| x == '\t' = (Position l (c+8))
+movePos' x (Position l c) = (Position l (c+1))
+
+movePos (x:xs) (Position l c) | x == '\n' = movePos xs (Position (l+1) 0)
+movePos (x:xs) (Position l c) | x == '\t' = movePos xs (Position l (c+8))
+movePos (x:xs) (Position l c) = movePos xs (Position l (c+1))
+movePos _ p = p
+
+instance Show (ErrorMsg String) where
+  show (ErrorMsg e pos) = "at position " ++ show pos ++ ":\n" ++ (unlines $ map ('\t':) (nub e))
+
+instance (Show input, Show result) => Show (Result String input result) where
+  show (Failure e) = "Parsing failed\n" ++ show e
+  show (Success i _ r) = "Parsing succeeded!\nResult:\n" ++ show r ++ "\nSuffix:\t" ++ show i
