@@ -5,7 +5,9 @@ import           Combinators      (Result (..), runParser, toStream)
 import qualified Data.Map         as Map
 import           Debug.Trace      (trace)
 import           LLang            (Configuration (..), LAst (..), eval,
-                                   initialConf, parseL, Function (..), Program (..))
+                                   initialConf, parseL, Function (..), Program (..), parseWord)
+
+import           Test.Helper
 import           Test.Tasty.HUnit (Assertion, assertBool, (@?=))
 import           Text.Printf      (printf)
 
@@ -36,6 +38,29 @@ prog =
 --       write (x);
 --     }
 -- }
+
+sub1 = "(while (x<42) ((let (x) (x*7))))"
+sub1' = Seq [While (BinOp Lt (Ident "x") (Num 42)) (Seq [Assign "x" (BinOp Mult (Ident "x") (Num 7))])]
+
+sub3 = "(while (x<42) ((let (x) (x*7)) (write (x))))"
+sub3' = Seq [While (BinOp Lt (Ident "x") (Num 42)) (Seq [Assign "x" (BinOp Mult (Ident "x") (Num 7)), Write (Ident "x")])]
+
+sub2 = "(if (x>13) then ((write (x))) else ((while (x<42) ((let (x) (x*7)) (write (x))))))"
+
+sub2' = Seq [If (BinOp Gt (Ident "x") (Num 13))
+         (Seq [(Write (Ident "x"))])
+         (Seq [(While (BinOp Lt (Ident "x") (Num 42))
+                (Seq [ Assign "x"
+                        (BinOp Mult (Ident "x") (Num 7))
+                     , Write (Ident "x")
+                     ]
+                )
+         )])]
+
+stmt1' :: String
+stmt1' = "(read (x)) (if (x>13) then ((write (x))) else ((while (x<42) ((let (x) (x*7)) (write (x))))))"
+
+
 stmt1 :: LAst
 stmt1 =
   Seq
@@ -50,6 +75,7 @@ stmt1 =
                 )
          )])
     ]
+
 
 unit_stmt1 :: Assertion
 unit_stmt1 = do
@@ -67,6 +93,9 @@ unit_stmt1 = do
 --     write (x);
 --   }
 -- else {}
+--
+stmt2' = "(read (x)) (if (x) then ((while (x) ((let (x) (x-2)) (write (x))))) else ())"
+
 stmt2 :: LAst
 stmt2 =
   Seq
@@ -92,6 +121,7 @@ unit_stmt2 = do
 -- read x;
 -- read y;
 -- write (x == y);
+stmt3' = "(read (x)) (read (y)) (write (x==y))"
 stmt3 :: LAst
 stmt3 =
   Seq
@@ -155,3 +185,45 @@ unit_stmt4 = do
   eval stmt4 (initialConf [2]) @?= Just (Conf (subst' 2) [] [1])
   eval stmt4 (initialConf [10]) @?= Just (Conf (subst 10 10 55 34 55) [] [55] )
   eval stmt4 (initialConf []) @?= Nothing
+
+unit_parseWord :: Assertion
+unit_parseWord = do
+    let p = runParser parseWord
+    testSuccess (p "var") (toStream "" 3) "var"
+    testSuccess (p "var ") (toStream " " 3) "var"
+    testSuccess (p "123wead...var ") (toStream " " (length "123wead...var")) "123wead...var"
+
+unit_parseSeq :: Assertion
+unit_parseSeq = do
+    let p = runParser parseL
+    let pp prog res = testSuccess (p prog) (toStream "" (length prog)) res
+    let p1 = "(let (x) (12))"
+
+    pp p1 (Seq [Assign "x" (Num 12)])
+    pp (p1 ++ p1) (Seq [Assign "x" (Num 12),Assign "x" (Num 12)])
+
+    let p2 = "(let (x) (12)) (write (y+1)) (read (z))"
+    pp p2 (Seq [Assign "x" (Num 12),
+                Write (BinOp Plus (Ident "y") (Num 1)),
+                    Read "z"])
+--
+    let p3 = "(while (1) ((return (x))))"
+    pp p3 (Seq [While (Num 1)
+                    (Seq [Return (Ident "x")])])
+--
+    let p4 = "(if (1) then ((return (x))) else ((return (x))))"
+    pp p4 (Seq [If (Num 1) (Seq [Return (Ident "x")]) (Seq [Return (Ident "x")])])
+--
+    let p5 = "(if (1) then ((let (x) (1))) else ((let (y) (12))))"
+    pp p5 (Seq [If (Num 1) (Seq [Assign "x" (Num 1)]) (Seq [Assign "y" (Num 12)])])
+--
+    let p6 = "(if (1) then ((let (x) (1)) (write (x))) else ((let (y) (12))))"
+    pp p6 (Seq [If (Num 1) (Seq [Assign "x" (Num 1), Write (Ident "x")]) (Seq [Assign "y" (Num 12)])])
+
+    pp sub1 sub1'
+    pp sub3 sub3'
+    pp sub2 sub2'
+    pp stmt1' stmt1
+    pp stmt2' stmt2
+    pp stmt3' stmt3
+

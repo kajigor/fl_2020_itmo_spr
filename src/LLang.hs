@@ -121,10 +121,12 @@ eval (If expr thenSt elseSt) conf@(Conf env _ _) = do
             then eval thenSt conf
             else eval elseSt conf
 
-eval (While expr st) conf@(Conf env _ _) = do
+eval w@(While expr st) conf@(Conf env _ _) = do
         value <- evalExpr expr env
         if value /= falsy
-            then eval st conf
+            then do
+                newConf <- eval st conf
+                eval w newConf 
             else return conf
 
 eval (Assign ident expr) (Conf env input output) = do
@@ -141,7 +143,6 @@ eval (Write expr) (Conf env input output) = do
 -- Не полностью уверен, что это корректное поведение.
 eval (Return expr) env = eval (Write expr) env
 
---eval (Seq [x]) env = eval x env
 eval (Seq []) env = return env
 eval (Seq (x:xs)) env = eval x env >>= eval (Seq xs)
 
