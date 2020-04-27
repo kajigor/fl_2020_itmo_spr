@@ -72,12 +72,9 @@ def const(x,y) {
 
 ### Язык LLang [Димы(DimaOrekhov)](https://github.com/DimaOrekhov/fl_2020_ifmo_spr)
 
-Замечения:
+Замечания:
 
 * надо оборачивать в скобочки выражение, которое возвращается из функции
-
-* все равно не получилось создать программу без `main()`
-
 
 ```python
 def factorial(n) {
