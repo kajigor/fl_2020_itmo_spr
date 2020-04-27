@@ -1,0 +1,38 @@
+https://github.com/kajigor/fl_2020_itmo_spr/pull/55
+
+Синтаксис стандартный. Замечаний нет
+
+def main(){
+	return (f(x));
+} 
+
+def id(x){
+	return (x);
+}
+
+def main(){
+	return (f(f(1,2,3), 2, 3));
+}
+
+def f(a,b,c){
+	return (a+b+c);
+}
+
+
+https://github.com/dima74/ifmo-2020-formal-languages/tree/HW08-dev
+
+Синтаксис стандартный. Замечаний нет
+
+fn foo(a, c) {
+	return f(x); 
+}
+
+fn f(){
+	return g();
+]
+
+fn g(){
+	return 2;
+}
+
+
