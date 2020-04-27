@@ -1,7 +1,7 @@
 module LLang where
 
 import AST (AST (..), Operator (..), Subst (..))
-import Combinators (Parser (..), symbol, satisfy)
+import Combinators (Parser (..), symbol, satisfy, symbols, fail')
 import Expr (parseExpr, parseIdent, evalExpr, falsy)
 import qualified Data.Map as Map
 import Data.List (intercalate)
@@ -59,27 +59,29 @@ stmt =
          )
     ]
 
-inBrackets parser = skipWhitespace (symbol '(') *> parser <* skipWhitespace (symbol ')')
+inBrackets parser = skipWhitespace (symbol '(') *> skipWhitespace parser <* skipWhitespace (symbol ')')
 
 parseStatement :: String -> Parser String String LAst
 parseStatement "if" = do
         expression <- inBrackets parseExpr 
-        thenStatement <- parseSeq
-        elseStatement <- parseSeq
+        skipWhitespace $ symbols "then"
+        thenStatement <- inBrackets parseSeq 
+        skipWhitespace $ symbols "else"
+        elseStatement <- inBrackets parseSeq 
         return $ If expression thenStatement elseStatement
 
 parseStatement "while" = do
         expression <- inBrackets parseExpr 
-        statement <- parseSeq
+        statement <- inBrackets parseSeq
         return $ While expression statement
 
-parseStatement "defvar" = do
-        varname <- skipWhitespace parseIdent
+parseStatement "let" = do
+        varname <- inBrackets parseIdent
         value <- inBrackets parseExpr
         return $ Assign varname value
 
 parseStatement "read" = do
-        varname <- skipWhitespace parseIdent
+        varname <- inBrackets parseIdent
         return $ Read varname
 
 parseStatement "write" = do
@@ -90,7 +92,7 @@ parseStatement "return" = do
         expression <- inBrackets parseExpr
         return $ Return expression
 
-parseStatement _ = fail "unexpected token"
+parseStatement tok = fail' ("unexpected token: " ++ tok)
 
 parseWord :: Parser String String String
 parseWord = some (satisfy (/= ' '))
@@ -98,9 +100,7 @@ parseWord = some (satisfy (/= ' '))
 parseStatements :: Parser String String [LAst]
 parseStatements = parser <|> return []
     where parser = do
-            skipWhitespace (symbol '(')
-            statement <- parseWord >>= parseStatement
-            skipWhitespace (symbol ')')
+            statement <- inBrackets (parseWord >>= parseStatement)
             stats <- parseStatements
             return $ statement:stats
 
@@ -114,23 +114,37 @@ initialConf :: [Int] -> Configuration
 initialConf input = Conf Map.empty input []
 
 eval :: LAst -> Configuration -> Maybe Configuration
-eval (If expr thenSt elseSt) conf | evalExpr expr /= falsy = eval thenSt conf
-                                  | otherwise = eval elseSt conf
 
-eval (While expr st) conf | evalExpr expr /= falsy = eval st conf
-                          | otherwise = Nothing
+eval (If expr thenSt elseSt) conf@(Conf env _ _) = do
+        value <- evalExpr expr env
+        if value /= falsy
+            then eval thenSt conf
+            else eval elseSt conf
 
-eval (Assign ident expr) (Conf env input output) = Just $ Conf (Map.insert ident (evalExpr expr) env) input output
+eval (While expr st) conf@(Conf env _ _) = do
+        value <- evalExpr expr env
+        if value /= falsy
+            then eval st conf
+            else return conf
 
-eval (Read ident) (Conf env (x:input) output) = Just $ Conf (Map.insert ident x env) input output
+eval (Assign ident expr) (Conf env input output) = do
+        value <- evalExpr expr env
+        return $ Conf (Map.insert ident value env) input output
 
-eval (Write expr) (Conf env input output) = Just $ Conf env input ((evalExpr expr):output)
+eval (Read ident) (Conf env [] output) = Nothing
+eval (Read ident) (Conf env (x:input) output) = return $ Conf (Map.insert ident x env) input output
+
+eval (Write expr) (Conf env input output) = do
+    value <- evalExpr expr env
+    return $ Conf env input (value:output)
 
 -- Не полностью уверен, что это корректное поведение.
 eval (Return expr) env = eval (Write expr) env
 
-eval (Seq [x]) env = eval x env
+--eval (Seq [x]) env = eval x env
+eval (Seq []) env = return env
 eval (Seq (x:xs)) env = eval x env >>= eval (Seq xs)
+
 
 instance Show Function where
   show (Function name args funBody) =

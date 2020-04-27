@@ -1,11 +1,12 @@
 module Expr where
 
 import           AST         (AST (..), Operator (..))
-import           Combinators (Parser (..), Result (..), InputStream (..), elem', satisfy, symbol, symbols, runParser)
+import           Combinators (Parser (..), Result (..), InputStream (..), elem', satisfy, symbol, symbols, runParser, fail')
 import           Data.Char   (isDigit, digitToInt)
 import           UberExpr    (uberExpr, foldl1', Associativity (..), OpType (..))
 
 import Control.Applicative
+import qualified Data.Map as Map
 
 fullAlphabet :: [Char]
 fullAlphabet = symbolsOfAlphabet ++ digitsOfAlphabet ++ suffixCharsOfAlphabet
@@ -49,7 +50,10 @@ parseNatural =
 
 -- Парсер для операторов
 parseOp :: Parser String String Operator
-parseOp = elem' >>= toOperator
+parseOp = (elem' >>= toOperator) <|> do
+    char <- elem'
+    char2 <- elem'
+    toOperator' (char:char2:[])
 
 -- Преобразование символов операторов в операторы
 toOperator :: Char -> Parser String String Operator
@@ -59,18 +63,18 @@ toOperator '-' = return Minus
 toOperator '/' = return Div
 toOperator '^' = return Pow
 toOperator '!' = return Not
-toOperator _   = fail "Failed toOperator"
+toOperator _   = fail' "Failed toOperator"
 
-toOp :: String -> Parser String String Operator
-toOp "==" = return Equal
-toOp "/=" = return Nequal
-toOp "<=" = return Le
-toOp "<"  = return Lt
-toOp ">=" = return Ge 
-toOp ">"  = return Gt
-toOp "&&" = return And
-toOp "||" = return Or
-toOp _     = fail "Failed toOp"
+toOperator' :: String -> Parser String String Operator
+toOperator' "==" = return Equal
+toOperator' "/=" = return Nequal
+toOperator' "<=" = return Le
+toOperator' "<"  = return Lt
+toOperator' ">=" = return Ge 
+toOperator' ">"  = return Gt
+toOperator' "&&" = return And
+toOperator' "||" = return Or
+toOperator' _     = fail' "Failed toOperator'"
 
 mult  = symbol '*' >>= toOperator
 sum'  = symbol '+' >>= toOperator
@@ -78,14 +82,14 @@ minus = symbol '-' >>= toOperator
 div'  = symbol '/' >>= toOperator
 pow   = symbol '^' >>= toOperator
 not'  = symbol '!' >>= toOperator
-eq    = symbols "=="  >>= toOp
-neq   = symbols "/=" >>= toOp
-leq   = symbols "<="  >>= toOp
-lt    = symbols "<"   >>= toOp
-geq   = symbols ">="  >>= toOp
-gt    = symbols ">"   >>= toOp
-and'  = symbols "&&"  >>= toOp
-or'   = symbols "||"  >>= toOp
+eq    = symbols "=="  >>= toOperator'
+neq   = symbols "/=" >>= toOperator'
+leq   = symbols "<="  >>= toOperator'
+lt    = symbols "<"   >>= toOperator'
+geq   = symbols ">="  >>= toOperator'
+gt    = symbols ">"   >>= toOperator'
+and'  = symbols "&&"  >>= toOperator'
+or'   = symbols "||"  >>= toOperator'
 
 -- Парсер арифметических выражений над целыми числами с арифметическими операциями +,-,*,/,^ и бинарными логическими операциями.
 parseExpr :: Parser String String AST
@@ -113,38 +117,48 @@ compute (BinOp Pow x y) = compute x ^ compute y
 compute (UnaryOp Minus x) = 0 - (compute x)
 compute _ = error "compute undefined"
 
-truthy = 1
+falsy :: Int
 falsy = 0
--- 0 is false
-evalExpr :: AST -> Int
-evalExpr (BinOp Equal x y) | compute x == compute y = truthy
-                           | otherwise = falsy 
 
-evalExpr (BinOp Nequal x y) | compute x /= compute y = truthy
-                            | otherwise = falsy
-                            
-evalExpr (BinOp Gt x y) | compute x > compute y = truthy
-                        | otherwise = falsy
+truthy :: Int
+truthy = 1 -- or any other non-zero value
 
-evalExpr (BinOp Lt x y) | compute x < compute y = truthy
-                        | otherwise = falsy
+fromBool op x y | x `op` y = truthy
+                | otherwise = falsy
 
-evalExpr (BinOp Ge x y) | compute x >= compute y = truthy
-                        | otherwise = falsy
+evalExpr :: AST -> Map.Map String Int -> Maybe Int
+evalExpr (Num x) _ = return x
+evalExpr (Ident x) env = Map.lookup x env
 
-evalExpr (BinOp Le x y) | compute x <= compute y = truthy
-                        | otherwise = falsy
+evalExpr (UnaryOp Minus x) env = do
+    value <- evalExpr x env
+    return $ -value
 
-evalExpr (BinOp And x y) | (evalExpr x == truthy) && (evalExpr y == truthy) = truthy
-                         | otherwise = falsy
+evalExpr (UnaryOp Not x) env = do
+        value <- evalExpr x env
+        if value == falsy
+            then return truthy
+            else return falsy
 
-evalExpr (BinOp Or x y) | (evalExpr x == truthy) || (evalExpr y == truthy) = truthy
-                        | otherwise = falsy
-
-evalExpr (UnaryOp Not x) | evalExpr x == falsy = truthy
-                         | otherwise = falsy
-                       
-evalExpr _ = error "evalExpr undefined"
+evalExpr (BinOp op x y) env = do
+          x' <- evalExpr x env
+          y' <- evalExpr y env
+          return $ case op of 
+                Plus -> x' + y'
+                Mult -> x' * y'
+                Minus -> x' - y'
+                Div -> x' `div` y'
+                Pow -> x' ^ y'
+                Equal -> fromBool (==) x' y'
+                Nequal -> fromBool (/=) x' y'
+                Gt -> fromBool (>) x' y'
+                Lt -> fromBool (<) x' y'
+                Ge -> fromBool (>=) x' y'
+                Le -> fromBool (<=) x' y'
+                And -> if x' == falsy then falsy else y'
+                Or -> if x' == falsy then y' else truthy
+                _ -> error "evalExpr undefined"
+ 
 
 evaluate :: String -> Maybe Int
 evaluate input = do 
