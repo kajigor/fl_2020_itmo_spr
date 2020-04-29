@@ -57,7 +57,7 @@ incrPos :: (Enum c) => c -> Position -> Position
 incrPos c pos
   | equals c ' ' = pos {column = column pos + 1}
   | equals c '\n' = Position (line pos + 1) 0
-  | equals c '\t' = pos {column = column pos + 4}
+  | equals c '\t' = let col = column pos in pos {column = col + 8 - ((col - 1) `mod` 8)}
   | otherwise = pos {column = column pos + 1}
   where
     equals l r = fromEnum l == fromEnum r -- отвратительно
