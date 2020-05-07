@@ -1,11 +1,11 @@
-#Язык L
+# Язык L
 
 Пробелы переносы строк используются только, чтобы разделять лексемы языка.
-Например, if a не тоже самое, что ifa. То есть пробельные символы нужны лексеру,
+Например, `if` a не тоже самое, что `ifa`. То есть пробельные символы нужны лексеру,
 но при парсинге они игнорируются
 
-##Граматика
-###Макросы
+## Грамматика
+### Макросы
 
 a+ == X, где X - дополнительно введеное правило X -> a | a X 
    a* == X, где X - дополнительно введеное правило X -> a X | eps
@@ -27,9 +27,13 @@ Ident -> [SmallLetter|'_'] [Letter|Digit|'_']*
 
 Keywords -> 'if' | 'while' | 'else' | 'read' | 'write' 
 
+FuncCall -> Ident `(` Params `)`
+
+Params -> Expr `,` Params | Expr | empty
+
 Expr ->  Or
 
-Term -> Number | Ident | '(' Expr ')'
+Term -> Number | FuncCall | Ident | '(' Expr ')'
 
 Or -> Or '||' And | And
 
@@ -53,6 +57,12 @@ Read -> 'read' '(' Ident ')'
 
 Write -> 'write' '(' Expr ')'
 
-Statement = If ';' | While ';' | Assign ';' | Read ';' | Write ';'
+Statement -> If ';' | While ';' | Assign ';' | Read ';' | Write ';'
 
-Statements = Statement | Statement Statements
+Statements -> Statement | Statement Statements
+
+Func -> `def` Ident `(` Args `)` `{` Statements `}`
+
+Args -> Ident `,` Args | Ident | empty
+
+Program -> Func | Program \\ Одна из функций должна иметь имя main
