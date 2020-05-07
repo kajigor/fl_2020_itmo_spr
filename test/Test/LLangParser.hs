@@ -33,5 +33,5 @@ error_expr = do
   let (Success i _ _) =  runParser parseLLang "a=3;\nb=3;eqweqw"
   i @?= (InputStream "eqweqw" (Position 1 4))
   let (Success i1 _ _) =  runParser parseLLang "a=3;\tb=3;eqweqw"
-  i1 @?= (InputStream "eqweqw" (Position 0 16))  
+  i1 @?= (InputStream "eqweqw" (Position 0 12))  
 

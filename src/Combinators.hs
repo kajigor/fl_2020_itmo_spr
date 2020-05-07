@@ -185,11 +185,11 @@ symbols w = Parser $ \(InputStream input pos) ->
 word = symbols
 
 movePos' x (Position l c)| x == '\n' = (Position (l+1) 0)
-movePos' x (Position l c)| x == '\t' = (Position l (c+8))
+movePos' x (Position l c)| x == '\t' = (Position l (c+4))
 movePos' x (Position l c) = (Position l (c+1))
 
 movePos (x:xs) (Position l c) | x == '\n' = movePos xs (Position (l+1) 0)
-movePos (x:xs) (Position l c) | x == '\t' = movePos xs (Position l (c+8))
+movePos (x:xs) (Position l c) | x == '\t' = movePos xs (Position l (c+4))
 movePos (x:xs) (Position l c) = movePos xs (Position l (c+1))
 movePos _ p = p
 
