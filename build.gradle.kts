@@ -35,4 +35,7 @@ tasks {
         outputDirectory = File("src/main/java/antlr")
         arguments = arguments + listOf("-visitor", "-long-messages")
     }
+    test {
+        useJUnitPlatform()
+    }
 }

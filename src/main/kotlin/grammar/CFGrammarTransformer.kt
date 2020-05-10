@@ -17,7 +17,7 @@ internal fun transform(cfgrammar: CFGrammarParser.CfgrammarContext): CFGrammar {
     val terms = rules.values
         .flatMap { it.alternatives }
         .flatMap { it.rvalue }
-        .mapNotNull { it as? Symbol.Term }
+        .mapNotNull { it as? Symbol.Terminal }
         .toSet()
     return CFGrammar(
         terms,
@@ -26,16 +26,16 @@ internal fun transform(cfgrammar: CFGrammarParser.CfgrammarContext): CFGrammar {
     )
 }
 
-internal fun transform(cfrule: CFGrammarParser.CfruleContext): Pair<Symbol.NonTerm, Alternative> {
+internal fun transform(cfrule: CFGrammarParser.CfruleContext): Pair<Symbol.NonTerminal, Alternative> {
     val nonTerm = transform(cfrule.nonterm())
     val rvalue = transform(cfrule.rvalue())
     return nonTerm to rvalue
 }
 
 
-internal fun transform(nonTerm: CFGrammarParser.NontermContext): Symbol.NonTerm {
+internal fun transform(nonTerm: CFGrammarParser.NontermContext): Symbol.NonTerminal {
     val text = nonTerm.id().ruleid().ID().text
-    return Symbol.NonTerm(text)
+    return Symbol.NonTerminal(text)
 }
 
 internal fun transform(rvalue: CFGrammarParser.RvalueContext): Alternative {
@@ -58,6 +58,6 @@ internal fun transform(element: CFGrammarParser.ElementContext): Symbol {
     return symbol!!
 }
 
-internal fun transform(term: TerminalNode): Symbol.Term {
-    return Symbol.Term(term.text)
+internal fun transform(term: TerminalNode): Symbol.Terminal {
+    return Symbol.Terminal(term.text)
 }

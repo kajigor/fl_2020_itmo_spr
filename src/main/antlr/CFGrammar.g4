@@ -38,17 +38,15 @@ QUOTE: '\'';
 
 SEMICOLON: ';';
 
-STRING: QUOTE CHAR* QUOTE;
+STRING: QUOTE ~('\r' | '\n' | '\'')* QUOTE;
 
-ID: ('a' ..'z' | 'A' ..'Z') CHAR+;
-
-fragment CHAR: (
+ID: ('a' ..'z' | 'A' ..'Z') (
 		'a' ..'z'
 		| 'A' ..'Z'
 		| '0' ..'9'
 		| '-'
 		| '_'
 		| ' '
-	);
+	)+;
 
 WS: [ \r\n\t] -> skip;
