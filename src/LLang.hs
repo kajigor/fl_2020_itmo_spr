@@ -119,7 +119,7 @@ parseProg = parseFuncs where
           
           
             
-          
+       
 stmt :: LAst
 stmt =
   Seq
@@ -338,7 +338,7 @@ parseStatment = (parseSt parseIf) <|> (parseSt parseWhile) <|> (parseSt parseWri
 parseStatments =  many parseStatment
 
 parseSeparator :: Parser String String Char
-parseSeparator = (satisfy isSeparator) <|> (symbol '\n')
+parseSeparator = (satisfy isSeparator) <|> (symbol '\n') <|> (symbol '\t')
 
 parseSeparators = many parseSeparator
 

@@ -47,7 +47,7 @@ class SatisfyInput a where
 
 instance SatisfyInput Char where
     incrPosSatisfy '\n' (InputStream str (Position l c)) = InputStream str (Position (l + 1) 0 )
-    incrPosSatisfy '\t' (InputStream str (Position l c)) = InputStream str (Position l (c + 4) )
+    incrPosSatisfy '\t' (InputStream str (Position l c)) = InputStream str (Position l  (c + 8 - (c `mod` 8)))
     incrPosSatisfy ch (InputStream str (Position l c)) = InputStream str (Position l (c + 1) )
 
 instance SatisfyInput String where
