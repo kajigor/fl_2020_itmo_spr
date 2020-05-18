@@ -15,3 +15,7 @@ conda install -c anaconda ply
 python main.py -g <grammar_file> -i <input_file>
 
 -i - опциональный аргумент, в любом случае, пока что не поддерживает проверка выводимости цепочек из грамматики.
+
+## Тестирование:
+
+python grammar_parsing_tests.py
