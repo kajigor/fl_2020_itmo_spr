@@ -27,6 +27,6 @@ Rules :: StartRule | Rules, Rule
 
 StartRule :: StartSymbol '@' RightTerms
 
-Rule :: NotTerminal '@' RightTerms
+Rule :: NotTerminal '@' RightTerms | StartRule
 
 RightTerms :: Terminal | NotTerminal | RightTerms Terminal | RightTerms NotTerminal
