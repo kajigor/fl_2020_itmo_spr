@@ -1,0 +1,4 @@
+START > A | B | A+B | C+e
+A > B | a+A | EPSILON
+B > C+A+c+A | C
+C > b+b

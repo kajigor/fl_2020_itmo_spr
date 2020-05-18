@@ -1,0 +1,4 @@
+A > A + B | EPSILON
+B > C
+C > B
+EPSILON > EPSILON | A
