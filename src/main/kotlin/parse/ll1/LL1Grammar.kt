@@ -1,14 +1,17 @@
-package grammar.model
+package parse.ll1
 
-data class CFGrammar(
+import grammar.model.RValue
+import grammar.model.Symbol
+
+data class LL1Grammar(
     val terminals: Set<Symbol.Terminal>,
     val nonTerminals: Set<Symbol.NonTerminal>,
     val startNonTerminal: Symbol.NonTerminal,
-    val rules: Map<Symbol.NonTerminal, Alternative>
+    val rules: List<Pair<Symbol.NonTerminal, RValue>>
 ) {
     override fun toString(): String =
         """
-CFGrammar(
+LL1Grammar(
     terms=$terminals,
     nonTerms=$nonTerminals,
     rules = {
@@ -18,6 +21,5 @@ CFGrammar(
 """.trimIndent()
 
     fun rulesToString(indent: String = ""): String =
-        rules.map { "${it.key} ::= ${it.value};" }.joinToString("\n" + indent)
+        rules.map { "${it.first} ::= ${it.second};" }.joinToString("\n" + indent)
 }
-

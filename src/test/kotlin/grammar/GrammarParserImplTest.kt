@@ -21,7 +21,7 @@ internal class GrammarParserImplTest {
         val filePath = "src/test/resources/grammar/natural.grammar"
         val grammar = parser.parse(filePath)
 
-        assertEquals((0..9).map { Symbol.Terminal("'$it'") }.toSet(), grammar.terminals)
+        assertEquals((0..9).map { Symbol.Terminal("$it") }.toSet(), grammar.terminals)
         assertEquals(setOf(Symbol.NonTerminal("natural"), Symbol.NonTerminal("digit")), grammar.nonTerminals)
         assertEquals(2, grammar.rules.size)
 
@@ -33,7 +33,7 @@ internal class GrammarParserImplTest {
     fun parseTestCBS() {
         val filePath = "src/test/resources/grammar/cbs.grammar"
         val grammar = parser.parse(filePath)
-        assertEquals(setOf(Symbol.Terminal("'('"), Symbol.Terminal("')'"), Symbol.Terminal("''")), grammar.terminals)
+        assertEquals(setOf(Symbol.Terminal("("), Symbol.Terminal(")"), Symbol.Terminal("")), grammar.terminals)
         assertEquals(setOf(Symbol.NonTerminal("eps"), Symbol.NonTerminal("cbs")), grammar.nonTerminals)
         assertEquals(2, grammar.rules.size)
         val testContent = getFileContent(filePath)

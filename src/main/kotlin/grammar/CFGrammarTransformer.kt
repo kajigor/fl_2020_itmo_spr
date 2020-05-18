@@ -9,11 +9,21 @@ import org.antlr.v4.runtime.tree.TerminalNode
 
 
 internal fun transform(cfgrammar: CFGrammarParser.CfgrammarContext): CFGrammar {
-    val rules = cfgrammar
+    val rulesList = cfgrammar
         .cfrules()
         .cfrule()
         .map { transform(it) }
-        .toMap()
+
+    val startNonTerminal = rulesList.first().first
+    val rules = rulesList
+        .groupBy { it.first }
+        .mapValues { entry ->
+            val rValues = entry.value.fold(setOf<RValue>()) { acc, alt ->
+                acc.union(alt.second.alternatives)
+            }
+            Alternative(rValues.toList())
+        }
+
     val terms = rules.values
         .flatMap { it.alternatives }
         .flatMap { it.rvalue }
@@ -22,6 +32,7 @@ internal fun transform(cfgrammar: CFGrammarParser.CfgrammarContext): CFGrammar {
     return CFGrammar(
         terms,
         rules.keys,
+        startNonTerminal,
         rules
     )
 }
@@ -59,5 +70,5 @@ internal fun transform(element: CFGrammarParser.ElementContext): Symbol {
 }
 
 internal fun transform(term: TerminalNode): Symbol.Terminal {
-    return Symbol.Terminal(term.text)
+    return Symbol.Terminal(term.text.trim('\''))
 }
