@@ -22,6 +22,7 @@ internal class LL1ParserTest {
         val cfGrammar = grammarParser.parse(filePath)
         val llParser = LL1Parser(cfGrammar)
         assertTrue(llParser.match(listOf("a", "d")))
+        assertTrue(llParser.match("ad"))
     }
 
 
@@ -32,6 +33,7 @@ internal class LL1ParserTest {
         val llParser = LL1Parser(cfGrammar)
         assertFalse(llParser.match(listOf("a", "a")))
         assertTrue(llParser.match(listOf("a")))
+        assertTrue(llParser.match("a"))
     }
 
     @Test
@@ -43,8 +45,9 @@ internal class LL1ParserTest {
         assertTrue(llParser.match(listOf("(", "n", ")")))
         assertTrue(llParser.match(listOf("(", "n", "+", "n", ")", "*", "n")))
         assertFalse(llParser.match(listOf("(", "n", "+", "n", "*", "n")))
+        assertTrue(llParser.match("(n)"))
+        assertTrue(llParser.match("(n+n)*n+n+(n+n)"))
     }
-
 
 
     @Test
@@ -53,10 +56,13 @@ internal class LL1ParserTest {
         val cfGrammar = grammarParser.parse(filePath)
         val llParser = LL1Parser(cfGrammar)
         assertFalse(llParser.match(listOf("1", "1", "n")))
+        assertFalse(llParser.match("123n"))
         assertTrue(llParser.match(listOf("0", "1", "2", "4", "4", "4")))
+        assertTrue(llParser.match("3120945430819823423"))
         assertTrue(llParser.match(listOf("1", "2", "3")))
         assertTrue(llParser.match(listOf("0", "1", "2", "3", "0", "6", "8", "9")))
         assertFalse(llParser.match(listOf("0", ".", "1")))
+        assertFalse(llParser.match("0.23"))
     }
 
 
@@ -67,7 +73,7 @@ internal class LL1ParserTest {
         val llParser = LL1Parser(cfGrammar)
         assertFalse(llParser.match(listOf("a", "a", "a", "b")))
         assertTrue(llParser.match(listOf("a", "a", "a", "a", "a", "a")))
-        assertFalse(llParser.match(listOf()))
+        assertFalse(llParser.match(""))
     }
 
 
@@ -79,6 +85,6 @@ internal class LL1ParserTest {
         assertFalse(llParser.match(listOf("a", "a", "a", "b")))
         assertTrue(llParser.match(listOf("a")))
         assertTrue(llParser.match(listOf("a", "a", "a", "a", "a", "a")))
-        assertTrue(llParser.match(listOf()))
+        assertTrue(llParser.match(""))
     }
 }

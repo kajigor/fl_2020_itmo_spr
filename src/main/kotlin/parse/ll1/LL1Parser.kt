@@ -25,10 +25,7 @@ class LL1Parser(cfGrammar: CFGrammar) : Parser {
     private val supportCalculator = supportTableCalculator(grammar)
 
     override fun match(tokens: List<String>): Boolean {
-        if (tokens.isEmpty())
-            return supportCalculator.isNullable(grammar.startNonTerminal)
-
-        val tokensList = tokens + Symbol.EOF.text
+        val tokensList = tokens.plus(Symbol.EOF.text)
         val stack: ArrayDeque<Symbol> = ArrayDeque(listOf(grammar.startNonTerminal, Symbol.EOF))
         val tokenIterator = tokensList.iterator()
         var currentToken = tokenIterator.next()
@@ -53,5 +50,9 @@ class LL1Parser(cfGrammar: CFGrammar) : Parser {
             }
         }
         return !tokenIterator.hasNext()
+    }
+
+    override fun match(content: String): Boolean {
+        return match(content.map { "$it" })
     }
 }
