@@ -4,13 +4,12 @@ import grammar.GrammarParser
 import grammar.GrammarParserImpl
 import grammar.model.RValue
 import grammar.model.Symbol
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 internal class FirstTableTest {
-    lateinit var parser: GrammarParser
+    private lateinit var parser: GrammarParser
 
     @BeforeEach
     fun setUp() {

@@ -20,6 +20,6 @@ LL1Grammar(
 )
 """.trimIndent()
 
-    fun rulesToString(indent: String = ""): String =
-        rules.map { "${it.first} ::= ${it.second};" }.joinToString("\n" + indent)
+    private fun rulesToString(indent: String = ""): String =
+        rules.joinToString("\n" + indent) { "${it.first} ::= ${it.second};" }
 }

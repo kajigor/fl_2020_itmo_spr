@@ -1,2 +1,2 @@
-<K> ::= <eps> | 'a' <K>;
+<kleene> ::= <eps> | 'a' <kleene>;
 <eps> ::= '';

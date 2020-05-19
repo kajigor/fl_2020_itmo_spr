@@ -10,7 +10,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 internal class LL1TableTest {
-    lateinit var parser: GrammarParser
+    private lateinit var parser: GrammarParser
 
     @BeforeEach
     fun setUp() {

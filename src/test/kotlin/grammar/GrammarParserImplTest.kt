@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Assertions.*
 import java.io.File
 
 internal class GrammarParserImplTest {
-    lateinit var parser: GrammarParser
+    private lateinit var parser: GrammarParser
 
     @BeforeEach
     fun setUp() {
@@ -21,9 +21,14 @@ internal class GrammarParserImplTest {
         val filePath = "src/test/resources/grammar/natural.grammar"
         val grammar = parser.parse(filePath)
 
-        assertEquals((0..9).map { Symbol.Terminal("$it") }.toSet(), grammar.terminals)
-        assertEquals(setOf(Symbol.NonTerminal("natural"), Symbol.NonTerminal("digit")), grammar.nonTerminals)
-        assertEquals(2, grammar.rules.size)
+        val digits = (0..9).map { Symbol.Terminal("$it") }.toSet()
+        assertEquals(digits.plus(Symbol.EMPTY), grammar.terminals)
+
+        assertEquals(
+            listOf("natural", "natural'", "digit", "eps").map { Symbol.NonTerminal(it) }.toSet(),
+            grammar.nonTerminals
+        )
+        assertEquals(4, grammar.rules.size)
 
         val testContent = getFileContent(filePath)
         assertEquals(testContent, getGrammarRulesString(grammar))

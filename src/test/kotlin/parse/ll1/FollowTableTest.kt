@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 
 internal class FollowTableTest {
-    lateinit var parser: GrammarParser
+    private lateinit var parser: GrammarParser
 
     @BeforeEach
     fun setUp() {

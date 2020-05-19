@@ -39,7 +39,7 @@ class LL1Parser(cfGrammar: CFGrammar) : Parser {
                 topStack.text == currentToken -> {
                     stack.pop()
                     if (!tokenIterator.hasNext())
-                        return stack.isEmpty();
+                        return stack.isEmpty()
                     currentToken = tokenIterator.next()
                 }
                 topStack is Symbol.Terminal -> return false
