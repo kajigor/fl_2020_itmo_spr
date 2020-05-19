@@ -18,7 +18,7 @@ class Grammar:
 
     @staticmethod
     def rhs_to_string(rhs):
-        return " | ".join(map(lambda x: " + ".join(x) if len(x) != 0 else "EPSILON",
+        return " | ".join(map(lambda x: " ".join(x) if len(x) != 0 else "EPSILON",
                             rhs))
 
 
