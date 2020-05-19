@@ -184,22 +184,14 @@ class SupportTableCalculatorImpl(grammar: LL1Grammar) : SupportTableCalculator {
     }
 
     private fun firstSymbols(symbols: List<Symbol>): Set<Symbol.Terminal> {
-        if (symbols.isEmpty())
-            return setOf()
-        if (Symbol.EMPTY in symbols)
-            return setOf(Symbol.EMPTY)
-        if (!isNullable(symbols.first()))
-            return firstFor(symbols.first())
-        return firstFor(symbols.first()).union(firstSymbols(symbols.subList(1, symbols.size)))
+        var symbolsSet = setOf<Symbol.Terminal>()
 
-//        var symbolsSet = setOf<Symbol.Terminal>()
-//
-//        for (symbol in symbols) {
-//            symbolsSet = symbolsSet.union(firstFor(symbol))
-//            if (!isNullable(symbol))
-//                break
-//        }
-//        return symbolsSet
+        for (symbol in symbols) {
+            symbolsSet = symbolsSet.union(firstFor(symbol))
+            if (!isNullable(symbol))
+                break
+        }
+        return symbolsSet
     }
 
     private fun followSymbols(symbol: Symbol.NonTerminal): Set<Symbol.Terminal> {

@@ -3,11 +3,9 @@ package parse.ll1
 import grammar.GrammarParser
 import grammar.GrammarParserImpl
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Test
-
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import parse.base.NonLL1Grammar
-import parse.info.LatexForestLLDerivationTreeFormatter
 
 internal class LL1ParserTest {
     private lateinit var grammarParser: GrammarParser

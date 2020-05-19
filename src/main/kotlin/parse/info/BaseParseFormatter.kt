@@ -21,6 +21,6 @@ interface BaseParseFormatter {
     }
 
     fun formatted(symbolSet: Set<Symbol>): String {
-        return "${symbolSet.joinToString(", ") { formatted(it) }}"
+        return symbolSet.joinToString(", ") { formatted(it) }
     }
 }
