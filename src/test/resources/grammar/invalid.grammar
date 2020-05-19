@@ -1,0 +1,3 @@
+<natural> ::= <digit> <natural'>;
+<natural'> ::= <eps> | natural;
+<eps> ::= '';

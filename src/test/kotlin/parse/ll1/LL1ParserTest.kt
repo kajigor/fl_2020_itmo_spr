@@ -113,4 +113,15 @@ internal class LL1ParserTest {
             llParser.match("(((())))(())")
         }
     }
+
+    @Test
+    fun parserTestNonLL1Grammar2() {
+        val filePath = "src/test/resources/parse/ll1table/non_ll1_2.txt"
+        val cfGrammar = grammarParser.parse(filePath)
+
+        assertThrows(NonLL1Grammar::class.java) {
+            val llParser = LL1Parser(cfGrammar)
+            llParser.match("(((())))(())")
+        }
+    }
 }
