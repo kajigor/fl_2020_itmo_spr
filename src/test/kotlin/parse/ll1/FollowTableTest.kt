@@ -22,7 +22,7 @@ internal class FollowTableTest {
      */
     @Test
     fun calculateFollowTableSimple() {
-        val filePath = "src/test/resources/parse/support/lund.grammar"
+        val filePath = "src/test/resources/parse/support/non_ll1_2.grammar"
         val cfGrammar = parser.parse(filePath)
         val grammar = convertToLL1Grammar(cfGrammar)
         val supportTableCalculator = SupportTableCalculatorImpl(grammar)

@@ -4,6 +4,7 @@ import grammar.model.RValue
 import grammar.model.Symbol
 import grammar.model.prefix
 import grammar.model.suffix
+import parse.base.NonLL1Grammar
 
 fun supportTableCalculator(grammar: LL1Grammar): SupportTableCalculator = SupportTableCalculatorImpl(grammar)
 
@@ -162,14 +163,19 @@ class SupportTableCalculatorImpl(grammar: LL1Grammar) : SupportTableCalculator {
 
         for ((nonTerminal, rValue) in grammar.rules) {
             val firstSet = firstSymbols(rValue)
-            for (terminal in firstSet.minus(Symbol.EMPTY))
+            for (terminal in firstSet.minus(Symbol.EMPTY)) {
+                check(table[nonTerminal to terminal], rValue)
                 table[nonTerminal to terminal] = rValue
+            }
 
             if (Symbol.EMPTY in firstSet) {
                 val followSet = followSymbols(nonTerminal)
-                for (terminal in followSet)
+                for (terminal in followSet) {
+                    check(table[nonTerminal to terminal], rValue)
                     table[nonTerminal to terminal] = rValue
+                }
                 if (Symbol.EOF in followSet) {
+                    check(table[nonTerminal to Symbol.EOF], rValue)
                     table[nonTerminal to Symbol.EOF] = rValue
                 }
             }
@@ -178,17 +184,30 @@ class SupportTableCalculatorImpl(grammar: LL1Grammar) : SupportTableCalculator {
     }
 
     private fun firstSymbols(symbols: List<Symbol>): Set<Symbol.Terminal> {
-        var symbolsSet = setOf<Symbol.Terminal>()
+        if (symbols.isEmpty())
+            return setOf()
+        if (Symbol.EMPTY in symbols)
+            return setOf(Symbol.EMPTY)
+        if (!isNullable(symbols.first()))
+            return firstFor(symbols.first())
+        return firstFor(symbols.first()).union(firstSymbols(symbols.subList(1, symbols.size)))
 
-        for (symbol in symbols) {
-            symbolsSet = symbolsSet.union(firstFor(symbol))
-            if (!isNullable(symbol))
-                break
-        }
-        return symbolsSet
+//        var symbolsSet = setOf<Symbol.Terminal>()
+//
+//        for (symbol in symbols) {
+//            symbolsSet = symbolsSet.union(firstFor(symbol))
+//            if (!isNullable(symbol))
+//                break
+//        }
+//        return symbolsSet
     }
 
     private fun followSymbols(symbol: Symbol.NonTerminal): Set<Symbol.Terminal> {
         return followTable[symbol] ?: setOf()
+    }
+
+    private fun check(rValue: RValue?, newRValue: RValue) {
+        if (rValue != null && rValue != newRValue)
+            throw NonLL1Grammar()
     }
 }

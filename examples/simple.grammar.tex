@@ -1,0 +1,46 @@
+\documentclass[10pt,twoside,a4paper]{memoir}
+\usepackage{graphicx}
+\usepackage{forest}
+\usepackage{tikz-qtree}
+\usepackage[english,russian]{babel}
+\begin{document}
+Грамматика:
+
+\textsl{\textless S\textgreater} ::= \textit{a};\\
+
+\textsl{Исходная строка:} a
+
+\textbf{Дерево вывода:}
+
+\begin{forest} for tree={edge path={\noexpand\path[\forestoption{edge}] (\forestOve{\forestove{@parent}}{name}.parent anchor) -- +(0,-12pt)-| (\forestove{name}.child anchor)\forestoption{edge label};}}
+[[\textsl{\textless S\textgreater}[\textit{a}]], [\$]]
+\end{forest}
+
+
+
+\begin{center}
+\textsl{Дополнительные таблицы:}
+
+\begin{tabular}{ |c||c|c|c| }
+\hline
+ & Выводится $\varepsilon$ & FIRST таблица & FOLLOW таблица \\
+\hline\hline
+\textsl{\textless S\textgreater} & false & \{\textit{a}\} & \{\$\}\\
+\hline
+\end{tabular}
+
+\end{center}     
+
+\begin{center}
+\textsl{LL(1) таблица}
+
+\begin{tabular}{ |c||c| }
+\hline
+ & \textit{a} \\
+\hline\hline
+\textsl{\textless S\textgreater} & \textit{a}\\
+\hline
+\end{tabular}
+
+\end{center}
+\end{document}

@@ -10,7 +10,7 @@ repositories {
 }
 
 application {
-    mainClassName = "Main.kt"
+    mainClassName = "MainKt"
 }
 
 dependencies {

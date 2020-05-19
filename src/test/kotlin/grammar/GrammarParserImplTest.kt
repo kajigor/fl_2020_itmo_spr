@@ -35,19 +35,16 @@ internal class GrammarParserImplTest {
     }
 
     @Test
-    fun parseTestCBS() {
-        val filePath = "src/test/resources/grammar/cbs.grammar"
+    fun parseTestIdentifier() {
+        val filePath = "src/test/resources/grammar/identifier.grammar"
         val grammar = parser.parse(filePath)
-        assertEquals(setOf(Symbol.Terminal("("), Symbol.Terminal(")"), Symbol.Terminal("")), grammar.terminals)
-        assertEquals(setOf(Symbol.NonTerminal("eps"), Symbol.NonTerminal("cbs")), grammar.nonTerminals)
-        assertEquals(2, grammar.rules.size)
         val testContent = getFileContent(filePath)
         assertEquals(testContent, getGrammarRulesString(grammar))
     }
 
     @Test
-    fun parseTestIdentifier() {
-        val filePath = "src/test/resources/grammar/identifier.grammar"
+    fun parseTestExpression() {
+        val filePath = "src/test/resources/parse/support/expression.grammar"
         val grammar = parser.parse(filePath)
         val testContent = getFileContent(filePath)
         assertEquals(testContent, getGrammarRulesString(grammar))

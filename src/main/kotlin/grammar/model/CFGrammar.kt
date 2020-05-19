@@ -17,7 +17,7 @@ CFGrammar(
 )
 """.trimIndent()
 
-    fun rulesToString(indent: String = ""): String =
-        rules.map { "${it.key} ::= ${it.value};" }.joinToString("\n" + indent)
+    fun rulesToString(indent: String = "", formatter: (Symbol) -> String = { it.toString() }): String =
+        rules.map { "${formatter(it.key)} ::= ${it.value.toString(formatter)};" }.joinToString("\n" + indent)
 }
 

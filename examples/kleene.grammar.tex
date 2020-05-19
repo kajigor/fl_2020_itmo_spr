@@ -1,0 +1,51 @@
+\documentclass[10pt,twoside,a4paper]{memoir}
+\usepackage{graphicx}
+\usepackage{forest}
+\usepackage{tikz-qtree}
+\usepackage[english,russian]{babel}
+\begin{document}
+Грамматика:
+
+\textsl{\textless kleene\textgreater} ::= \textsl{\textless eps\textgreater} | \textit{a} \textsl{\textless kleene\textgreater};
+
+\textsl{\textless eps\textgreater} ::= $\varepsilon$;\\
+
+\textsl{Исходная строка:} a, a, a, a, a
+
+\textbf{Дерево вывода:}
+
+\begin{forest} for tree={edge path={\noexpand\path[\forestoption{edge}] (\forestOve{\forestove{@parent}}{name}.parent anchor) -- +(0,-12pt)-| (\forestove{name}.child anchor)\forestoption{edge label};}}
+[[\textsl{\textless kleene\textgreater}[\textit{a}], [\textsl{\textless kleene\textgreater}[\textit{a}], [\textsl{\textless kleene\textgreater}[\textit{a}], [\textsl{\textless kleene\textgreater}[\textit{a}], [\textsl{\textless kleene\textgreater}[\textit{a}], [\textsl{\textless kleene\textgreater}[\textsl{\textless eps\textgreater}[$\varepsilon$]]]]]]]], [\$]]
+\end{forest}
+
+
+
+\begin{center}
+\textsl{Дополнительные таблицы:}
+
+\begin{tabular}{ |c||c|c|c| }
+\hline
+ & Выводится $\varepsilon$ & FIRST таблица & FOLLOW таблица \\
+\hline\hline
+\textsl{\textless kleene\textgreater} & true & \{\textit{a}, $\varepsilon$\} & \{\$\}\\ \hline
+\textsl{\textless eps\textgreater} & true & \{$\varepsilon$\} & \{\$\}\\
+\hline
+\end{tabular}
+
+\end{center}     
+
+\begin{center}
+\textsl{LL(1) таблица}
+
+\begin{tabular}{ |c||c|c|c| }
+\hline
+ & \$ & \textit{a} & \$ \\
+\hline\hline
+\textsl{\textless kleene\textgreater} & \textsl{\textless eps\textgreater} & \textit{a} \textsl{\textless kleene\textgreater} & \textsl{\textless eps\textgreater}\\ \hline
+\textsl{\textless kleene\textgreater} & \textsl{\textless eps\textgreater} & \textit{a} \textsl{\textless kleene\textgreater} & \textsl{\textless eps\textgreater}\\ \hline
+\textsl{\textless eps\textgreater} & $\varepsilon$ &  & $\varepsilon$\\
+\hline
+\end{tabular}
+
+\end{center}
+\end{document}

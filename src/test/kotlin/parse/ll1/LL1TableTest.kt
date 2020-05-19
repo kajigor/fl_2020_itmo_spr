@@ -25,11 +25,9 @@ internal class LL1TableTest {
         val supportTableCalculator = SupportTableCalculatorImpl(grammar)
         val ll1Table = supportTableCalculator.ll1Table
         val startNonTerm = Symbol.NonTerminal("S")
-        val aNonTerm = Symbol.NonTerminal("A")
         val a = Symbol.Terminal("a")
         val expected: LL1Table = mapOf(
-            (startNonTerm to a) to RValue(listOf(a)),
-            (aNonTerm to a) to RValue(listOf(a))
+            (startNonTerm to a) to RValue(listOf(a))
         )
         assertEquals(expected, ll1Table)
     }

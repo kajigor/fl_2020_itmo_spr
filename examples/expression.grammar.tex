@@ -1,0 +1,78 @@
+\documentclass[10pt,twoside,a4paper]{memoir}
+\usepackage{graphicx}
+\usepackage{forest}
+\usepackage{tikz-qtree}
+\usepackage[english,russian]{babel}
+\begin{document}
+Грамматика:
+
+\textsl{\textless E\textgreater} ::= \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater};
+
+\textsl{\textless E'\textgreater} ::= \textit{+} \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} | \textsl{\textless eps\textgreater};
+
+\textsl{\textless T\textgreater} ::= \textsl{\textless F\textgreater} \textsl{\textless T'\textgreater};
+
+\textsl{\textless T'\textgreater} ::= \textit{*} \textsl{\textless F\textgreater} \textsl{\textless T'\textgreater} | \textsl{\textless eps\textgreater};
+
+\textsl{\textless F\textgreater} ::= \textit{n} | \textit{(} \textsl{\textless E\textgreater} \textit{)};
+
+\textsl{\textless eps\textgreater} ::= $\varepsilon$;\\
+
+\textsl{Исходная строка:} (, n, +, n, *, n
+
+\textbf{Дерево вывода:}
+
+\begin{forest} for tree={edge path={\noexpand\path[\forestoption{edge}] (\forestOve{\forestove{@parent}}{name}.parent anchor) -- +(0,-12pt)-| (\forestove{name}.child anchor)\forestoption{edge label};}}
+[[\textsl{\textless E\textgreater}[\textsl{\textless T\textgreater}[\textsl{\textless F\textgreater}[\textit{(}], [\textsl{\textless E\textgreater}[\textsl{\textless T\textgreater}[\textsl{\textless F\textgreater}[\textit{n}]], [\textsl{\textless T'\textgreater}[\textsl{\textless eps\textgreater}[$\varepsilon$]]]], [\textsl{\textless E'\textgreater}[\textit{+}], [\textsl{\textless T\textgreater}[\textsl{\textless F\textgreater}[\textit{n}]], [\textsl{\textless T'\textgreater}[\textit{*}], [\textsl{\textless F\textgreater}[\textit{n}]], [\textsl{\textless T'\textgreater}[\textsl{\textless eps\textgreater}[$\varepsilon$]]]]], [\textsl{\textless E'\textgreater}[\textsl{\textless eps\textgreater}[$\varepsilon$]]]]]]]]]
+\end{forest}
+
+Случилась ошибка! Неожиданный терминал: ')'
+
+\begin{center}
+\textsl{Дополнительные таблицы:}
+
+\begin{tabular}{ |c||c|c|c| }
+\hline
+ & Выводится $\varepsilon$ & FIRST таблица & FOLLOW таблица \\
+\hline\hline
+\textsl{\textless E\textgreater} & false & \{\textit{n}, \textit{(}\} & \{\$, \textit{)}\}\\ \hline
+\textsl{\textless E'\textgreater} & true & \{\textit{+}, $\varepsilon$\} & \{\$, \textit{)}\}\\ \hline
+\textsl{\textless T\textgreater} & false & \{\textit{n}, \textit{(}\} & \{\textit{+}, $\varepsilon$, \$, \textit{)}\}\\ \hline
+\textsl{\textless T'\textgreater} & true & \{\textit{*}, $\varepsilon$\} & \{\textit{+}, $\varepsilon$, \$, \textit{)}\}\\ \hline
+\textsl{\textless F\textgreater} & false & \{\textit{n}, \textit{(}\} & \{\textit{*}, $\varepsilon$, \textit{+}, \$, \textit{)}\}\\ \hline
+\textsl{\textless eps\textgreater} & true & \{$\varepsilon$\} & \{\$, \textit{+}, $\varepsilon$, \textit{)}\}\\
+\hline
+\end{tabular}
+
+\end{center}     
+
+\begin{center}
+\textsl{LL(1) таблица}
+
+\begin{tabular}{ |c||c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c| }
+\hline
+ & \textit{n} & \textit{(} & \textit{+} & \$ & \textit{)} & \textit{n} & \textit{(} & \textit{*} & \textit{+} & $\varepsilon$ & \$ & \textit{)} & \textit{n} & \textit{(} & \$ & \textit{+} & $\varepsilon$ & \textit{)} \\
+\hline\hline
+\textsl{\textless E\textgreater} & \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} & \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} &  &  &  & \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} & \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} &  &  &  &  &  & \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} & \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} &  &  &  & \\ \hline
+\textsl{\textless E\textgreater} & \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} & \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} &  &  &  & \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} & \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} &  &  &  &  &  & \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} & \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} &  &  &  & \\ \hline
+\textsl{\textless E'\textgreater} &  &  & \textit{+} \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} &  &  &  & \textit{+} \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} &  & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} &  &  & \textsl{\textless eps\textgreater} & \textit{+} \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} &  & \textsl{\textless eps\textgreater}\\ \hline
+\textsl{\textless E'\textgreater} &  &  & \textit{+} \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} &  &  &  & \textit{+} \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} &  & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} &  &  & \textsl{\textless eps\textgreater} & \textit{+} \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} &  & \textsl{\textless eps\textgreater}\\ \hline
+\textsl{\textless E'\textgreater} &  &  & \textit{+} \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} &  &  &  & \textit{+} \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} &  & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} &  &  & \textsl{\textless eps\textgreater} & \textit{+} \textsl{\textless T\textgreater} \textsl{\textless E'\textgreater} &  & \textsl{\textless eps\textgreater}\\ \hline
+\textsl{\textless T\textgreater} & \textsl{\textless F\textgreater} \textsl{\textless T'\textgreater} & \textsl{\textless F\textgreater} \textsl{\textless T'\textgreater} &  &  &  & \textsl{\textless F\textgreater} \textsl{\textless T'\textgreater} & \textsl{\textless F\textgreater} \textsl{\textless T'\textgreater} &  &  &  &  &  & \textsl{\textless F\textgreater} \textsl{\textless T'\textgreater} & \textsl{\textless F\textgreater} \textsl{\textless T'\textgreater} &  &  &  & \\ \hline
+\textsl{\textless T\textgreater} & \textsl{\textless F\textgreater} \textsl{\textless T'\textgreater} & \textsl{\textless F\textgreater} \textsl{\textless T'\textgreater} &  &  &  & \textsl{\textless F\textgreater} \textsl{\textless T'\textgreater} & \textsl{\textless F\textgreater} \textsl{\textless T'\textgreater} &  &  &  &  &  & \textsl{\textless F\textgreater} \textsl{\textless T'\textgreater} & \textsl{\textless F\textgreater} \textsl{\textless T'\textgreater} &  &  &  & \\ \hline
+\textsl{\textless T'\textgreater} &  &  & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} &  &  & \textit{*} \textsl{\textless F\textgreater} \textsl{\textless T'\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} &  &  & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater}\\ \hline
+\textsl{\textless T'\textgreater} &  &  & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} &  &  & \textit{*} \textsl{\textless F\textgreater} \textsl{\textless T'\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} &  &  & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater}\\ \hline
+\textsl{\textless T'\textgreater} &  &  & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} &  &  & \textit{*} \textsl{\textless F\textgreater} \textsl{\textless T'\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} &  &  & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater}\\ \hline
+\textsl{\textless T'\textgreater} &  &  & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} &  &  & \textit{*} \textsl{\textless F\textgreater} \textsl{\textless T'\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} &  &  & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater}\\ \hline
+\textsl{\textless T'\textgreater} &  &  & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} &  &  & \textit{*} \textsl{\textless F\textgreater} \textsl{\textless T'\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} &  &  & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater} & \textsl{\textless eps\textgreater}\\ \hline
+\textsl{\textless F\textgreater} & \textit{n} & \textit{(} \textsl{\textless E\textgreater} \textit{)} &  &  &  & \textit{n} & \textit{(} \textsl{\textless E\textgreater} \textit{)} &  &  &  &  &  & \textit{n} & \textit{(} \textsl{\textless E\textgreater} \textit{)} &  &  &  & \\ \hline
+\textsl{\textless F\textgreater} & \textit{n} & \textit{(} \textsl{\textless E\textgreater} \textit{)} &  &  &  & \textit{n} & \textit{(} \textsl{\textless E\textgreater} \textit{)} &  &  &  &  &  & \textit{n} & \textit{(} \textsl{\textless E\textgreater} \textit{)} &  &  &  & \\ \hline
+\textsl{\textless eps\textgreater} &  &  & $\varepsilon$ & $\varepsilon$ & $\varepsilon$ &  &  &  & $\varepsilon$ & $\varepsilon$ & $\varepsilon$ & $\varepsilon$ &  &  & $\varepsilon$ & $\varepsilon$ & $\varepsilon$ & $\varepsilon$\\ \hline
+\textsl{\textless eps\textgreater} &  &  & $\varepsilon$ & $\varepsilon$ & $\varepsilon$ &  &  &  & $\varepsilon$ & $\varepsilon$ & $\varepsilon$ & $\varepsilon$ &  &  & $\varepsilon$ & $\varepsilon$ & $\varepsilon$ & $\varepsilon$\\ \hline
+\textsl{\textless eps\textgreater} &  &  & $\varepsilon$ & $\varepsilon$ & $\varepsilon$ &  &  &  & $\varepsilon$ & $\varepsilon$ & $\varepsilon$ & $\varepsilon$ &  &  & $\varepsilon$ & $\varepsilon$ & $\varepsilon$ & $\varepsilon$\\ \hline
+\textsl{\textless eps\textgreater} &  &  & $\varepsilon$ & $\varepsilon$ & $\varepsilon$ &  &  &  & $\varepsilon$ & $\varepsilon$ & $\varepsilon$ & $\varepsilon$ &  &  & $\varepsilon$ & $\varepsilon$ & $\varepsilon$ & $\varepsilon$\\
+\hline
+\end{tabular}
+
+\end{center}
+\end{document}
