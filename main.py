@@ -16,7 +16,7 @@ arg_parser.add_argument("-i",
 def main():
     args = vars(arg_parser.parse_args())
     with open(args["grammar"], "r") as g_istream:
-        grammar = Grammar(grammar_parser.parse(g_istream.read()))
+        grammar = Grammar(grammar_parser.parse(g_istream.read().strip()))
     print("Parsed grammar:", sep="\n\n")
     print(grammar)
     # Пока что не доделано:
