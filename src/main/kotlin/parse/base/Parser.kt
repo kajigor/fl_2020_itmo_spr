@@ -1,5 +1,5 @@
 package parse.base
 
 interface Parser {
-    fun parse(string: String)
+    fun match(tokens: List<String>): Boolean
 }

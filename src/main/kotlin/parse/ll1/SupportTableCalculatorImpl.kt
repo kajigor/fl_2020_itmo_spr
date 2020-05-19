@@ -1,9 +1,11 @@
 package parse.ll1
 
+import grammar.model.RValue
 import grammar.model.Symbol
 import grammar.model.prefix
 import grammar.model.suffix
 
+fun supportTableCalculator(grammar: LL1Grammar): SupportTableCalculator = SupportTableCalculatorImpl(grammar)
 
 class SupportTableCalculatorImpl(grammar: LL1Grammar) : SupportTableCalculator {
     override val firstTable: FirstTable by lazy { calculateFirstTable(grammar) }
@@ -12,7 +14,10 @@ class SupportTableCalculatorImpl(grammar: LL1Grammar) : SupportTableCalculator {
 
     override val nullableTable: Nullable by lazy { calculateNullable(grammar) }
 
+    override val ll1Table: LL1Table by lazy { calculateLL1Table(grammar) }
+
     override fun isNullable(symbol: Symbol): Boolean = nullableTable[symbol] == true
+
 
     override fun firstFor(symbol: Symbol): Set<Symbol.Terminal> {
         return when (symbol) {
@@ -22,6 +27,10 @@ class SupportTableCalculatorImpl(grammar: LL1Grammar) : SupportTableCalculator {
     }
 
     override fun followFor(symbol: Symbol): Set<Symbol.Terminal> = followTable[symbol] ?: setOf()
+
+    override fun rValueFor(nonTerminal: Symbol.NonTerminal, terminal: Symbol.Terminal): RValue? {
+        return ll1Table[nonTerminal to terminal]
+    }
 
     private fun canNullify(symbols: List<Symbol>): Boolean {
         return symbols.all { isNullable(it) }
@@ -41,8 +50,8 @@ class SupportTableCalculatorImpl(grammar: LL1Grammar) : SupportTableCalculator {
 
             isChanged = false
             for ((head, rValue) in grammar.rules) {
-                for (offset in 0 until rValue.rvalue.size - 1) {
-                    val symbol = rValue.rvalue[offset]
+                for (offset in 0 until rValue.size - 1) {
+                    val symbol = rValue[offset]
                     if (symbol is Symbol.NonTerminal) {
                         val symbolSuffix = rValue.suffix(offset + 1)
                         val firstSymbols = firstSymbols(symbolSuffix)
@@ -54,8 +63,8 @@ class SupportTableCalculatorImpl(grammar: LL1Grammar) : SupportTableCalculator {
                     }
                 }
 
-                for (offset in rValue.rvalue.indices.reversed()) {
-                    val symbol = rValue.rvalue[offset]
+                for (offset in rValue.indices.reversed()) {
+                    val symbol = rValue[offset]
                     val symbolSuffix = rValue.suffix(offset + 1)
                     if (symbol is Symbol.NonTerminal && canNullify(symbolSuffix)) {
                         val symbolSet = (table[symbol] ?: setOf()).union(table[head] ?: setOf())
@@ -82,7 +91,7 @@ class SupportTableCalculatorImpl(grammar: LL1Grammar) : SupportTableCalculator {
         for ((nonTerminal, rValue) in grammar.rules) {
             table[nonTerminal] = setOf()
 
-            for (symbol in rValue.rvalue)
+            for (symbol in rValue)
                 if (symbol is Symbol.Terminal)
                     table[symbol] = setOf(symbol)
         }
@@ -92,8 +101,8 @@ class SupportTableCalculatorImpl(grammar: LL1Grammar) : SupportTableCalculator {
         while (isChanged) {
             isChanged = false
             for ((nonTerminal, rValue) in grammar.rules) {
-                val firstSymbol = rValue.rvalue.firstOrNull() ?: continue
-                for (offset in rValue.rvalue.indices) {
+                val firstSymbol = rValue.firstOrNull() ?: continue
+                for (offset in rValue.indices) {
                     val symbolPrefix = rValue.prefix(offset)
 
                     if (canNullify(symbolPrefix)) {
@@ -130,7 +139,7 @@ class SupportTableCalculatorImpl(grammar: LL1Grammar) : SupportTableCalculator {
             isChanged = false
             for ((nonTerminal, rValues) in rules) {
                 val hasNullableRValue = rValues.any { rValue ->
-                    rValue.rvalue.all { container[it] == true }
+                    rValue.all { container[it] == true }
                 }
                 if (container[nonTerminal] != hasNullableRValue && hasNullableRValue) {
                     isChanged = true
@@ -148,7 +157,38 @@ class SupportTableCalculatorImpl(grammar: LL1Grammar) : SupportTableCalculator {
     }
 
 
+    private fun calculateLL1Table(grammar: LL1Grammar): LL1Table {
+        val table: MutableMap<Pair<Symbol.NonTerminal, Symbol.Terminal>, RValue> = mutableMapOf()
+
+        for ((nonTerminal, rValue) in grammar.rules) {
+            val firstSet = firstSymbols(rValue)
+            for (terminal in firstSet.minus(Symbol.EMPTY))
+                table[nonTerminal to terminal] = rValue
+
+            if (Symbol.EMPTY in firstSet) {
+                val followSet = followSymbols(nonTerminal)
+                for (terminal in followSet)
+                    table[nonTerminal to terminal] = rValue
+                if (Symbol.EOF in followSet) {
+                    table[nonTerminal to Symbol.EOF] = rValue
+                }
+            }
+        }
+        return table
+    }
+
     private fun firstSymbols(symbols: List<Symbol>): Set<Symbol.Terminal> {
-        return symbols.flatMap { firstFor(it) }.toSet()
+        var symbolsSet = setOf<Symbol.Terminal>()
+
+        for (symbol in symbols) {
+            symbolsSet = symbolsSet.union(firstFor(symbol))
+            if (!isNullable(symbol))
+                break
+        }
+        return symbolsSet
+    }
+
+    private fun followSymbols(symbol: Symbol.NonTerminal): Set<Symbol.Terminal> {
+        return followTable[symbol] ?: setOf()
     }
 }

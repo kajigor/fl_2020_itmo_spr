@@ -54,7 +54,7 @@ https://neerc.ifmo.ru/wiki/index.php?title=LL(k)-грамматики,_множ�
     */
     @Test
     fun firstTableComplexTest() {
-        val filePath = "src/test/resources/parse/dummy.grammar"
+        val filePath = "src/test/resources/parse/support/dummy.grammar"
         val cfGrammar = parser.parse(filePath)
         val grammar = convertToLL1Grammar(cfGrammar)
         val supportTableCalculator = SupportTableCalculatorImpl(grammar)
@@ -79,7 +79,7 @@ https://neerc.ifmo.ru/wiki/index.php?title=LL(k)-грамматики,_множ�
      */
     @Test
     fun firstTableExpressionComplexTest() {
-        val filePath = "src/test/resources/parse/expression.grammar"
+        val filePath = "src/test/resources/parse/support/expression.grammar"
         val cfGrammar = parser.parse(filePath)
         val grammar = convertToLL1Grammar(cfGrammar)
 

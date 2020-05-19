@@ -17,7 +17,7 @@ internal class NullableTest {
     }
     @Test
     fun calculateNullableTest() {
-        val filePath = "src/test/resources/parse/lund.grammar"
+        val filePath = "src/test/resources/parse/support/lund.grammar"
         val cfGrammar = parser.parse(filePath)
         val grammar = convertToLL1Grammar(cfGrammar)
         val supportTableCalculator = SupportTableCalculatorImpl(grammar)
@@ -39,7 +39,7 @@ internal class NullableTest {
         val f = Symbol.NonTerminal("F")
         val eps = Symbol.NonTerminal("eps")
 
-        val filePath = "src/test/resources/parse/expression.grammar"
+        val filePath = "src/test/resources/parse/support/expression.grammar"
         val cfGrammar = parser.parse(filePath)
         val grammar = convertToLL1Grammar(cfGrammar)
         val supportTableCalculator = SupportTableCalculatorImpl(grammar)

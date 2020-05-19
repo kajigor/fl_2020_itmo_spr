@@ -22,7 +22,7 @@ internal class FollowTableTest {
      */
     @Test
     fun calculateFollowTableSimple() {
-        val filePath = "src/test/resources/parse/lund.grammar"
+        val filePath = "src/test/resources/parse/support/lund.grammar"
         val cfGrammar = parser.parse(filePath)
         val grammar = convertToLL1Grammar(cfGrammar)
         val supportTableCalculator = SupportTableCalculatorImpl(grammar)
@@ -51,7 +51,7 @@ internal class FollowTableTest {
         val multiplication = Symbol.Terminal("*")
         val plus = Symbol.Terminal("+")
 
-        val filePath = "src/test/resources/parse/expression.grammar"
+        val filePath = "src/test/resources/parse/support/expression.grammar"
         val cfGrammar = parser.parse(filePath)
         val grammar = convertToLL1Grammar(cfGrammar)
         val supportTableCalculator = SupportTableCalculatorImpl(grammar)

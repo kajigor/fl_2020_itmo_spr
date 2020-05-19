@@ -19,7 +19,7 @@ internal fun transform(cfgrammar: CFGrammarParser.CfgrammarContext): CFGrammar {
         .groupBy { it.first }
         .mapValues { entry ->
             val rValues = entry.value.fold(setOf<RValue>()) { acc, alt ->
-                acc.union(alt.second.alternatives)
+                acc.union(alt.second)
             }
             Alternative(rValues.toList())
         }

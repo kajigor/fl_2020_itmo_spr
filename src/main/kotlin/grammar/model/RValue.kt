@@ -1,7 +1,9 @@
 package grammar.model
 
-data class RValue(val rvalue: List<Symbol>) {
+data class RValue(val rvalue: List<Symbol>) : List<Symbol> by rvalue {
     override fun toString(): String = rvalue.joinToString(" ") { it.toString() }
+
+    val isEpsilon: Boolean get() = rvalue == listOf(Symbol.EMPTY)
 }
 
 fun RValue.suffix(fromIndex: Int): List<Symbol> = rvalue.subList(fromIndex, rvalue.size)
