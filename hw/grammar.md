@@ -3,7 +3,7 @@
 к '#' или к строке терминалов (нетерминалов). Т. е {abcd} -- Terminal, {XYZ} -- NotTerminal
 
 
-Grammar :: {StartSymbol}; {Terminals}; {NotTerminals}; {Rules}
+Grammar :: {StartSymbol}, {Terminals}, {NotTerminals}, {Rules}
 
 StartSymbol :: {'#'}
 
@@ -13,11 +13,11 @@ Terminal :: {StringTerm}
 
 NotTerminals :: NotTerminal | NotTerminal, NotTerminals
 
-NotTerminal :: {StringNot}
+NotTerminal :: {StringNotTerm}
 
 StringTerm :: LetterSmall  | terminals LetterSmall 
 
-StringNotTerm ::  LetterBig  | terminals LetterBig
+StringNotTerm ::  LetterBig  | StartSymbol |  terminals LetterBig | terminals StartSymbol
 
 LetterSmall :: 'a' | ... | 'z' 
 
@@ -25,8 +25,10 @@ LetterBig :: 'A' | ... | 'Z'
 
 Rules :: StartRule | Rules, Rule
 
-StartRule :: StartSymbol '@' RightTerms
+StartRule :: StartSymbol '@' TermsChoice
 
-Rule :: NotTerminal '@' RightTerms | StartRule
+Rule :: NotTerminal '@' TermsChoice 
 
 RightTerms :: Terminal | NotTerminal | RightTerms Terminal | RightTerms NotTerminal
+
+TermsChoice :: RightTerms | RightTerms '|' TermsChoice
