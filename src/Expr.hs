@@ -32,7 +32,7 @@ parseIdent = noDigitsAtTheStart >>= whateverLetter >>= ticksAtTheEnd
           ticksAtTheEnd = \x -> do
                 ticks <- many (ofList suffixCharsOfAlphabet)
                 return $ x ++ ticks
-          
+
 -- Парсер чисел
 parseNum :: Parser String String Int
 parseNum = parseNatural <|> (symbol '-' *> (negate <$> parseNum))
@@ -70,7 +70,7 @@ toOperator' "==" = return Equal
 toOperator' "/=" = return Nequal
 toOperator' "<=" = return Le
 toOperator' "<"  = return Lt
-toOperator' ">=" = return Ge 
+toOperator' ">=" = return Ge
 toOperator' ">"  = return Gt
 toOperator' "&&" = return And
 toOperator' "||" = return Or
@@ -102,7 +102,7 @@ parseExpr =
               , (mult <|> div', Binary LeftAssoc)
               , (minus, Unary)
               , (pow, Binary RightAssoc)
-              ] 
+              ]
               ((Num <$> parseNatural) <|> (Ident <$> parseIdent) <|> (symbol '(' *> parseExpr <* symbol ')') )
               BinOp
               UnaryOp
@@ -114,7 +114,7 @@ compute (BinOp Mult x y) = compute x * compute y
 compute (BinOp Minus x y) = compute x - compute y
 compute (BinOp Div x y) = compute x `div` compute y
 compute (BinOp Pow x y) = compute x ^ compute y
-compute (UnaryOp Minus x) = 0 - (compute x)
+compute (UnaryOp Minus x) = negate (compute x)
 compute _ = error "compute undefined"
 
 falsy :: Int
@@ -143,7 +143,7 @@ evalExpr (UnaryOp Not x) env = do
 evalExpr (BinOp op x y) env = do
           x' <- evalExpr x env
           y' <- evalExpr y env
-          return $ case op of 
+          return $ case op of
                 Plus -> x' + y'
                 Mult -> x' * y'
                 Minus -> x' - y'
@@ -158,11 +158,11 @@ evalExpr (BinOp op x y) env = do
                 And -> if x' == falsy then falsy else y'
                 Or -> if x' == falsy then y' else truthy
                 _ -> error "evalExpr undefined"
- 
+
 
 evaluate :: String -> Maybe Int
-evaluate input = do 
+evaluate input = do
      case runParser parseExpr input of
-          Success rest msg ast | null (stream rest) -> return $ compute ast 
+          Success rest msg ast | null (stream rest) -> return $ compute ast
           _ -> Nothing
 
