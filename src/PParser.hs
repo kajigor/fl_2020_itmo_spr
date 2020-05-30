@@ -282,14 +282,14 @@ happyReduction_7 _  = notHappyAtAll
 happyReduce_8 = happySpecReduce_1  9 happyReduction_8
 happyReduction_8 (HappyTerminal (PLex.TVar happy_var_1))
 	 =  HappyAbsSyn9
-		 (Left happy_var_1
+		 (V happy_var_1
 	)
 happyReduction_8 _  = notHappyAtAll 
 
 happyReduce_9 = happySpecReduce_1  9 happyReduction_9
 happyReduction_9 (HappyAbsSyn10  happy_var_1)
 	 =  HappyAbsSyn9
-		 (Right happy_var_1
+		 (A happy_var_1
 	)
 happyReduction_9 _  = notHappyAtAll 
 
@@ -300,7 +300,7 @@ happyReduction_10 (_ `HappyStk`
 	(HappyTerminal (PLex.TId happy_var_1)) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn10
-		 (Atom happy_var_1 happy_var_3
+		 (Atom happy_var_1 (reverse happy_var_3)
 	) `HappyStk` happyRest
 
 happyReduce_11 = happySpecReduce_1  10 happyReduction_11
@@ -403,19 +403,19 @@ happySeq = happyDontSeq
 commaFold :: [String] -> String
 commaFold xs = intercalate ", " xs
 
-data P = P [Line] Task
+data P = P [Line] Task deriving (Eq)
 
 instance Show P where
     show (P lines task) = printf "%s ?- %s." (intercalate "\n" (map show lines)) (show task)
 
-data Line = Line Head Body
+data Line = Line Head Body deriving (Eq)
 
 instance Show Line where
     show (Line head body@(Body b)) | null b = printf "%s." (show head)
                                    | otherwise = printf "%s :- %s." (show head) (show body)
 
 
-data Head = Head Ident [Arg]
+data Head = Head Ident [Arg] deriving (Eq)
 
 instance Show Head where
     show (Head id args) | null args = printf "%s" id
@@ -425,9 +425,17 @@ type Ident = String
 
 type Var = String 
 
-type Arg = Either Var Atom
+{- type Arg = Either Var Atom -}
 
-data Body = Body [Atom]
+data Helper a b = V a | A b deriving (Eq)
+type Arg = Helper Var Atom
+
+instance (Show a, Show b) => Show (Helper a b) where
+    show x = case x of
+        V a -> show a
+        A b -> show b
+
+data Body = Body [Atom] deriving (Eq)
 
 instance Show Body where
     show x = case x of
@@ -435,7 +443,7 @@ instance Show Body where
                   then printf ""
                   else printf "%s" (commaFold (map show b))
 
-data Atom = Atom Ident [Arg]
+data Atom = Atom Ident [Arg] deriving (Eq)
 
 instance Show Atom where
     show x = case x of
@@ -443,16 +451,34 @@ instance Show Atom where
                         then printf "%s" id
                         else printf "%s(%s)" id (commaFold (map show args))
 
-data Task = Task [Atom]
+data Task = Task [Atom] deriving (Eq)
 instance Show Task where
     show x = case x of
         Task b -> if null b 
                   then printf ""
                   else printf "%s" (commaFold (map show b))
 
-parseError = undefined
+parseError :: [PLex.Token] -> a
+parseError ts = error ("parse error on token" ++ (show ts))
 
 runParser = print . parse . PLex.alexScanTokens
+
+orig = 
+    [ "eval(St, var(X), U) :- elem(X, St, U)."
+    , "eval(St, conj(X,Y), U) :- eval(St, X, V), eval(St, Y, W), and(V, W, U)."
+    , "eval(St, disj(X,Y), U) :- eval(St, X, V), eval(St, Y, W), or(V, W, U)."
+    , "eval(St, not(X), U) :- eval(St, X, V), neg(U, V)."
+    , "elem(zero, cons(H,T), H)."
+    , "elem(succ(N), cons(H,T), V) :- elem(N, T, V)."
+    , "nand(false, false, true)."
+    , "nand(false, true, true)."
+    , "nand(true, false, true)."
+    , "nand(true, true, false)."
+    , "neg(X, R) :- nand(X, X, R)."
+    , "or(X, Y, R) :- nand(X, X, Xx), nand(Y, Y, Yy), nand(Xx, Yy, R)."
+    , "and(X, Y, R) :- nand(X, Y, Xy), nand(Xy, Xy, R)."
+    , "?- eval(St, conj(disj(X,Y),not(var(Z))), true)."
+    ]
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 -- $Id: GenericTemplate.hs,v 1.26 2005/01/14 14:47:22 simonmar Exp $
 
