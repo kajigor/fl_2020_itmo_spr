@@ -34,19 +34,14 @@ dependencies:
 library:
   source-dirs: src
   exposed-modules:
-      Lex
-      LexStmt
-      Parser
-      ParserAst
-      ParserStmts
-      SimpleLex
-      Grammar
+      PLex
+      PParser
   other-modules : []
 
 executables:
-  repl:
+  pparser:
     main:                Main.hs
-    source-dirs:         app
+    source-dirs:         app 
     ghc-options:
     - -threaded
     - -rtsopts

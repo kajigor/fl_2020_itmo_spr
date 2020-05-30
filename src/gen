@@ -1,6 +1,0 @@
-alex SimpleLex.x
-alex Lex.x
-alex LexStmt.x 
-happy Parser.y
-happy ParserAst.y
-happy ParserStmts.y

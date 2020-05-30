@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.34.1.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7107497ec5a29c7af8e40034209a977f770114270f4d53bcc81604487f65d11d
+-- hash: 79e8f4eed1fdacc250839b44742adc77bf00a9b18132f7ca3308802b1c621813
 
 name:           happy-example
 version:        0.1.0.0
@@ -27,7 +27,7 @@ source-repository head
 
 library
   exposed-modules:
-      Lex LexStmt Parser ParserAst ParserStmts SimpleLex Grammar
+      PLex PParser
   hs-source-dirs:
       src
   build-depends:
@@ -43,7 +43,7 @@ library
     , tasty-hunit
   default-language: Haskell2010
 
-executable repl
+executable pparser
   main-is: Main.hs
   other-modules:
       Paths_happy_example
@@ -71,6 +71,8 @@ test-suite test
   type: exitcode-stdio-1.0
   main-is: Test.hs
   other-modules:
+      Test.PLex
+      Test.PParser
       Paths_happy_example
   hs-source-dirs:
       test
