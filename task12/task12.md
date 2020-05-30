@@ -35,3 +35,5 @@ X -> a X c
 | Y | a     | c      |                 |   |   |   |   |   |
 | X | a     | c      |                 |   |   |   |   |   |
 
+
+### [Условия](https://drive.google.com/drive/folders/1e0OnMhqnesibLAI9bQ9nkLM4o8eP645I?usp=sharing)
