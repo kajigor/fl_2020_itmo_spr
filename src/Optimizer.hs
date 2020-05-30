@@ -49,6 +49,8 @@ optimize (BinOp Mult left right) = do
 
 optimize a@(Num _) = return a
 
+optimize a = return a
+
 -- optimize (  BinOp Mult left right) = do
 --     left' <- optimize left
 --     case left' of
