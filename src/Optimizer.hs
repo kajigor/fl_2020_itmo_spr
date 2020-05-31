@@ -14,60 +14,53 @@ import           Combinators                    ( Parser(..)
 
 evaluateOptimized :: String -> Maybe AST
 evaluateOptimized input = case runParser parseExpr input of
-    Success rest _ ast | null (stream rest) -> optimize ast
+    Success rest _ ast | null (stream rest) -> return $ optimize ast
     _ -> Nothing
 
+optimize :: AST -> AST
+optimize a@(Num   _       ) = a
+optimize a@(Ident _       ) = a
+optimize (  BinOp Plus l r) = case left of
+    Num i -> case right of
+        Num j -> Num (i + j)
+        BinOp Plus l'@(Num j) r' ->
+            if j == 0 then Num i else BinOp Plus (Num (i + j)) r'
+        BinOp Plus l' r'@(Num j) ->
+            if j == 0 then Num i else BinOp Plus l' (Num (i + j))
+        _ -> if i == 0 then right else BinOp Plus left right
+    _ -> BinOp Plus left right
+  where
+    left  = optimize l
+    right = optimize r
 
-optimize :: AST -> Maybe AST
-optimize (BinOp Plus left right) = do
-    left'  <- optimize left
-    right' <- optimize right
-    case (left', right') of
-        (Num i, Num j) -> return $ Num (i + j)
+optimize (BinOp Mult l r) = case left of
+    Num i -> if i == 0
+        then Num 0
+        else if i == 1
+            then right
+            else case right of
+                Num j -> Num (i * j)
+                BinOp Mult l'@(Num j) r' ->
+                    if j == 0 then Num 0 else BinOp Mult (Num (i * j)) r'
+                BinOp Mult l' r'@(Num j) ->
+                    if j == 0 then Num 0 else BinOp Mult l' (Num (i * j))
 
-        (Num i, BinOp Plus (Num j) r) -> return $ BinOp Plus (Num (i + j)) r
-        (Num i, BinOp Plus l (Num j)) -> return $ BinOp Plus (Num (i + j)) l
+                _ -> if i == 0 then Num 0 else BinOp Mult left right
+    Ident i -> case right of
+        n@(Num j) ->
+            if j == 0 then Num 0 else if j == 1 then left else BinOp Mult left n
+        BinOp Mult l'@(Num j) r' -> if j == 0
+            then Num 0
+            else if j == 1 then BinOp Mult left r' else BinOp Mult left right
+        BinOp Mult l' r'@(Num j) -> if j == 0
+            then Num 0
+            else if j == 1 then BinOp Mult left l' else BinOp Mult left right
+        _ -> BinOp Mult left right
 
-        (BinOp Plus (Num j) r, Num i) -> return $ BinOp Plus (Num (i + j)) r
-        (BinOp Plus l (Num j), Num i) -> return $ BinOp Plus (Num (i + j)) l
+    _ -> BinOp Mult left right
+  where
+    left  = optimize l
+    right = optimize r
 
-        _ -> return $ BinOp Plus left' right'
+optimize _ = error "unsupported operation"
 
-optimize (BinOp Mult left right) = do
-    left'  <- optimize left
-    right' <- optimize right
-    case (left', right') of
-        (Num i, Num j) -> return $ Num (i * j)
-
-        (Num i, BinOp Mult (Num j) r) -> return $ BinOp Mult (Num (i * j)) r
-        (Num i, BinOp Mult l (Num j)) -> return $ BinOp Mult (Num (i * j)) l
-
-        (BinOp Mult (Num j) r, Num i) -> return $ BinOp Mult (Num (i * j)) r
-        (BinOp Mult l (Num j), Num i) -> return $ BinOp Mult (Num (i * j)) l
-
-        _ -> return $ BinOp Mult left' right'
-
-optimize a@(Num _) = return a
-
-optimize a = return a
-
--- optimize (  BinOp Mult left right) = do
---     left' <- optimize left
---     case left' of
---         Num i -> do
---             right' <- optimize right
---             case right' of
---                 Num j -> return $ Num (i * j)
---                 _     -> return $ BinOp Mult left' right'
---         _ -> optimize right >>= (\right' -> return $ BinOp Mult left' right')
--- 
-
-{-     *
- -   /
-    +
-   / \
-  +   N
- / \
-N   N
-
--}
