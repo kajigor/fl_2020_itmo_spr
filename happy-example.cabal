@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: af21ff0264576d1e4860816af9ce089db812053951311d2feecdf3d3f2ad83dd
+-- hash: 898ee316836f5982648746e3b71b436e83a03dfb487870256ff1885081d1300f
 
 name:           happy-example
 version:        0.1.0.0
@@ -36,6 +36,26 @@ library
     , base >=4.7 && <5
     , containers
     , directory
+    , hedgehog
+    , tasty
+    , tasty-discover
+    , tasty-hedgehog
+    , tasty-hunit
+  default-language: Haskell2010
+
+executable pparser
+  main-is: Main.hs
+  other-modules:
+      Paths_happy_example
+  hs-source-dirs:
+      app
+  build-depends:
+      HUnit
+    , array
+    , base >=4.7 && <5
+    , containers
+    , directory
+    , happy-example
     , hedgehog
     , tasty
     , tasty-discover
