@@ -9,8 +9,8 @@
 P такое, что :
 
 ```
-S -> a Y c g 
-   | a X c d
+S -> Y g 
+   | X d
 
 Y -> a Y c
    | a f c
@@ -32,8 +32,8 @@ X -> a X c
 | N | First | Follow | a               | b | c | d | f | g |
 |---|-------|--------|-----------------|---|---|---|---|---|
 | S | a     | $      | X \| Y => error |   |   |   |   |   |
-| Y | a     | c      |                 |   |   |   |   |   |
-| X | a     | c      |                 |   |   |   |   |   |
+| Y | a     | c, g   |                 |   |   |   |   |   |
+| X | a     | c, d   |                 |   |   |   |   |   |
 
 
 ### [Условия](https://drive.google.com/drive/folders/1e0OnMhqnesibLAI9bQ9nkLM4o8eP645I?usp=sharing)
