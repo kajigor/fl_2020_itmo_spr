@@ -1,4 +1,3 @@
-
 class Body:
     def __init__(self, atoms=[]):
         self.atoms = atoms[::-1]
@@ -30,6 +29,7 @@ class P:
       st += str(self.target)
       return st
  
+
 class Relation:
 
    def __init__(self, atom, body=Body()):
@@ -82,8 +82,6 @@ class Atom:
         return st
 
         
-
- 
 class Arg: 
     def __init__(self, ident):
         self.ident = ident
@@ -91,8 +89,4 @@ class Arg:
         if isinstance(self.ident, Atom):
            return str(self.ident)
         return "Var " + str(self.ident)
-
-
-
-
 

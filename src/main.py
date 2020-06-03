@@ -8,16 +8,3 @@ path = args.filename
 with open(path, "r") as f:
     result = parser.parser.parse(f.read())
     print(result)
-
-
-
-
-
-
-
-
-
-
-
-
-

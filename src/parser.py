@@ -32,7 +32,6 @@ t_ignore  = " \t\n"
 lexer = lex.lex()
 
 
-
 def p_p(p) :
     """P : Relations TargetSymb Target
          | TargetSymb Target"""
@@ -69,6 +68,7 @@ def p_atom(p):
     else:
         p[0] = ast.Atom(p[1], p[3])
 
+
 def p_args(p):
     """Args : Arg
             | Arg Separator Args"""
@@ -83,9 +83,11 @@ def p_arg(p):
            | Atom"""
     p[0] = ast.Arg(p[1])
 
+
 def p_Body(p):
     """Body : Atoms"""
     p[0] = ast.Body(p[1])
+
 
 def p_atoms(p): 
     """Atoms : Atom Point
@@ -102,12 +104,9 @@ def p_target(p):
     p[0] = ast.Target(p[1])
 
 
-
-
 def p_error(p):
     print(p)
     print("Syntax error in input!")
-
 
 
 parser = yacc.yacc()
