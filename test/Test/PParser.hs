@@ -4,7 +4,6 @@ import           PParser                        ( parse
                                                 , P(..)
                                                 , Task(..)
                                                 , Line(..)
-                                                , Head(..)
                                                 , Body(..)
                                                 , Helper(..)
                                                 , Atom(..)
@@ -38,7 +37,7 @@ unit_parser :: Assertion
 unit_parser = do
     parse (alexScanTokens "?-.") @?= P [] (Task [])
     parse (alexScanTokens (head orig ++ last orig)) @?= P
-        [ Line (Head "eval" [V "St", A (Atom "var" [V "X"]), V "U"])
+        [ Line (Atom "eval" [V "St", A (Atom "var" [V "X"]), V "U"])
                (Body [Atom "elem" [V "X", V "St", V "U"]])
         ]
         (Task

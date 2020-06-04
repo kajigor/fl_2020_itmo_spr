@@ -1,0 +1,16 @@
+eval(St, var(X), R) :- elem(X, St, R).
+eval(St, conj(X,Y), true)  :- eval(St, X, true), eval(St, Y, true).
+eval(St, conj(X,Y), false) :- eval(St, X, false).
+eval(St, conj(X,Y), false) :- eval(St, Y, false).
+eval(St, disj(X,Y), false) :- eval(St, X, false), eval(St, Y, false).
+eval(St, disj(X,Y), true)  :- eval(St, X, true).
+eval(St, disj(X,Y), true)  :- eval(St, Y, true).
+eval(St, not(X), true) :- eval(St, X, false).
+eval(St, not(X), false) :- eval(St, X, true).
+
+elem(zero, cons(H,T), H).
+elem(succ(N), cons(H,T), V) :- elem(N, T, V).
+
+true.false.true.
+
+?- eval(St,not(conj(disj(X,Y),var(Z)),not(var(T)))).

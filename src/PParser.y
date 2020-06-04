@@ -29,10 +29,7 @@ Relations :: { [Line] }
           | {- empty -}        { [] }
 
 Rltn :: { Line }
-     : Head Body '.'           { Line $1 $2 }
-
-Head :: { Head }
-     : ident '(' Args ')'      { Head $1 (reverse $3) }
+     : Atom Body '.'           { Line $1 $2 }
 
 Args :: { [Arg] }
      : Args ',' Arg            { $3 : $1 }
@@ -68,18 +65,11 @@ data P = P [Line] Task deriving (Eq)
 instance Show P where
     show (P lines task) = printf "%s ?- %s." (intercalate "\n" (map show lines)) (show task)
 
-data Line = Line Head Body deriving (Eq)
+data Line = Line Atom Body deriving (Eq)
 
 instance Show Line where
     show (Line head body@(Body b)) | null b = printf "%s." (show head)
                                    | otherwise = printf "%s :- %s." (show head) (show body)
-
-
-data Head = Head Ident [Arg] deriving (Eq)
-
-instance Show Head where
-    show (Head id args) | null args = printf "%s" id
-                        | otherwise = printf "%s(%s)" id (commaFold (map show args))
 
 type Ident = String 
 
