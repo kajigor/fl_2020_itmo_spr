@@ -1,0 +1,7 @@
+out/*
+.gradle/*
+.idea/*
+fl-p-lang-parser.git/build/*
+fl-p-lang-parser.git/out/*
+fl-p-lang-parser.git/.gradle/*
+fl-p-lang-parser.git/.idea/*
