@@ -58,3 +58,17 @@ unit_optimizeWithIdentifiers = do
     evaluateOptimized "y*x*3+11*0"
         @?= Just (BinOp Mult (BinOp Mult (Ident "y") (Ident "x")) (Num 3)) 
 
+    evaluateOptimized "(x+0)+(y+0)"
+        @?= Just (BinOp Plus (Ident "x") (Ident "y"))
+
+    evaluateOptimized "(x+0)*(y+0)"
+        @?= Just (BinOp Mult (Ident "x") (Ident "y"))
+
+    evaluateOptimized "(x*0)*(y*0)"
+        @?= Just (Num 0)
+
+    evaluateOptimized "(x+(y*0))*(y+1)"
+        @?= Just (BinOp Mult (Ident "x") (BinOp Plus (Ident "y") (Num 1)))
+
+    evaluateOptimized "(x*(y*0))+(y+1)"
+        @?= Just (BinOp Plus (Ident "y") (Num 1))
