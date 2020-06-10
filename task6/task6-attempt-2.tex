@@ -17,85 +17,61 @@
 
         Грамматика распознающая язык (этот факт, наверное, следует доказать):
         \[
-            S \rightarrow A B
+            S \rightarrow A b B
         \]
         \[
-            A \rightarrow a A b~|~b
+            A \rightarrow a A b~|~\varepsilon 
         \]
         \[
             B \rightarrow b B a~|~b~B~|~\varepsilon
         \]
 
         Она же в НФК:
-
         \[
-            S \rightarrow b
+            S \rightarrow A B_1~|~B_1B~|~A C~|~b
         \]
         \[
-            S \rightarrow A_1 A'
-        \]
-        \[
-            S \rightarrow A B
-        \]
-        \[
-            A \rightarrow  A_1 A'~|~b
+            C \rightarrow B_1 B
         \]
         \[
             A_1 \rightarrow a
         \]
         \[
-            A' \rightarrow A B_1
-        \]
-        \[
             B_1 \rightarrow b
         \]
         \[
-            B \rightarrow B_1 B'
+            A \rightarrow A_1 A'
         \]
         \[
-            B \rightarrow B_1 A_1
+            A' \rightarrow A B_1~|~b
         \]
         \[
-            B' \rightarrow B A_1
+            B \rightarrow B_1 B'~|~B_1 B~|~b
         \]
-
         \[
-            B \rightarrow B_1 B
+            B' \rightarrow B A_1~|~a
         \]
+        Таблицу можно сгенерировать с помощью следующего инструмента: \\ \url{http://lxmls.it.pt/2015/cky.html} 
 
-        Таблица и дерево вывода:
+        Грамматика для вставки:
 
-        \[
-            w = abbbbaa
-        \]
-        Следующая таблица сгенерирована с помощью \url{http://lxmls.it.pt/2015/cky.html}
-\begin{table}[h]
-\begin{tabular}{llllllll}
-\cline{2-8}
-\multicolumn{1}{l|}{\cellcolor[HTML]{DAE8FC}6} & \multicolumn{1}{l|}{$S$}   & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} \\ \cline{2-8} 
-\multicolumn{1}{l|}{\cellcolor[HTML]{DAE8FC}5} & \multicolumn{1}{l|}{$S$}   & \multicolumn{1}{l|}{$S, B', B$}               & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} \\ \cline{2-8} 
-\multicolumn{1}{l|}{\cellcolor[HTML]{DAE8FC}4} & \multicolumn{1}{l|}{}      & \multicolumn{1}{l|}{$S, B$}                   & \multicolumn{1}{l|}{$S, B', B$}               & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} \\ \cline{2-8} 
-\multicolumn{1}{l|}{\cellcolor[HTML]{DAE8FC}3} & \multicolumn{1}{l|}{$A'$}  & \multicolumn{1}{l|}{}                         & \multicolumn{1}{l|}{$S, B$}                   & \multicolumn{1}{l|}{$B', B$}                  & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} \\ \cline{2-8} 
-\multicolumn{1}{l|}{\cellcolor[HTML]{DAE8FC}2} & \multicolumn{1}{l|}{$S,A$} & \multicolumn{1}{l|}{}                         & \multicolumn{1}{l|}{}                         & \multicolumn{1}{l|}{$S, B$}                   & \multicolumn{1}{l|}{B'}                       & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} \\ \cline{2-8} 
-\multicolumn{1}{l|}{\cellcolor[HTML]{DAE8FC}1} & \multicolumn{1}{l|}{}      & \multicolumn{1}{l|}{$A'$}                     & \multicolumn{1}{l|}{$A'$}                     & \multicolumn{1}{l|}{$A'$}                     & \multicolumn{1}{l|}{$B$}                      & \multicolumn{1}{l|}{\cellcolor[HTML]{FFFFFF}} & \multicolumn{1}{l|}{\cellcolor[HTML]{9B9B9B}} \\ \cline{2-8} 
-\multicolumn{1}{l|}{\cellcolor[HTML]{DAE8FC}0} & \multicolumn{1}{l|}{$A_1$} & \multicolumn{1}{l|}{$S,A,B_1$}                & \multicolumn{1}{l|}{$S,A,B_1$}                & \multicolumn{1}{l|}{$S,A,B_1$}                & \multicolumn{1}{l|}{$S,A,B_1$}                & \multicolumn{1}{l|}{$A_1$}                    & \multicolumn{1}{l|}{$A_1$}                    \\ \cline{2-8} 
-                                               & \cellcolor[HTML]{CBCEFB}0  & \cellcolor[HTML]{CBCEFB}1                     & \cellcolor[HTML]{CBCEFB}2                     & \cellcolor[HTML]{CBCEFB}3                     & \cellcolor[HTML]{CBCEFB}4                     & \cellcolor[HTML]{CBCEFB}5                     & \cellcolor[HTML]{CBCEFB}6                    
-\end{tabular}
-\end{table}
-
-% S -> b
-% S -> A1 AN
-% S -> A B
-% A -> A1 AN
-% A -> b
-% A1 -> a
-% AN -> A B1
-% B1 -> b
-% B -> B1 BN
-% B -> B1 A1
-% BN -> B A1
-
-% B -> B1 B
+\begin{verbatim}
+S -> A B1
+S -> B1 B
+S -> A C
+S -> b
+C -> B1 B
+A1 -> a
+B1 -> b
+A -> A1 AN
+AN -> A B1
+AN -> b
+B -> B1 BN
+B -> B1 B
+B -> b
+BN -> B A1
+BN -> a
+\end{verbatim}
 
 \end{enumerate}
 
