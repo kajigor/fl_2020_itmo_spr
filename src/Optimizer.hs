@@ -1,19 +1,23 @@
 module Optimizer where
 
 
-import           AST                            ( AST(..)
-                                                , Operator(..)
-                                                )
+import           AST                            
+import UberExpr
 import           Control.Applicative
-import           Expr                           ( parseExpr )
-import           Combinators                    ( Parser(..)
-                                                , Result(..)
-                                                , InputStream(..)
-                                                , runParser
-                                                )
+import           Expr                           
+import           Combinators                                                                    
+
+parserSumMult :: Parser String String AST
+parserSumMult =
+     uberExpr [ (sum', Binary LeftAssoc)
+              , (mult, Binary LeftAssoc)
+              ]
+              ((Num <$> parseNatural) <|> (Ident <$> Expr.parseIdent) <|> (symbol '(' *> parserSumMult <* symbol ')') )
+              BinOp
+              UnaryOp
 
 evaluateOptimized :: String -> Maybe AST
-evaluateOptimized input = case runParser parseExpr input of
+evaluateOptimized input = case runParser parserSumMult input of
     Success rest _ ast | null (stream rest) -> return $ optimize ast
     _ -> Nothing
 
@@ -21,14 +25,16 @@ optimize :: AST -> AST
 optimize a@(Num   _       ) = a
 optimize a@(Ident _       ) = a
 optimize (  BinOp Plus l r) = case left of
-    Num i -> case right of
+    Num i -> if i == 0 then right else case right of
         Num j -> Num (i + j)
         BinOp Plus l'@(Num j) r' ->
             if j == 0 then Num i else BinOp Plus (Num (i + j)) r'
         BinOp Plus l' r'@(Num j) ->
             if j == 0 then Num i else BinOp Plus l' (Num (i + j))
         _ -> if i == 0 then right else BinOp Plus left right
-    _ -> BinOp Plus left right
+    _ -> case right of 
+        Num 0 -> left
+        _ -> BinOp Plus left right
   where
     left  = optimize l
     right = optimize r
@@ -57,10 +63,10 @@ optimize (BinOp Mult l r) = case left of
             else if j == 1 then BinOp Mult left l' else BinOp Mult left right
         _ -> BinOp Mult left right
 
-    _ -> BinOp Mult left right
+    _ -> case right of
+        Num 0 -> Num 0
+        _ -> BinOp Mult left right
   where
     left  = optimize l
     right = optimize r
-
-optimize _ = error "unsupported operation"
 
